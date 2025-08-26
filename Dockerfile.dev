@@ -1,0 +1,43 @@
+# Easter Game Frontend - Development Dockerfile
+# File: frontend/Dockerfile.dev
+# Description: Development Docker image for React frontend with code mounting
+# Author: Daniel Fuhrer
+# Created: 2025
+# License: MIT
+#
+# Usage:
+#   docker build -f Dockerfile.dev -t easter-game-frontend:dev .
+#   docker run -p 3000:3000 -v $(pwd)/src:/app/src easter-game-frontend:dev
+#
+# Features:
+# - Code mounted from host for live development
+# - Hot reload enabled via React dev server
+# - Node.js 18 Alpine base image
+# - Port 3000 exposed
+# - Development optimizations
+
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy initial files (will be overridden by mounts at runtime)
+COPY src/ ./src/
+COPY public/ ./public/
+
+# Expose port
+EXPOSE 3000
+
+# Start development server
+# WATCHPACK_POLLING enables hot reload in Docker
+# CHOKIDAR_USEPOLLING enables file watching in Docker
+ENV WATCHPACK_POLLING=true
+ENV CHOKIDAR_USEPOLLING=true
+
+CMD ["npm", "start"]

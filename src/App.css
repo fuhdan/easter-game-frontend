@@ -1,0 +1,278 @@
+/**
+ * Easter Game Frontend - Main Application Styles
+ * File: frontend/src/App.css
+ * Description: CSS styles for the main React application
+ * Author: Daniel Fuhrer
+ * Created: 2025
+ * License: MIT
+ * 
+ * Features:
+ * - Responsive design
+ * - Easter theme colors
+ * - Card-based layout
+ * - Loading animations
+ * - Mobile-friendly
+ */
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+  min-height: 100vh;
+}
+
+/* Main App Container */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #333;
+}
+
+/* Header Styles */
+.App-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.App-header h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.App-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Main Content */
+.App-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Section Styles */
+.info-section,
+.game-section,
+.error-section,
+.actions-section {
+  margin-bottom: 3rem;
+}
+
+.info-section h2,
+.game-section h2,
+.error-section h2,
+.actions-section h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #4a5568;
+  text-align: center;
+}
+
+/* Grid Layout */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Card Styles */
+.info-card,
+.game-card,
+.error-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover,
+.game-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.info-card h3,
+.game-card h3 {
+  color: #2d3748;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.info-card p,
+.game-card p {
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-size: 1rem;
+}
+
+.info-card strong,
+.game-card strong {
+  color: #2b6cb0;
+  font-weight: 600;
+}
+
+/* Game Section */
+.game-card {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Error Section */
+.error-card {
+  background: #fed7d7;
+  border-color: #e53e3e;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.error-card p {
+  color: #c53030;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+/* Button Styles */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-btn,
+.error-card button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.action-btn:hover,
+.error-card button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.error-card button {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+}
+
+.error-card button:hover {
+  box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+}
+
+/* Loading Styles */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+}
+
+.loading h2 {
+  color: #4a5568;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Footer */
+.App-footer {
+  background: #2d3748;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .App-header {
+    padding: 1.5rem;
+  }
+
+  .App-header h1 {
+    font-size: 2rem;
+  }
+
+  .App-main {
+    padding: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .action-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .App-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .App-header p {
+    font-size: 1rem;
+  }
+
+  .info-card,
+  .game-card,
+  .error-card {
+    padding: 1rem;
+  }
+}

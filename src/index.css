@@ -1,0 +1,51 @@
+/**
+ * Easter Game Frontend - Global Base Styles
+ * File: frontend/src/index.css
+ * Description: Global CSS reset and base styles for React application
+ * Author: Daniel Fuhrer
+ * Created: 2025
+ * License: MIT
+ * 
+ * Features:
+ * - CSS reset and normalization
+ * - Base typography
+ * - Smooth scrolling
+ * - Focus accessibility
+ */
+
+/* CSS Reset and Base Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Remove focus outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Ensure focus is visible for keyboard users */
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
