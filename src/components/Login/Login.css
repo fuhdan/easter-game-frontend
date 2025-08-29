@@ -1,68 +1,48 @@
 /**
- * Styles: Login Component
- * Purpose: Style A card-based design with Ypsomed branding
+ * File: Login.css
+ * Purpose: Login component styles matching mock design exactly
  * Part of: Easter Quest 2025 Frontend
  * 
- * Design System:
- * - Primary Blue: #005da0
- * - Accent Red: #c41e3a
- * - Card shadows and gradients
- * - 12px border radius
- * - Responsive layout
+ * Features:
+ * - Centered modal design
+ * - Ypsomed logo integration
+ * - Gradient background
+ * - Form validation styles
  */
 
-/* Container and layout */
+/* Login Container */
 .login-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.login-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.05),
-        0 10px 25px rgba(0, 93, 160, 0.1);
-    max-width: 400px;
-    width: 100%;
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Login Box */
+.login-box {
+  width: 400px;
+  max-width: 90%;
+  background: white;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  border-top: 6px solid var(--primary-blue);
+  border-radius: 20px;
 }
 
-.login-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-        0 8px 12px rgba(0, 0, 0, 0.1),
-        0 15px 35px rgba(0, 93, 160, 0.15);
-}
-
-/* Header with Ypsomed branding */
+/* Login Header */
 .login-header {
-    background: linear-gradient(135deg, #005da0 0%, #004271 100%);
-    color: white;
-    padding: 30px 20px;
-    text-align: center;
+  margin-bottom: 2rem;
 }
 
-.login-header h1 {
-    margin: 0 0 5px 0;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.login-header p {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-/* Ypsomed Logo - Container for img tag */
-.ypsomed-logo {
-  margin: 0 auto 1.5rem;
+.login-logo {
   width: 80px;
   height: 80px;
   background: white;
@@ -71,184 +51,88 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto 1rem;
   box-shadow: 0 8px 20px rgba(0, 93, 160, 0.3);
+  overflow: hidden;
 }
 
-.ypsomed-logo img {
-  width: 60px;
-  height: 60px;
+.login-logo img {
+  width: 70px;
+  height: 70px;
   object-fit: contain;
 }
 
-/* Form styles */
+/* Logo Fallback */
+.logo-fallback {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary-blue);
+}
+
+/* Login Form */
 .login-form {
-    padding: 30px 20px;
+  margin-bottom: 1.5rem;
 }
 
-.form-group {
-    margin-bottom: 20px;
+.login-form .form-group {
+  margin-bottom: 1rem;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: #333;
-    font-size: 14px;
+.login-btn {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.form-group input {
-    width: 100%;
-    height: 44px;
-    padding: 0 12px;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background: white;
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.form-group input:focus {
-    outline: none;
-    border-color: #005da0;
-    box-shadow: 0 0 0 3px rgba(0, 93, 160, 0.1);
-}
-
-.form-group input:disabled {
-    background: #f8f9fa;
-    cursor: not-allowed;
-}
-
-.form-group input::placeholder {
-    color: #6c757d;
-}
-
-/* Error message */
+/* Error Message */
 .error-message {
-    background: #fdf2f2;
-    color: #dc3545;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 14px;
-    border: 1px solid #f5c6cb;
+  background: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #f5c6cb;
 }
 
-/* Login button */
-.login-button {
-    width: 100%;
-    height: 44px;
-    background: linear-gradient(135deg, #005da0 0%, #004271 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 20px;
+/* Welcome Text */
+.welcome-text {
+  margin-top: 1.5rem;
+  color: #666;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
-.login-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #004271 0%, #003456 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 93, 160, 0.3);
+/* Loading State */
+.login-form.loading .form-control {
+  opacity: 0.6;
 }
 
-.login-button:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.login-button:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Demo credentials section */
-.demo-credentials {
-    border-top: 1px solid #e9ecef;
-    padding: 20px;
-    background: #f8f9fa;
-}
-
-.demo-credentials h3 {
-    margin: 0 0 15px 0;
-    font-size: 16px;
-    color: #495057;
-    text-align: center;
-}
-
-.demo-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.demo-button {
-    flex: 1;
-    height: 36px;
-    border: 2px solid;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: white;
-}
-
-.demo-button.admin {
-    border-color: #005da0;
-    color: #005da0;
-}
-
-.demo-button.admin:hover:not(:disabled) {
-    background: #005da0;
-    color: white;
-}
-
-.demo-button.player {
-    border-color: #28a745;
-    color: #28a745;
-}
-
-.demo-button.player:hover:not(:disabled) {
-    background: #28a745;
-    color: white;
-}
-
-.demo-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Responsive design */
+/* Responsive Design */
 @media (max-width: 480px) {
-    .login-container {
-        padding: 10px;
-    }
-    
-    .login-card {
-        max-width: 100%;
-    }
-    
-    .login-header {
-        padding: 25px 15px;
-    }
-    
-    .login-form {
-        padding: 25px 15px;
-    }
-    
-    .demo-credentials {
-        padding: 15px;
-    }
-    
-    .demo-buttons {
-        flex-direction: column;
-    }
-    
-    .login-header h1 {
-        font-size: 20px;
-    }
+  .login-box {
+    width: 95%;
+    padding: 1.5rem;
+  }
+  
+  .login-logo {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .login-logo img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .demo-credentials {
+    padding: 0.75rem;
+  }
 }

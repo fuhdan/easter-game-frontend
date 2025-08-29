@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import Login from './components/Login/Login';
 import './App.css';
 
 const App = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
     const [activeTab, setActiveTab] = useState('dashboard');
 
     // Check authentication status on app load
@@ -97,18 +97,9 @@ const App = () => {
         }
     }
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        await login(loginForm.username, loginForm.password);
-        setLoginForm({ username: '', password: '' });
-    };
-
-    const handleDemoLogin = (type) => {
-        if (type === 'admin') {
-            setLoginForm({ username: 'admin', password: 'demo' });
-        } else {
-            setLoginForm({ username: 'player1', password: 'demo' });
-        }
+    const handleLogin = async (username, password) => {
+        const result = await login(username, password);
+        return result;
     };
 
     if (loading) {
@@ -124,84 +115,11 @@ const App = () => {
 
     if (!user) {
         return (
-            <div className="app">
-                <div className="login-card">
-                    <div className="login-header">
-                        <div className="ypsomed-logo">
-                            <div className="logo-center"></div>
-                        </div>
-                        <h1>Easter Quest 2025</h1>
-                        <p>Welcome to the Ypsomed Innovation Challenge</p>
-                    </div>
-                    
-                    <div className="login-form">
-                        {error && (
-                            <div className="error-message">
-                                {error}
-                            </div>
-                        )}
-                        
-                        <form onSubmit={handleLogin}>
-                            <div className="form-group">
-                                <label htmlFor="username">Username</label>
-                                <input
-                                    id="username"
-                                    type="text"
-                                    value={loginForm.username}
-                                    onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
-                                    placeholder="Enter your username"
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    value={loginForm.password}
-                                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                                    placeholder="Enter your password"
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-                            
-                            <button type="submit" className="login-button" disabled={loading}>
-                                {loading ? 'Signing In...' : 'Login'}
-                            </button>
-                        </form>
-                        
-                        <div className="demo-info">
-                            <h4>Demo Credentials:</h4>
-                            <div>Username: admin</div>
-                            <div>Password: demo</div>
-                            <div style={{marginTop: '0.5rem', fontSize: '0.8rem', color: '#666'}}>
-                                Or click any navigation button above ↗
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="demo-section">
-                        <h3>Demo Accounts</h3>
-                        <div className="demo-buttons">
-                            <button 
-                                className="demo-btn admin"
-                                onClick={() => handleDemoLogin('admin')}
-                            >
-                                Admin Demo
-                            </button>
-                            <button 
-                                className="demo-btn player"
-                                onClick={() => handleDemoLogin('player')}
-                            >
-                                Player Demo
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <Login 
+                onLogin={handleLogin}
+                loading={loading}
+                error={error}
+            />
         );
     }
 

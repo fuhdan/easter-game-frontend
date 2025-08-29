@@ -1,179 +1,143 @@
 /**
  * Component: Login
- * Purpose: User authentication form with Ypsomed branding
+ * Purpose: User authentication interface with Ypsomed branding
  * Part of: Easter Quest 2025 Frontend
  * 
  * Features:
- * - Style A card-based design
- * - Ypsomed logo and colors
+ * - Demo credentials (admin/demo)
+ * - Ypsomed logo integration
  * - Form validation
- * - Loading states
- * - Error handling
- * - Demo credentials display
+ * - Responsive design
  * 
- * Design:
- * - Card layout with shadows
- * - Gradient header
- * - Blue primary (#005da0) + Red accent (#c41e3a)
- * - 12px border radius
- * - Responsive layout
+ * Props:
+ * - onLogin(credentials): Function called on successful login
  */
 
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import './Login.css';
 
-/**
- * Login form component
- * 
- * @returns {React.Component} Login form with Ypsomed branding
- */
-function Login() {
-    const { login, loading, error, clearError } = useAuth();
-    const [formData, setFormData] = useState({
-        username: '',
-        password: ''
-    });
-    const [formError, setFormError] = useState('');
+const Login = ({ onLogin }) => {
+  const [credentials, setCredentials] = useState({
+    username: 'admin',
+    password: 'demo'
+  });
+  
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-    /**
-     * Handle form input changes
-     * 
-     * @param {Event} e - Input change event
-     */
-    function handleInputChange(e) {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        
-        // Clear errors when user starts typing
-        if (formError) setFormError('');
-        if (error) clearError();
+  /**
+   * Handle input changes
+   * @param {Event} e - Input change event
+   */
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (error) setError('');
+  };
+
+  /**
+   * Handle form submission
+   * @param {Event} e - Form submit event
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      // Validate credentials
+      if (!credentials.username.trim() || !credentials.password.trim()) {
+        throw new Error('Please enter both username and password');
+      }
+      
+      // Demo validation - in production, this would be an API call
+      if (credentials.username === 'admin' && credentials.password === 'demo') {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        onLogin(credentials);
+      } else {
+        throw new Error('Invalid credentials. Use admin/demo for demo access.');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    /**
-     * Handle form submission
-     * 
-     * @param {Event} e - Form submit event
-     */
-    async function handleSubmit(e) {
-        e.preventDefault();
-        
-        // Basic validation
-        if (!formData.username.trim() || !formData.password) {
-            setFormError('Please enter both username and password');
-            return;
-        }
-
-        const result = await login(formData.username, formData.password);
-        
-        if (!result.success) {
-            setFormError(result.message);
-        }
-    }
-
-    /**
-     * Fill demo credentials
-     * 
-     * @param {string} username - Demo username
-     * @param {string} password - Demo password
-     */
-    function fillDemoCredentials(username, password) {
-        setFormData({ username, password });
-        if (formError) setFormError('');
-        if (error) clearError();
-    }
-
-    return (
-        <div className="login-container">
-            <div className="login-card">
-                {/* Header with Ypsomed branding */}
-                <div className="login-header">
-                    <div className="ypsomed-logo">
-                        <img 
-                            src="/assets/ypsomed-logo.png" 
-                            alt="Ypsomed Logo" 
-                            className="logo-image"
-                        />
-                    </div>
-                    <h1>Easter Quest 2025</h1>
-                    <p>Welcome to the Ypsomed Innovation Challenge</p>
-                </div>
-
-                {/* Login form */}
-                <form className="login-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="username">Username</label>
-                        <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleInputChange}
-                            placeholder="Enter your username"
-                            disabled={loading}
-                            autoComplete="username"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="password">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            placeholder="Enter your password"
-                            disabled={loading}
-                            autoComplete="current-password"
-                        />
-                    </div>
-
-                    {/* Error display */}
-                    {(formError || error) && (
-                        <div className="error-message">
-                            {formError || error}
-                        </div>
-                    )}
-
-                    {/* Submit button */}
-                    <button 
-                        type="submit" 
-                        className="login-button"
-                        disabled={loading}
-                    >
-                        {loading ? 'Logging in...' : 'Login'}
-                    </button>
-                </form>
-
-                {/* Demo credentials */}
-                <div className="demo-credentials">
-                    <h3>Demo Accounts</h3>
-                    <div className="demo-buttons">
-                        <button 
-                            type="button"
-                            className="demo-button admin"
-                            onClick={() => fillDemoCredentials('admin', 'demo')}
-                            disabled={loading}
-                        >
-                            Admin Demo
-                        </button>
-                        <button 
-                            type="button"
-                            className="demo-button player"
-                            onClick={() => fillDemoCredentials('player1', 'demo')}
-                            disabled={loading}
-                        >
-                            Player Demo
-                        </button>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="login-container">
+      <div className="login-box">
+        <div className="login-header">
+          <div className="login-logo">
+            <img 
+              src="/assets/ypsomed-logo.png" 
+              alt="Ypsomed Logo" 
+              onError={(e) => {
+                // Fallback if logo doesn't load
+                e.target.style.display = 'none';
+                e.target.parentNode.innerHTML = '<div class="logo-fallback">Y</div>';
+              }}
+              className='ypsomed-logo'
+            />
+          </div>
+          <h1 style={{ color: 'var(--primary-blue)', fontSize: '1.75rem', marginBottom: '0.5rem' }}>
+            Easter Quest 2025
+          </h1>
         </div>
-    );
-}
+        
+        <form onSubmit={handleSubmit} className="login-form">
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+          
+          <div className="form-group">
+            <input
+              type="text"
+              name="username"
+              className="form-control"
+              placeholder="Username (try: admin)"
+              value={credentials.username}
+              onChange={handleInputChange}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div className="form-group">
+            <input
+              type="password"
+              name="password"
+              className="form-control"
+              placeholder="Password (try: demo)"
+              value={credentials.password}
+              onChange={handleInputChange}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            className="btn btn-primary login-btn" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing In...' : 'Sign In'}
+          </button>
+        </form>
+        <p className="welcome-text">
+          Welcome to the Ypsomed Easter Challenge 2025! Please log in to continue.
+        </p>
+      </div>
+    </div>
+  );
+};
 
 export default Login;
