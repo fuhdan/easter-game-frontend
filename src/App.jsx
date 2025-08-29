@@ -1,163 +1,356 @@
-/**
- * Easter Game Frontend - Main Application Component
- * File: frontend/src/App.jsx
- * Description: Main React application component with API integration
- * Author: Daniel Fuhrer
- * Created: 2025
- * License: MIT
- * 
- * Features:
- * - API health check integration
- * - Game status display
- * - Environment-based configuration
- * - Responsive design
- * - Error handling
- * 
- * API Endpoints Used:
- * - GET /api/health - Backend health status
- * - GET /api/game/status - Game status information
- * 
- * Environment Variables:
- * - REACT_APP_API_URL: Backend API base URL
- * - REACT_APP_ENV: Environment (development/production)
- */
-
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-function App() {
-  const [backendStatus, setBackendStatus] = useState(null);
-  const [gameStatus, setGameStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const App = () => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const [activeTab, setActiveTab] = useState('dashboard');
 
-  const apiUrl = `${window.location.protocol}//${window.location.host}/api`;
-  const environment = process.env.REACT_APP_ENV || 'development';
+    // Check authentication status on app load
+    useEffect(() => {
+        checkAuthStatus();
+    }, []);
 
-  // Fetch backend health status
-  const fetchBackendHealth = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/health`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      setBackendStatus(data);
-    } catch (err) {
-      console.error('Backend health check failed:', err);
-      setError(`Backend connection failed: ${err.message}`);
+    async function checkAuthStatus() {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+            } else {
+                setUser(null);
+            }
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
     }
-  };
 
-  // Fetch game status
-  const fetchGameStatus = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/game/status`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      setGameStatus(data);
-    } catch (err) {
-      console.error('Game status fetch failed:', err);
-      setError(`Game status failed: ${err.message}`);
+    async function login(username, password) {
+        try {
+            setError(null);
+            setLoading(true);
+
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username.trim(),
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                setUser(data.user);
+                return { success: true, message: data.message };
+            } else {
+                const errorMsg = data.detail || data.message || 'Login failed';
+                setError(errorMsg);
+                return { success: false, message: errorMsg };
+            }
+        } catch (err) {
+            const errorMsg = 'Network error. Please try again.';
+            setError(errorMsg);
+            return { success: false, message: errorMsg };
+        } finally {
+            setLoading(false);
+        }
     }
-  };
 
-  // Load data on component mount
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      await Promise.all([fetchBackendHealth(), fetchGameStatus()]);
-      setLoading(false);
+    async function logout() {
+        try {
+            setLoading(true);
+            
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            setUser(null);
+            setError(null);
+        } catch (err) {
+            console.error('Logout error:', err);
+            setUser(null);
+            setError(null);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        await login(loginForm.username, loginForm.password);
+        setLoginForm({ username: '', password: '' });
     };
 
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array is intentional - only run on mount
+    const handleDemoLogin = (type) => {
+        if (type === 'admin') {
+            setLoginForm({ username: 'admin', password: 'demo' });
+        } else {
+            setLoginForm({ username: 'player1', password: 'demo' });
+        }
+    };
 
-  // Render loading state
-  if (loading) {
+    if (loading) {
+        return (
+            <div className="loading">
+                <div className="ypsomed-logo">
+                    <img src="/assets/ypsomed-logo.png" alt="Ypsomed Logo" />
+                </div>
+                <p>Loading Easter Quest 2025...</p>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="app">
+                <div className="login-card">
+                    <div className="login-header">
+                        <div className="ypsomed-logo">
+                            <div className="logo-center"></div>
+                        </div>
+                        <h1>Easter Quest 2025</h1>
+                        <p>Welcome to the Ypsomed Innovation Challenge</p>
+                    </div>
+                    
+                    <div className="login-form">
+                        {error && (
+                            <div className="error-message">
+                                {error}
+                            </div>
+                        )}
+                        
+                        <form onSubmit={handleLogin}>
+                            <div className="form-group">
+                                <label htmlFor="username">Username</label>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    value={loginForm.username}
+                                    onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                                    placeholder="Enter your username"
+                                    required
+                                    disabled={loading}
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label htmlFor="password">Password</label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    value={loginForm.password}
+                                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                                    placeholder="Enter your password"
+                                    required
+                                    disabled={loading}
+                                />
+                            </div>
+                            
+                            <button type="submit" className="login-button" disabled={loading}>
+                                {loading ? 'Signing In...' : 'Login'}
+                            </button>
+                        </form>
+                        
+                        <div className="demo-info">
+                            <h4>Demo Credentials:</h4>
+                            <div>Username: admin</div>
+                            <div>Password: demo</div>
+                            <div style={{marginTop: '0.5rem', fontSize: '0.8rem', color: '#666'}}>
+                                Or click any navigation button above ↗
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="demo-section">
+                        <h3>Demo Accounts</h3>
+                        <div className="demo-buttons">
+                            <button 
+                                className="demo-btn admin"
+                                onClick={() => handleDemoLogin('admin')}
+                            >
+                                Admin Demo
+                            </button>
+                            <button 
+                                className="demo-btn player"
+                                onClick={() => handleDemoLogin('player')}
+                            >
+                                Player Demo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Dashboard view - matches Image 3
     return (
-      <div className="App">
-        <div className="loading">
-          <h2>🐰 Loading Easter Game...</h2>
-          <div className="spinner"></div>
+        <div className="app" style={{maxWidth: '1200px'}}>
+            <div className="dashboard">
+                <div className="dashboard-header">
+                    <div className="dashboard-logo">
+                        <div className="ypsomed-logo">
+                            <img src="/assets/ypsomed-logo.png" alt="Ypsomed Logo" />
+                        </div>
+                        <div className="dashboard-title">
+                            <h1>Easter Quest 2025</h1>
+                            <p>Ypsomed Innovation Challenge</p>
+                        </div>
+                    </div>
+                    
+                    <div className="user-info">
+                        <div className="user-avatar">
+                            {(user.display_name || user.username || 'U').substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                            <div>{user.display_name || user.username}</div>
+                            <div style={{fontSize: '0.8rem', opacity: 0.8}}>{user.role}</div>
+                        </div>
+                        <button onClick={logout} className="logout-btn">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="nav-tabs">
+                    <button 
+                        className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('dashboard')}
+                    >
+                        📊 Admin Dashboard
+                    </button>
+                    <button 
+                        className={`nav-tab ${activeTab === 'teams' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('teams')}
+                    >
+                        👥 Team Creation
+                    </button>
+                    <button 
+                        className={`nav-tab ${activeTab === 'game' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('game')}
+                    >
+                        🎮 Game Panel
+                    </button>
+                    <button 
+                        className={`nav-tab ${activeTab === 'profile' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('profile')}
+                    >
+                        👤 Profile
+                    </button>
+                </div>
+                
+                {activeTab === 'dashboard' && (
+                    <>
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-number">24</div>
+                                <div className="stat-label">Active Teams</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-number">156</div>
+                                <div className="stat-label">Games Completed</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-number">89%</div>
+                                <div className="stat-label">Participation Rate</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-number">4.2</div>
+                                <div className="stat-label">Avg Rating</div>
+                            </div>
+                        </div>
+                        
+                        <div className="data-section">
+                            <h3>View Options</h3>
+                            <div className="view-options">
+                                <button className="view-btn active">Summary</button>
+                                <button className="view-btn">Per Game</button>
+                                <button className="view-btn">Per Team</button>
+                            </div>
+                            
+                            <div className="data-table">
+                                <div className="table-header">
+                                    <div>TEAM</div>
+                                    <div>PROGRESS</div>
+                                    <div>GAMES COMPLETED</div>
+                                    <div>HELP REQUESTS</div>
+                                    <div>STATUS</div>
+                                </div>
+                                
+                                <div className="table-row">
+                                    <div>Team Alpha</div>
+                                    <div>
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{width: '95%'}}></div>
+                                        </div>
+                                        <div style={{fontSize: '0.8rem', marginTop: '4px'}}>95%</div>
+                                    </div>
+                                    <div>9/10</div>
+                                    <div>3</div>
+                                    <div><span className="status-badge status-active">Active</span></div>
+                                </div>
+                                
+                                <div className="table-row">
+                                    <div>Team Beta</div>
+                                    <div>
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{width: '100%'}}></div>
+                                        </div>
+                                        <div style={{fontSize: '0.8rem', marginTop: '4px'}}>100%</div>
+                                    </div>
+                                    <div>10/10</div>
+                                    <div>1</div>
+                                    <div><span className="status-badge status-completed">Completed</span></div>
+                                </div>
+                                
+                                <div className="table-row">
+                                    <div>Team Gamma</div>
+                                    <div>
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{width: '70%'}}></div>
+                                        </div>
+                                        <div style={{fontSize: '0.8rem', marginTop: '4px'}}>70%</div>
+                                    </div>
+                                    <div>7/10</div>
+                                    <div>8</div>
+                                    <div><span className="status-badge status-help">Needs Help</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+                
+                {activeTab !== 'dashboard' && (
+                    <div style={{padding: '3rem', textAlign: 'center', color: '#666'}}>
+                        <h3>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel</h3>
+                        <p>This feature is coming soon...</p>
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
     );
-  }
-
-  // Render main application
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>🐰 Easter Game</h1>
-        <p>Welcome to the Easter Egg Hunt!</p>
-      </header>
-
-      <main className="App-main">
-        {/* Environment Info */}
-        <section className="info-section">
-          <h2>🔧 Environment Info</h2>
-          <div className="info-grid">
-            <div className="info-card">
-              <h3>Frontend</h3>
-              <p>Environment: <strong>{environment}</strong></p>
-              <p>API URL: <strong>{apiUrl}</strong></p>
-            </div>
-            
-            {backendStatus && (
-              <div className="info-card">
-                <h3>Backend</h3>
-                <p>Status: <strong>{backendStatus.status}</strong></p>
-                <p>Environment: <strong>{backendStatus.environment}</strong></p>
-                <p>Debug: <strong>{backendStatus.debug}</strong></p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Game Status */}
-        {gameStatus && (
-          <section className="game-section">
-            <h2>🎮 Game Status</h2>
-            <div className="game-card">
-              <h3>{gameStatus.game}</h3>
-              <p>Status: <strong>{gameStatus.status}</strong></p>
-              <p>Players Online: <strong>{gameStatus.players_online}</strong></p>
-            </div>
-          </section>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <section className="error-section">
-            <h2>⚠️ Connection Issue</h2>
-            <div className="error-card">
-              <p>{error}</p>
-              <button onClick={() => window.location.reload()}>
-                🔄 Retry Connection
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* Action Buttons */}
-        <section className="actions-section">
-          <h2>🚀 Actions</h2>
-          <div className="button-group">
-            <button onClick={fetchBackendHealth} className="action-btn">
-              🔍 Check Backend Health
-            </button>
-            <button onClick={fetchGameStatus} className="action-btn">
-              🎯 Refresh Game Status
-            </button>
-          </div>
-        </section>
-      </main>
-
-      <footer className="App-footer">
-        <p>Easter Game © 2025 - Environment: {environment}</p>
-      </footer>
-    </div>
-  );
-}
+};
 
 export default App;
