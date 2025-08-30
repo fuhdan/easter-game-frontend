@@ -1,0 +1,45 @@
+/* FILE: components/AdminDashboard/AdminDashboard.css */
+/*
+ * Admin dashboard component styles
+ */
+
+.admin-dashboard {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0; /* Remove padding completely */
+  width: 100%;
+  overflow: visible;
+}
+
+/* Loading state */
+.dashboard-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 0 1rem; /* Reduce padding on mobile */
+  }
+
+  .dashboard-controls {
+    margin: 0 1rem 1rem 1rem;
+    padding: 1rem;
+  }
+  
+  .view-options {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .view-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+}

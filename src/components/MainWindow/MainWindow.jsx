@@ -113,7 +113,7 @@ function MainWindow() {
                         />
                     </div>
                     <div className="header-title">
-                        <h1>Easter Quest 2025</h1>
+                        <h1>Easter Quest 2026</h1>
                         <span className="subtitle">Ypsomed Innovation Challenge</span>
                     </div>
                 </div>

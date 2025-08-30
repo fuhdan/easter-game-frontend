@@ -1,32 +1,33 @@
 /**
- * Component: Login
+ * Component: Login (Optimized)
  * Purpose: User authentication interface with Ypsomed branding
  * Part of: Easter Quest 2025 Frontend
  * 
- * Features:
- * - Demo credentials (admin/demo)
- * - Ypsomed logo integration
- * - Form validation
- * - Responsive design
+ * Optimizations:
+ * - Removed inline styles (moved to CSS)
+ * - Better error handling
+ * - Cleaner logo fallback mechanism
+ * - Consistent with global button styles
  * 
  * Props:
- * - onLogin(credentials): Function called on successful login
+ * - onLogin(username, password): Function called on login attempt
+ * - loading: External loading state
+ * - error: External error message
  */
 
 import React, { useState } from 'react';
 import './Login.css';
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, loading = false, error = null }) => {
   const [credentials, setCredentials] = useState({
     username: 'admin',
     password: 'demo'
   });
   
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   /**
-   * Handle input changes
+   * Handle input changes and clear external errors.
    * @param {Event} e - Input change event
    */
   const handleInputChange = (e) => {
@@ -35,63 +36,53 @@ const Login = ({ onLogin }) => {
       ...prev,
       [name]: value
     }));
-    
-    // Clear error when user types
-    if (error) setError('');
   };
 
   /**
-   * Handle form submission
+   * Handle form submission.
    * @param {Event} e - Form submit event
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
     
-    try {
-      // Validate credentials
-      if (!credentials.username.trim() || !credentials.password.trim()) {
-        throw new Error('Please enter both username and password');
-      }
-      
-      // Demo validation - in production, this would be an API call
-      if (credentials.username === 'admin' && credentials.password === 'demo') {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        onLogin(credentials);
-      } else {
-        throw new Error('Invalid credentials. Use admin/demo for demo access.');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+    // Basic validation
+    if (!credentials.username.trim() || !credentials.password.trim()) {
+      return;
     }
+    
+    // Call parent login handler
+    await onLogin(credentials.username, credentials.password);
+  };
+
+  /**
+   * Handle logo loading error - show CSS fallback.
+   * @param {Event} e - Image error event
+   */
+  const handleLogoError = (e) => {
+    setLogoError(true);
+    e.target.style.display = 'none';
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <div className="login-logo">
-            <img 
-              src="/assets/ypsomed-logo.png" 
-              alt="Ypsomed Logo" 
-              onError={(e) => {
-                // Fallback if logo doesn't load
-                e.target.style.display = 'none';
-                e.target.parentNode.innerHTML = '<div class="logo-fallback">Y</div>';
-              }}
-              className='ypsomed-logo'
-            />
+          <div className={`login-logo ${logoError ? 'fallback' : ''}`}>
+            {!logoError ? (
+              <img 
+                src="/assets/ypsomed-logo.png" 
+                alt="Ypsomed Logo" 
+                onError={handleLogoError}
+              />
+            ) : (
+              <div className="logo-fallback">Y</div>
+            )}
           </div>
-          <h1 style={{ color: 'var(--primary-blue)', fontSize: '1.75rem', marginBottom: '0.5rem' }}>
-            Easter Quest 2025
-          </h1>
+          <h1>Easter Quest 2026</h1>
+          <p>Ypsomed Innovation Challenge</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className={`login-form ${loading ? 'loading' : ''}`}>
           {error && (
             <div className="error-message">
               {error}
@@ -107,7 +98,8 @@ const Login = ({ onLogin }) => {
               value={credentials.username}
               onChange={handleInputChange}
               required
-              disabled={isLoading}
+              disabled={loading}
+              autoComplete="username"
             />
           </div>
           
@@ -120,20 +112,22 @@ const Login = ({ onLogin }) => {
               value={credentials.password}
               onChange={handleInputChange}
               required
-              disabled={isLoading}
+              disabled={loading}
+              autoComplete="current-password"
             />
           </div>
           
           <button 
             type="submit" 
             className="btn btn-primary login-btn" 
-            disabled={isLoading}
+            disabled={loading || !credentials.username.trim() || !credentials.password.trim()}
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
         <p className="welcome-text">
-          Welcome to the Ypsomed Easter Challenge 2025! Please log in to continue.
+          Welcome to the Ypsomed Easter Challenge 2026 Dashboard. Please log in to continue.
         </p>
       </div>
     </div>

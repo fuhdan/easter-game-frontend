@@ -1,0 +1,53 @@
+/* FILE: components/Navigation/Navigation.css */
+/*
+ * Navigation tabs component styles
+ */
+
+.nav-tabs {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    display: flex;
+    width: 100%;
+}
+
+.nav-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #6c757d;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.nav-tab.active {
+  background: white;
+  color: var(--primary-blue);
+  font-weight: 600;
+  box-shadow: 0 -3px 0 var(--primary-blue) inset;
+}
+
+.nav-tab:hover:not(.active) {
+  background: var(--medium-gray);
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .nav-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .nav-tab {
+    flex: 1 1 50%;
+    min-width: 120px;
+  }
+}

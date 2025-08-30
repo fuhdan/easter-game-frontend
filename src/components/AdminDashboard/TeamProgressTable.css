@@ -1,0 +1,197 @@
+/**
+ * File: components/AdminDashboard/TeamProgressTable.css
+ * Purpose: Team progress table component styles - separate card layout
+ * Part of: Easter Quest 2025 Frontend
+ */
+
+.team-progress-section {
+  padding: 0 0 2rem 0;
+  width: 100%;
+}
+
+.data-table {
+  width: 100%;
+  background: white;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.table-header {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+  gap: 1.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-row {
+  padding: 1.5rem 1.5rem;
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: rgba(0, 93, 160, 0.02);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* Team name styling */
+.table-row div:first-child {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Progress bar container */
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progress-bar {
+  background: var(--light-gray);
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+  transition: width 0.6s ease;
+  border-radius: 5px;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: var(--primary-blue);
+  font-weight: 600;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  display: inline-block;
+}
+
+.status-active {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-help {
+  background: #cce5ff;
+  color: #004085;
+}
+
+/* Mobile responsive */
+@media (max-width: 1200px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .team-progress-section {
+    padding: 0;
+  }
+  
+  /* Mobile table - stack vertically */
+  .table-header {
+    display: none;
+  }
+  
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .table-row div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .table-row div:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #666;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background: #f9fafb; /* subtle contrast */
+}
+
+.toolbar-title {
+  font-weight: 600;
+  color: var(--primary-blue);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.toolbar-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.toolbar-btn {
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--primary-blue);
+  border-radius: 20px;
+  background: white;
+  color: var(--primary-blue);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.toolbar-btn.active {
+  background: var(--primary-blue);
+  color: white;
+}

@@ -1,0 +1,36 @@
+/* FILE: components/TeamCreation/TeamCreation.css */
+/*
+ * Team creation component styles - placeholder for future implementation
+ */
+
+.team-creation {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+
+.team-creation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .team-creation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* FILE: components/GamePanel/GamePanel.css */
+/*
+ * Game panel component styles - placeholder for future implementation
+ */
+
+.game-panel {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}

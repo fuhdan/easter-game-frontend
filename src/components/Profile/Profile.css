@@ -1,0 +1,23 @@
+/* FILE: components/Profile/Profile.css */
+/*
+ * Profile component styles - placeholder for future implementation
+ */
+
+.profile {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
