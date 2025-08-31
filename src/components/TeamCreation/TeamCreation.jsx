@@ -1,99 +1,101 @@
 /**
- * Component: TeamCreation
- * Purpose: Team management interface with CSV upload and team building
- * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ * Component: TeamCreation.jsx
+ * Purpose: Main container for team management system
+ * Part of: Easter Quest 2025 Frontend
+ * Location: frontend/src/components/TeamCreation/TeamCreation.jsx
+ * 
+ * Layout:
+ * - PlayerManagement (dedicated file)
+ * - TeamDisplay (dedicated file)
+ * - TeamConfiguration (dedicated file)
+ * 
+ * @since 2025-08-31
  */
 
 import React, { useState, useEffect } from 'react';
-import CSVUploader from './CSVUploader';
-import TeamBuilder from './TeamBuilder';
-import UserTable from './UserTable';
 import './TeamCreation.css';
+import PlayerManagement from './PlayerManagement';
+import TeamConfiguration from './TeamConfiguration';
+import TeamDisplay from './TeamDisplay';
 
-/**
- * Team creation and management component.
- * @param {Object} props
- * @param {Object} props.user - Current authenticated user
- * @returns {JSX.Element}
- */
-const TeamCreation = ({ user }) => {
-    const [users, setUsers] = useState([]);
-    const [teams, setTeams] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+const TeamCreation = () => {
+  const [players, setPlayers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-    useEffect(() => {
-        if (user?.role === 'super_admin') {
-            loadUsersAndTeams();
-        }
-    }, [user]);
+  const [config, setConfig] = useState({
+    requiredDepartment: '',
+    ensureDepartmentDistribution: false,
+    captainFromRequiredDept: false,
+    minTeamSize: 3,
+    maxTeamSize: 4,
+  });
 
-    /**
-     * Load all users and teams from API.
-     * @async
-     * @returns {Promise<void>}
-     */
-    async function loadUsersAndTeams() {
-        try {
-            setLoading(true);
-            setError(null);
+  // Extract unique departments whenever players change
+  useEffect(() => {
+    const uniqueDepartments = [...new Set(players.map(p => p.department))]
+      .filter(d => d && d.trim())
+      .sort();
+    setDepartments(uniqueDepartments);
+  }, [players]);
 
-            const [usersRes, teamsRes] = await Promise.all([
-                fetch('/api/users', { credentials: 'include' }),
-                fetch('/api/teams', { credentials: 'include' })
-            ]);
+  const showNotification = (message, type = 'info') => {
+    console.log(`${type.toUpperCase()}: ${message}`);
+    if (type === 'error') alert(`Error: ${message}`);
+  };
 
-            if (!usersRes.ok || !teamsRes.ok) {
-                throw new Error('Failed to fetch users or teams');
-            }
+  return (
+    <div className="team-creation">
+      <h2 className="team-creation-title">🏆 Team Creation & Management</h2>
 
-            const usersData = await usersRes.json();
-            const teamsData = await teamsRes.json();
-
-            setUsers(usersData);
-            setTeams(teamsData);
-        } catch (err) {
-            console.error('Error loading users/teams:', err);
-            setError(err.message || 'Error loading data');
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    // 🚫 Access control: Block non-super_admins
-    if (user?.role !== 'super_admin') {
-        return (
-            <div className="team-creation">
-                <p style={{ color: 'red', fontWeight: 'bold' }}>
-                    Access denied – Team Creation is only available for Super Admins.
-                </p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="team-creation">
-            <h2>Team Creation & Management</h2>
-
-            {loading && <p>Loading data...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-
-            <div className="team-creation-grid">
-                <CSVUploader onUpload={loadUsersAndTeams} />
-                <TeamBuilder 
-                    users={users}
-                    teams={teams}
-                    onTeamCreate={loadUsersAndTeams}
-                />
-            </div>
-            
-            <UserTable 
-                users={users}
-                teams={teams}
-                onUserUpdate={loadUsersAndTeams}
-            />
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <div className="loading-spinner"></div>
+            <p>Processing... {progress > 0 && `${progress}%`}</p>
+          </div>
         </div>
-    );
+      )}
+
+      <div className="main-content">
+        <div className="content-area">
+          <div className="player-section">
+            <PlayerManagement
+              players={players}
+              setPlayers={setPlayers}
+              showNotification={showNotification}
+              loading={loading}
+              setLoading={setLoading}
+              setProgress={setProgress}
+            />
+          </div>
+
+          <div className="teams-section">
+            <TeamDisplay
+              teams={teams}
+              players={players}
+              showNotification={showNotification}
+              useMock={true}
+            />
+          </div>
+        </div>
+      </div>
+
+      <TeamConfiguration
+        config={config}
+        setConfig={setConfig}
+        players={players}
+        teams={teams}
+        setTeams={setTeams}
+        departments={departments}
+        showNotification={showNotification}
+        loading={loading}
+        setLoading={setLoading}
+      />
+    </div>
+  );
 };
 
 export default TeamCreation;
