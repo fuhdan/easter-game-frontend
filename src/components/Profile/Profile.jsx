@@ -18,6 +18,7 @@
 import React, { useState } from 'react';
 import PasswordChangeCard from './PasswordChangeCard';
 import TeamManagementCard from './TeamManagementCard';
+import GameRatingCard from './GameRatingCard';
 import './Profile.css';
 
 const Profile = ({ user }) => {
@@ -47,18 +48,6 @@ const Profile = ({ user }) => {
             <div className="card-body">
                 <p>Super admin features will be implemented later</p>
                 <p><small>Note: Full system access and admin management</small></p>
-            </div>
-        </div>
-    );
-
-    const GameRatingCard = () => (
-        <div className="profile-card">
-            <div className="card-header">
-                ⭐ Rate Games
-            </div>
-            <div className="card-body">
-                <p>Game rating system will be implemented in Step 7</p>
-                <p><small>Features: Rate completed games, submit feedback</small></p>
             </div>
         </div>
     );

@@ -36,7 +36,7 @@ const Header = ({ user, onLogout }) => {
                             {user.display_name || user.username}
                         </div>
                         <div className="user-role">
-                            {user.role}
+                            {user.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </div>
                     </div>
                 </div>
