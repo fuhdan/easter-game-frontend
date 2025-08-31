@@ -1,7 +1,7 @@
 /**
  * Component: GamePanel
  * Purpose: Game interface for players with challenges and progress
- * Part of: Easter Quest 2025 Frontend Dashboard
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  */
 
 import React, { useState, useEffect } from 'react';

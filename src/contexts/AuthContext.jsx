@@ -1,7 +1,7 @@
 /**
  * Component: AuthContext
  * Purpose: React Context for authentication state management
- * Part of: Easter Quest 2025 Frontend
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  * 
  * Features:
  * - User authentication state

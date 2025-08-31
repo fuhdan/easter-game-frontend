@@ -1,7 +1,7 @@
 /**
  * Component: Header
  * Purpose: Application header with logo, title, user info and logout
- * Part of: Easter Quest 2025 Frontend Dashboard
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  */
 
 import React from 'react';
@@ -26,7 +26,7 @@ const Header = ({ user, onLogout }) => {
                     <p>Ypsomed Easter Challenge 2026</p>
                 </div>
             </div>
-            <div class="header-actions">
+            <div className="header-actions">
                 <div className="user-info">
                     <div className="user-avatar">
                         {(user.display_name || user.username || 'U').substring(0, 2).toUpperCase()}

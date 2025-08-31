@@ -1,7 +1,7 @@
 /**
  * Component: Login (Optimized)
  * Purpose: User authentication interface with Ypsomed branding
- * Part of: Easter Quest 2025 Frontend
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  * 
  * Optimizations:
  * - Removed inline styles (moved to CSS)

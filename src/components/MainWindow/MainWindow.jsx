@@ -1,7 +1,7 @@
 /**
  * Component: MainWindow
  * Purpose: Main application interface after successful login
- * Part of: Easter Quest 2025 Frontend
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  * 
  * Features:
  * - Header with Ypsomed branding and user info

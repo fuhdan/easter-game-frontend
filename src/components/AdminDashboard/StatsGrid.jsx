@@ -1,14 +1,14 @@
 /**
  * Component: StatsGrid
  * Purpose: Display KPI statistics in a grid layout
- * Part of: Easter Quest 2025 Frontend Dashboard
- * 
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
  * Features:
  * - Four key statistics cards
+ * - Shows default data immediately, updates when API responds
  * - Responsive grid layout
  * - Hover animations
  */
-
 import React from 'react';
 import './StatsGrid.css';
 
@@ -19,32 +19,33 @@ import './StatsGrid.css';
  * @returns {JSX.Element}
  */
 const StatsGrid = ({ data }) => {
-    // Default data for when API data is not available
+    // Default data shown immediately
     const defaultStats = {
-        activeTeams: 24,
-        gamesCompleted: 156,
-        participationRate: 89,
-        avgRating: 4.2
+        active_teams: 24,
+        games_completed: 156,
+        participation_rate: 89,
+        avg_rating: 4.2
     };
 
+    // Use API data when available, fallback to defaults
     const stats = data || defaultStats;
 
     return (
         <div className="stats-grid">
             <div className="stat-card">
-                <div className="stat-number">{stats.activeTeams}</div>
+                <div className="stat-number">{stats.active_teams}</div>
                 <div className="stat-label">Active Teams</div>
             </div>
             <div className="stat-card">
-                <div className="stat-number">{stats.gamesCompleted}</div>
+                <div className="stat-number">{stats.games_completed}</div>
                 <div className="stat-label">Games Completed</div>
             </div>
             <div className="stat-card">
-                <div className="stat-number">{stats.participationRate}%</div>
+                <div className="stat-number">{stats.participation_rate}%</div>
                 <div className="stat-label">Participation Rate</div>
             </div>
             <div className="stat-card">
-                <div className="stat-number">{stats.avgRating}</div>
+                <div className="stat-number">{stats.avg_rating}</div>
                 <div className="stat-label">Avg Rating</div>
             </div>
         </div>

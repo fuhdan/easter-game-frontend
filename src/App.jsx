@@ -1,7 +1,7 @@
 /**
  * Module: App.jsx  
  * Purpose: Main application router with authentication state management
- * Part of: Easter Quest 2025 Frontend (React)
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  * 
  * Notes:
  * - Handles only authentication logic and component routing
@@ -18,9 +18,9 @@ import Login from './components/Login/Login';
 import Header from './components/Header/Header';
 import Navigation from './components/Navigation/Navigation';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
-/**import TeamCreation from './components/TeamCreation/TeamCreation';
+import TeamCreation from './components/TeamCreation/TeamCreation';
 import GamePanel from './components/GamePanel/GamePanel';
-import Profile from './components/Profile/Profile'; */
+import Profile from './components/Profile/Profile'; 
 import './App.css';
 
 /**
@@ -163,11 +163,27 @@ const App = () => {
             <Navigation 
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                user={user}
             />
-            
+
             {/* Route to appropriate component based on active tab */}
-            {activeTab === 'dashboard' && (
+            {activeTab === 'dashboard' && (user.role === 'super_admin' || user.role === 'admin') && (
                 <AdminDashboard user={user} />
+            )}
+
+            {/* ✅ Only super_admin can see this tab */}
+            {activeTab === 'team_creation' && user.role === 'super_admin' && (
+                <TeamCreation user={user} />
+            )}
+
+            {/* Game Panel - All authenticated users */}
+            {activeTab === 'game' && (
+                <GamePanel user={user} />
+            )}
+
+            {/* Profile always available */}
+            {activeTab === 'profile' && (
+                <Profile user={user} />
             )}
         </div>
     );
