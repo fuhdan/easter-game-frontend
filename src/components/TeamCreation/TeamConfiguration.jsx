@@ -8,7 +8,7 @@
  * - Team size configuration UI (min/max players per team)
  * - Department distribution constraint settings
  * - Captain selection rule configuration
- * - Uses centralized API service for backend communication
+ * - Uses REAL API service for backend communication
  * - Frontend validation before sending to backend
  * - Loading states and error handling
  * 
@@ -21,31 +21,7 @@
  */
 
 import React from 'react';
-// import api from '../../services/api';
-
-// TEMPORARY: Mock API for testing until service is created
-const api = {
-  teams: {
-    create: async (players, config) => {
-      console.log('Mock: Creating teams', players, config);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { teams: [] };
-    },
-    reset: async () => {
-      console.log('Mock: Resetting teams');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { success: true };
-    }
-  },
-  utils: {
-    handleError: (error, showNotification) => {
-      console.error('API Error:', error);
-      if (showNotification) {
-        showNotification(error.message || 'An error occurred', 'error');
-      }
-    }
-  }
-};
+import api from '../../services/api';
 
 const TeamConfiguration = ({ 
   config, 
@@ -107,7 +83,7 @@ const TeamConfiguration = ({
 
   /**
    * Handle Create Teams button click
-   * Uses centralized API service for backend communication
+   * Uses REAL API service for backend communication
    */
   const handleCreateTeams = async () => {
     setLoading(true);
@@ -116,17 +92,27 @@ const TeamConfiguration = ({
       // Frontend validation
       validateConfiguration();
       
-      // Use centralized API service
-      showNotification('Creating teams...', 'info');
+      console.log('Sending to backend:', { players, config });
+      
+      // Call REAL API service
+      showNotification('Sending players and configuration to backend...', 'info');
       const result = await api.teams.create(players, config);
       
-      // Update frontend state with backend results
-      setTeams(result.teams);
-      showNotification(`Successfully created ${result.teams.length} teams!`, 'success');
+      console.log('Backend response:', result);
+      
+      if (result.success && result.teams) {
+        // Update frontend state with backend results
+        setTeams(result.teams);
+        showNotification(`Successfully created ${result.teams.length} teams with backend algorithm!`, 'success');
+      } else {
+        throw new Error('Backend did not return teams successfully');
+      }
       
     } catch (error) {
+      console.error('Team creation failed:', error);
       // Use centralized error handling
-      api.utils.handleError(error, showNotification);
+      const errorMessage = api.utils.handleError(error, showNotification);
+      showNotification(errorMessage || 'Failed to create teams', 'error');
     } finally {
       setLoading(false);
     }
@@ -134,7 +120,7 @@ const TeamConfiguration = ({
 
   /**
    * Handle Reset Teams button click
-   * Clears teams from backend database via API service
+   * Clears teams from backend database via REAL API service
    */
   const handleResetTeams = async () => {
     if (!window.confirm('Reset all teams? This will delete all generated teams from the database.')) {
@@ -144,11 +130,18 @@ const TeamConfiguration = ({
     setLoading(true);
     
     try {
-      await api.teams.reset();
-      setTeams([]);
-      showNotification('All teams have been reset', 'success');
+      console.log('Calling api.teams.reset()');
+      const result = await api.teams.reset();
+      
+      if (result.success) {
+        setTeams([]);
+        showNotification('All teams have been reset', 'success');
+      } else {
+        throw new Error('Reset failed on backend');
+      }
       
     } catch (error) {
+      console.error('Reset failed:', error);
       api.utils.handleError(error, showNotification);
     } finally {
       setLoading(false);
@@ -167,7 +160,7 @@ const TeamConfiguration = ({
     setLoading(true);
     
     try {
-      // Reset teams on backend
+      // Reset teams on backend using REAL API
       await api.teams.reset();
       
       // Clear frontend state
@@ -201,7 +194,7 @@ const TeamConfiguration = ({
   return (
     <div className="options-panel">
       <div className="options-panel-header">
-        <h3 className="options-panel-title">⚙️ Team Configuration</h3>
+        <h3 className="options-panel-title">Team Configuration</h3>
       </div>
       <div className="options-panel-body">
         
@@ -218,6 +211,7 @@ const TeamConfiguration = ({
               max="10"
               value={config.minTeamSize}
               onChange={(e) => handleConfigChange('minTeamSize', parseInt(e.target.value))}
+              disabled={loading}
             />
             <small className="form-text">Minimum players per team (2-10)</small>
           </div>
@@ -231,6 +225,7 @@ const TeamConfiguration = ({
               max="15"
               value={config.maxTeamSize}
               onChange={(e) => handleConfigChange('maxTeamSize', parseInt(e.target.value))}
+              disabled={loading}
             />
             <small className="form-text">Maximum players per team</small>
           </div>
@@ -246,6 +241,7 @@ const TeamConfiguration = ({
               className="form-control"
               value={config.requiredDepartment}
               onChange={(e) => handleConfigChange('requiredDepartment', e.target.value)}
+              disabled={loading}
             >
               <option value="">None - No requirement</option>
               {departments.map(dept => (
@@ -261,7 +257,7 @@ const TeamConfiguration = ({
               id="ensureDeptDistribution"
               checked={config.ensureDepartmentDistribution}
               onChange={(e) => handleConfigChange('ensureDepartmentDistribution', e.target.checked)}
-              disabled={!config.requiredDepartment}
+              disabled={!config.requiredDepartment || loading}
             />
             <label htmlFor="ensureDeptDistribution">
               Ensure each team has at least 1 person from required department
@@ -274,7 +270,7 @@ const TeamConfiguration = ({
               id="captainFromRequiredDept"
               checked={config.captainFromRequiredDept}
               onChange={(e) => handleConfigChange('captainFromRequiredDept', e.target.checked)}
-              disabled={!config.requiredDepartment}
+              disabled={!config.requiredDepartment || loading}
             />
             <label htmlFor="captainFromRequiredDept">
               Team captain must be from required department
@@ -293,7 +289,7 @@ const TeamConfiguration = ({
               <strong>Estimated Teams:</strong> {estimatedTeams}
             </div>
             <div className="preview-stat">
-              <strong>Avg Team Size:</strong> {players.length > 0 ? Math.round(players.length / estimatedTeams) : 0}
+              <strong>Avg Team Size:</strong> {players.length > 0 && estimatedTeams > 0 ? Math.round(players.length / estimatedTeams) : 0}
             </div>
             {config.requiredDepartment && (
               <div className="preview-stat">
@@ -312,7 +308,7 @@ const TeamConfiguration = ({
             onClick={handleCreateTeams}
             disabled={loading || players.length === 0}
           >
-            🎲 Create Teams
+            {loading ? 'Creating Teams...' : 'Create Teams'}
           </button>
 
           <button
@@ -320,7 +316,7 @@ const TeamConfiguration = ({
             onClick={handleResetTeams}
             disabled={loading || teams.length === 0}
           >
-            🔄 Reset Teams
+            {loading ? 'Resetting...' : 'Reset Teams'}
           </button>
 
           <button
@@ -328,7 +324,7 @@ const TeamConfiguration = ({
             onClick={handleResetAll}
             disabled={loading}
           >
-            🗑️ Reset All
+            {loading ? 'Resetting...' : 'Reset All'}
           </button>
         </div>
 
@@ -336,19 +332,19 @@ const TeamConfiguration = ({
         <div className="config-status">
           {players.length === 0 && (
             <div className="status-message warning">
-              ⚠️ No players loaded. Upload a CSV file first.
+              No players loaded. Upload a CSV file first.
             </div>
           )}
           
           {teams.length > 0 && (
             <div className="status-message success">
-              ✅ {teams.length} teams created with {teams.reduce((sum, team) => sum + team.members.length, 0)} players
+              {teams.length} teams created with {teams.reduce((sum, team) => sum + (team.members?.length || 0), 0)} players
             </div>
           )}
 
           {loading && (
             <div className="status-message info">
-              ⏳ Processing request on backend server...
+              Processing request on backend server...
             </div>
           )}
         </div>
@@ -359,6 +355,8 @@ const TeamConfiguration = ({
             <details>
               <summary>Debug: Current Configuration</summary>
               <pre>{JSON.stringify(config, null, 2)}</pre>
+              <pre>Players: {players.length}</pre>
+              <pre>Teams: {teams.length}</pre>
             </details>
           </div>
         )}

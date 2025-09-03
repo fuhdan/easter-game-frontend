@@ -77,7 +77,7 @@ const TeamCreation = () => {
               teams={teams}
               players={players}
               showNotification={showNotification}
-              useMock={true}
+              useMock={false}
             />
           </div>
         </div>

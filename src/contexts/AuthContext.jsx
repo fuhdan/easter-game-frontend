@@ -9,6 +9,7 @@
  * - HTTPOnly cookie-based auth
  * - Automatic token validation
  * - Loading states
+ * - Uses centralized API service
  * 
  * Usage:
  * - Wrap App with AuthProvider
@@ -21,6 +22,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -52,7 +54,7 @@ export function AuthProvider({ children }) {
 
     /**
      * Check if user is authenticated on app load
-     * Validates HTTPOnly cookie with backend
+     * Validates HTTPOnly cookie with backend using API service
      */
     useEffect(() => {
         checkAuthStatus();
@@ -60,25 +62,13 @@ export function AuthProvider({ children }) {
 
     /**
      * Validate current authentication status
-     * Calls /api/auth/me to check HTTPOnly cookie
+     * Uses api.auth.verify() to check HTTPOnly cookie
      */
     async function checkAuthStatus() {
         try {
             setLoading(true);
-            const response = await fetch('/api/auth/me', {
-                method: 'GET',
-                credentials: 'include', // Include HTTPOnly cookies
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-            } else {
-                setUser(null);
-            }
+            const userData = await api.auth.verify();
+            setUser(userData);
         } catch (err) {
             console.error('Auth check failed:', err);
             setUser(null);
@@ -88,7 +78,7 @@ export function AuthProvider({ children }) {
     }
 
     /**
-     * Login user with credentials
+     * Login user with credentials using API service
      * 
      * @param {string} username - User login name
      * @param {string} password - User password
@@ -100,30 +90,22 @@ export function AuthProvider({ children }) {
             setError(null);
             setLoading(true);
 
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                credentials: 'include', // Include HTTPOnly cookies
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username.trim(),
-                    password: password
-                })
+            const response = await api.auth.login({
+                username: username.trim(),
+                password: password
             });
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                setUser(data.user);
-                return { success: true, message: data.message };
+            if (response.success) {
+                setUser(response.user);
+                return { success: true, message: response.message };
             } else {
-                const errorMsg = data.detail || data.message || 'Login failed';
+                const errorMsg = response.detail || response.message || 'Login failed';
                 setError(errorMsg);
                 return { success: false, message: errorMsg };
             }
         } catch (err) {
-            const errorMsg = 'Network error. Please try again.';
+            console.error('Login error:', err);
+            const errorMsg = err.message || 'Network error. Please try again.';
             setError(errorMsg);
             return { success: false, message: errorMsg };
         } finally {
@@ -132,7 +114,7 @@ export function AuthProvider({ children }) {
     }
 
     /**
-     * Logout current user
+     * Logout current user using API service
      * Clears HTTPOnly cookie and local state
      * 
      * @returns {Promise<void>}
@@ -141,15 +123,9 @@ export function AuthProvider({ children }) {
         try {
             setLoading(true);
             
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include', // Include HTTPOnly cookies
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+            await api.auth.logout();
 
-            // Clear local state regardless of API response
+            // Clear local state
             setUser(null);
             setError(null);
         } catch (err) {

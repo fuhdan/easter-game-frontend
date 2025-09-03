@@ -27,7 +27,7 @@
  * Configuration
  */
 const CONFIG = {
-  BASE_URL: process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8000/api',
+  BASE_URL: '', // Empty string since auth uses /api/auth/login directly
   TIMEOUT: 30000,
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000,
@@ -142,25 +142,25 @@ const api = {
   // AUTHENTICATION
   // =============================================================================
   auth: {
-    login: (credentials) => request('POST', '/auth/login', credentials),
-    logout: () => request('POST', '/auth/logout'),
-    refresh: () => request('POST', '/auth/refresh'),
-    verify: () => request('GET', '/auth/verify')
+    login: (credentials) => request('POST', '/api/auth/login', credentials),
+    logout: () => request('POST', '/api/auth/logout'),
+    refresh: () => request('POST', '/api/auth/refresh'),
+    verify: () => request('GET', '/api/auth/verify')
   },
   
   // =============================================================================
   // USER MANAGEMENT
   // =============================================================================
   users: {
-    getAll: () => request('GET', '/users'),
-    getById: (id) => request('GET', `/users/${id}`),
-    create: (userData) => request('POST', '/users', userData),
-    update: (id, userData) => request('PUT', `/users/${id}`, userData),
-    delete: (id) => request('DELETE', `/users/${id}`),
-    bulkCreate: (users) => request('POST', '/users/bulk-create', { users }),
-    getCurrentUser: () => request('GET', '/users/me'),
-    updateProfile: (profileData) => request('PUT', '/users/me', profileData),
-    changePassword: (passwordData) => request('PUT', '/users/me/password', passwordData)
+    getAll: () => request('GET', '/api/users'),
+    getById: (id) => request('GET', `/api/users/${id}`),
+    create: (userData) => request('POST', '/api/users', userData),
+    update: (id, userData) => request('PUT', `/api/users/${id}`, userData),
+    delete: (id) => request('DELETE', `/api/users/${id}`),
+    bulkCreate: (users) => request('POST', '/api/users/bulk-create', { users }),
+    getCurrentUser: () => request('GET', '/api/users/me'),
+    updateProfile: (profileData) => request('PUT', '/api/users/me', profileData),
+    changePassword: (passwordData) => request('PUT', '/api/users/me/password', passwordData)
   },
   
   // =============================================================================
@@ -168,79 +168,82 @@ const api = {
   // =============================================================================
   teams: {
     // Get all teams
-    getAll: () => request('GET', '/teams'),
+    getAll: () => request('GET', '/api/teams'),
     
     // Get team by ID
-    getById: (id) => request('GET', `/teams/${id}`),
+    getById: (id) => request('GET', `/api/teams/${id}`),
     
     // Create teams using backend algorithm
     create: (players, config) => {
       log.info(`Creating teams for ${players.length} players`);
-      return request('POST', '/teams/create', { players, config });
+      console.log('FRONTEND: Players being sent:', players.slice(0, 2));
+      console.log('FRONTEND: Config being sent:', config);
+      console.log('FRONTEND: Request payload:', JSON.stringify({ players, config }, null, 2));
+      return request('POST', '/api/teams/create', { players, config });
     },
     
     // Update team
-    update: (id, teamData) => request('PUT', `/teams/${id}`, teamData),
+    update: (id, teamData) => request('PUT', `/api/teams/${id}`, teamData),
     
     // Delete team
-    delete: (id) => request('DELETE', `/teams/${id}`),
+    delete: (id) => request('DELETE', `/api/teams/${id}`),
     
     // Reset all teams
     reset: () => {
       log.info('Resetting all teams');
-      return request('DELETE', '/teams/reset');
+      return request('DELETE', '/api/teams/reset');
     },
     
     // Export teams as CSV
-    export: () => request('GET', '/teams/export', null, {
+    export: () => request('GET', '/api/teams/export', null, {
       headers: { ...buildHeaders(false), 'Accept': 'text/csv' }
     }),
     
     // Add member to team
-    addMember: (teamId, userId) => request('POST', `/teams/${teamId}/members`, { userId }),
+    addMember: (teamId, userId) => request('POST', `/api/teams/${teamId}/members`, { userId }),
     
     // Remove member from team
-    removeMember: (teamId, userId) => request('DELETE', `/teams/${teamId}/members/${userId}`),
+    removeMember: (teamId, userId) => request('DELETE', `/api/teams/${teamId}/members/${userId}`),
     
     // Set team captain
-    setCaptain: (teamId, userId) => request('PUT', `/teams/${teamId}/captain`, { userId })
+    setCaptain: (teamId, userId) => request('PUT', `/api/teams/${teamId}/captain`, { userId })
   },
   
   // =============================================================================
   // PLAYER MANAGEMENT
   // =============================================================================
   players: {
-    getAll: () => request('GET', '/players'),
-    getById: (id) => request('GET', `/players/${id}`),
-    create: (playerData) => request('POST', '/players', playerData),
-    update: (id, playerData) => request('PUT', `/players/${id}`, playerData),
-    delete: (id) => request('DELETE', `/players/${id}`),
+    getAll: () => request('GET', '/api/players'),
+    getById: (id) => request('GET', `/api/players/${id}`),
+    create: (playerData) => request('POST', '/api/players', playerData),
+    update: (id, playerData) => request('PUT', `/api/players/${id}`, playerData),
+    delete: (id) => request('DELETE', `/api/players/${id}`),
     bulkCreate: (players) => {
       log.info(`Uploading ${players.length} players`);
-      return request('POST', '/players/bulk-create', { players });
+      return request('POST', '/api/players/bulk-create', { players });
     },
-    import: (csvData) => request('POST', '/players/import', { csvData }),
-    export: () => request('GET', '/players/export')
+    import: (csvData) => request('POST', '/api/players/import', { csvData }),
+    export: () => request('GET', '/api/players/export')
   },
   
   // =============================================================================
   // GAME MANAGEMENT
   // =============================================================================
   games: {
-    getAll: () => request('GET', '/games'),
-    getById: (id) => request('GET', `/games/${id}`),
-    create: (gameData) => request('POST', '/games', gameData),
-    update: (id, gameData) => request('PUT', `/games/${id}`, gameData),
-    delete: (id) => request('DELETE', `/games/${id}`),
+    getAll: () => request('GET', '/api/games'),
+    getById: (id) => request('GET', `/api/games/${id}`),
+    create: (gameData) => request('POST', '/api/games', gameData),
+    update: (id, gameData) => request('PUT', `/api/games/${id}`, gameData),
+    delete: (id) => request('DELETE', `/api/games/${id}`),
     
     // Game progress and solutions
-    getProgress: (gameId, teamId) => request('GET', `/games/${gameId}/progress/${teamId}`),
-    submitSolution: (gameId, solution) => request('POST', `/games/${gameId}/submit`, { solution }),
-    useHint: (gameId) => request('POST', `/games/${gameId}/hint`),
+    getProgress: (gameId, teamId) => request('GET', `/api/games/${gameId}/progress/${teamId}`),
+    submitSolution: (gameId, solution) => request('POST', `/api/games/${gameId}/submit`, { solution }),
+    useHint: (gameId) => request('POST', `/api/games/${gameId}/hint`),
     
     // Game ratings
-    rate: (gameId, rating, comment) => request('POST', `/games/${gameId}/rate`, { rating, comment }),
-    getRatings: (gameId) => request('GET', `/games/${gameId}/ratings`)
+    rate: (gameId, rating, comment) => request('POST', `/api/games/${gameId}/rate`, { rating, comment }),
+    getRatings: (gameId) => request('GET', `/api/games/${gameId}/ratings`)
   },
   
   // =============================================================================
@@ -248,24 +251,24 @@ const api = {
   // =============================================================================
   admin: {
     // Dashboard statistics
-    getStats: () => request('GET', '/admin/stats'),
-    getTeamProgress: () => request('GET', '/admin/teams/progress'),
-    getGameProgress: () => request('GET', '/admin/games/progress'),
+    getStats: () => request('GET', '/api/admin/stats'),
+    getTeamProgress: () => request('GET', '/api/admin/teams/progress'),
+    getGameProgress: () => request('GET', '/api/admin/games/progress'),
     
     // Admin actions
-    resetGame: (gameId) => request('POST', `/admin/games/${gameId}/reset`),
-    resetAllProgress: () => request('POST', '/admin/reset-all'),
+    resetGame: (gameId) => request('POST', `/api/admin/games/${gameId}/reset`),
+    resetAllProgress: () => request('POST', '/api/admin/reset-all'),
     
     // System management
-    getSystemInfo: () => request('GET', '/admin/system'),
-    exportAllData: () => request('GET', '/admin/export'),
+    getSystemInfo: () => request('GET', '/api/admin/system'),
+    exportAllData: () => request('GET', '/api/admin/export'),
     
     // User management
-    promoteUser: (userId) => request('PUT', `/admin/users/${userId}/promote`),
-    demoteUser: (userId) => request('PUT', `/admin/users/${userId}/demote`),
+    promoteUser: (userId) => request('PUT', `/api/admin/users/${userId}/promote`),
+    demoteUser: (userId) => request('PUT', `/api/admin/users/${userId}/demote`),
     
     // Game content management
-    updateGameContent: (gameId, content) => request('PUT', `/admin/games/${gameId}/content`, content)
+    updateGameContent: (gameId, content) => request('PUT', `/api/admin/games/${gameId}/content`, content)
   },
   
   // =============================================================================
@@ -275,23 +278,23 @@ const api = {
     // Send message to AI
     sendToAI: (message, context) => {
       log.info('Sending message to AI assistant');
-      return request('POST', '/chat/ai', { message, context });
+      return request('POST', '/api/chat/ai', { message, context });
     },
     
     // Send message to admin
     sendToAdmin: (message) => {
       log.info('Sending message to admin');
-      return request('POST', '/chat/admin', { message });
+      return request('POST', '/api/chat/admin', { message });
     },
     
     // Get chat history
-    getHistory: () => request('GET', '/chat/history'),
+    getHistory: () => request('GET', '/api/chat/history'),
     
     // Mark messages as read
-    markAsRead: (messageIds) => request('PUT', '/chat/read', { messageIds }),
+    markAsRead: (messageIds) => request('PUT', '/api/chat/read', { messageIds }),
     
     // Admin chat operations
-    getAdminMessages: () => request('GET', '/admin/chat/messages'),
+    getAdminMessages: () => request('GET', '/api/admin/chat/messages'),
     replyToUser: (userId, message) => request('POST', `/admin/chat/reply/${userId}`, { message })
   },
   
@@ -302,7 +305,7 @@ const api = {
     uploadCSV: (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      return request('POST', '/files/csv', formData, {
+      return request('POST', '/api/files/csv', formData, {
         headers: buildHeaders(null) // No content-type for FormData
       });
     },
@@ -310,7 +313,7 @@ const api = {
     uploadImage: (file) => {
       const formData = new FormData();
       formData.append('image', file);
-      return request('POST', '/files/image', formData, {
+      return request('POST', '/api/files/image', formData, {
         headers: buildHeaders(null)
       });
     }
@@ -320,9 +323,9 @@ const api = {
   // SYSTEM
   // =============================================================================
   system: {
-    health: () => request('GET', '/health'),
-    version: () => request('GET', '/version'),
-    ping: () => request('GET', '/ping')
+    health: () => request('GET', '/api/health'),
+    version: () => request('GET', '/api/version'),
+    ping: () => request('GET', '/api/ping')
   }
 };
 
