@@ -142,9 +142,16 @@ const api = {
   // AUTHENTICATION
   // =============================================================================
   auth: {
+    // Login user
     login: (credentials) => request('POST', '/api/auth/login', credentials),
+
+    // Logout user
     logout: () => request('POST', '/api/auth/logout'),
+
+    // Refresh token
     refresh: () => request('POST', '/api/auth/refresh'),
+
+    // Verify token
     verify: () => request('GET', '/api/auth/verify')
   },
   
@@ -152,14 +159,31 @@ const api = {
   // USER MANAGEMENT
   // =============================================================================
   users: {
+    // Get all users
     getAll: () => request('GET', '/api/users'),
+
+    // Get user by user ID
     getById: (id) => request('GET', `/api/users/${id}`),
+
+    // Create new user
     create: (userData) => request('POST', '/api/users', userData),
+
+    // Update user
     update: (id, userData) => request('PUT', `/api/users/${id}`, userData),
+
+    // Delete user
     delete: (id) => request('DELETE', `/api/users/${id}`),
+
+    // Bulk create users from CSV data
     bulkCreate: (users) => request('POST', '/api/users/bulk-create', { users }),
+
+    // Current user profile
     getCurrentUser: () => request('GET', '/api/users/me'),
+
+    // Update current user profile
     updateProfile: (profileData) => request('PUT', '/api/users/me', profileData),
+
+    // Change password current user
     changePassword: (passwordData) => request('PUT', '/api/users/me/password', passwordData)
   },
   
@@ -216,36 +240,72 @@ const api = {
   // PLAYER MANAGEMENT
   // =============================================================================
   players: {
+     // Get all players
     getAll: () => request('GET', '/api/players'),
+
+    // Get all players by player ID
     getById: (id) => request('GET', `/api/players/${id}`),
+
+    // Create player
     create: (playerData) => request('POST', '/api/players', playerData),
+
+    // Update player
     update: (id, playerData) => request('PUT', `/api/players/${id}`, playerData),
+
+    // Delete player
     delete: (id) => request('DELETE', `/api/players/${id}`),
+
+    // Bulk create players from CSV data
     bulkCreate: (players) => {
       log.info(`Uploading ${players.length} players`);
       return request('POST', '/api/players/bulk-create', { players });
     },
+
+    // Import players from CSV
     import: (csvData) => request('POST', '/api/players/import', { csvData }),
-    export: () => request('GET', '/api/players/export')
+
+    // Export players as CSV
+    export: () => request('GET', '/api/players/export'),
+
+    // Generate one-time password for player
+    generateOtp: (playerId) => {
+      log.info(`Generating OTP for player ${playerId}`);
+      return request('POST', `/api/players/${playerId}/generate-otp`);
+    }
   },
   
   // =============================================================================
   // GAME MANAGEMENT
   // =============================================================================
   games: {
+    // Get all games
     getAll: () => request('GET', '/api/games'),
+
+    // Get game by ID
     getById: (id) => request('GET', `/api/games/${id}`),
+
+    // Create new game
     create: (gameData) => request('POST', '/api/games', gameData),
+
+    // Update game
     update: (id, gameData) => request('PUT', `/api/games/${id}`, gameData),
+
+    // Delete game
     delete: (id) => request('DELETE', `/api/games/${id}`),
     
     // Game progress and solutions
     getProgress: (gameId, teamId) => request('GET', `/api/games/${gameId}/progress/${teamId}`),
+
+    // Submit solution for a game
     submitSolution: (gameId, solution) => request('POST', `/api/games/${gameId}/submit`, { solution }),
+
+    // Request a hint for a game
     useHint: (gameId) => request('POST', `/api/games/${gameId}/hint`),
     
     // Game ratings
     rate: (gameId, rating, comment) => request('POST', `/api/games/${gameId}/rate`, { rating, comment }),
+
+    // Get all ratings for a game
     getRatings: (gameId) => request('GET', `/api/games/${gameId}/ratings`)
   },
   
@@ -255,19 +315,29 @@ const api = {
   admin: {
     // Dashboard statistics
     getStats: () => request('GET', '/api/admin/stats'),
+
+    // Progress tracking
     getTeamProgress: () => request('GET', '/api/admin/teams/progress'),
+
+    // Overall game progress
     getGameProgress: () => request('GET', '/api/admin/games/progress'),
     
     // Admin actions
     resetGame: (gameId) => request('POST', `/api/admin/games/${gameId}/reset`),
+
+    // Reset all progress for all teams
     resetAllProgress: () => request('POST', '/api/admin/reset-all'),
     
     // System management
     getSystemInfo: () => request('GET', '/api/admin/system'),
+
+    // Export all data
     exportAllData: () => request('GET', '/api/admin/export'),
     
     // User management
     promoteUser: (userId) => request('PUT', `/api/admin/users/${userId}/promote`),
+
+    // Demote user
     demoteUser: (userId) => request('PUT', `/api/admin/users/${userId}/demote`),
     
     // Game content management
@@ -298,6 +368,8 @@ const api = {
     
     // Admin chat operations
     getAdminMessages: () => request('GET', '/api/admin/chat/messages'),
+
+    // Replay to user
     replyToUser: (userId, message) => request('POST', `/admin/chat/reply/${userId}`, { message })
   },
   
@@ -305,6 +377,7 @@ const api = {
   // FILE UPLOADS
   // =============================================================================
   files: {
+    // Upload CSV file
     uploadCSV: (file) => {
       const formData = new FormData();
       formData.append('file', file);
@@ -313,6 +386,7 @@ const api = {
       });
     },
     
+    // Upload image file
     uploadImage: (file) => {
       const formData = new FormData();
       formData.append('image', file);
@@ -326,8 +400,13 @@ const api = {
   // SYSTEM
   // =============================================================================
   system: {
+    // Health check
     health: () => request('GET', '/api/health'),
+
+    // Get system version
     version: () => request('GET', '/api/version'),
+
+    // Basic ping test
     ping: () => request('GET', '/api/ping')
   }
 };

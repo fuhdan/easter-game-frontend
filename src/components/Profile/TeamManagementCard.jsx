@@ -99,29 +99,36 @@ const TeamManagementCard = ({ user }) => {
    */
   const generateActivationCode = async (memberId) => {
     try {
-      const response = await api.teams.generateOtp(memberId);
+      console.log('About to generate OTP for member ID:', memberId);
+      const response = await api.players.generateOtp(memberId);
       
       if (response.success) {
+        console.log('OTP response:', response);
+        
         // Update local state with new OTP info
-        setTeamMembers(prev => prev.map(member => 
-          member.id === memberId 
-            ? { 
+        setTeamMembers(prev => {
+          console.log('Previous team members:', prev);
+          const updated = prev.map(member => {
+            if (member.id === memberId) {
+              const updatedMember = { 
                 ...member, 
                 has_otp: true, 
                 otp_expires: response.expires,
-                activation_code: response.otp // Store temporarily for display
-              }
-            : member
-        ));
+                activation_code: response.otp
+              };
+              console.log('Updating member:', updatedMember);
+              return updatedMember;
+            }
+            return member;
+          });
+          console.log('Updated team members:', updated);
+          return updated;
+        });
         
         console.log(`Generated activation code for ${response.player_name}: ${response.otp}`);
-      } else {
-        throw new Error(response.message || 'Failed to generate activation code');
       }
-      
     } catch (error) {
       console.error('Failed to generate activation code:', error);
-      alert(`Error: ${error.message || 'Failed to generate activation code'}`);
     }
   };
 
@@ -171,10 +178,17 @@ const TeamManagementCard = ({ user }) => {
    * Get status based on member data
    */
   const getMemberStatus = (member) => {
+    /* console.log(`Status check for ${member.display_name}:`, {
+      is_active: member.is_active,
+      has_otp: member.has_otp,
+      otp_expires: member.otp_expires
+    });*/
+    
     if (member.is_active) return 'active';
     if (member.has_otp && member.otp_expires) {
       const now = new Date();
       const expiry = new Date(member.otp_expires);
+      console.log(`Time check: now=${now.toISOString()}, expiry=${expiry.toISOString()}, valid=${expiry > now}`);
       if (expiry > now) return 'pending';
       return 'expired';
     }
