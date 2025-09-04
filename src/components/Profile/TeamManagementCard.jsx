@@ -1,62 +1,148 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Component: TeamManagementCard.jsx
+ * Purpose: Team member management with real database data
+ * Part of: Easter Quest 2025 Frontend
+ * Location: frontend/src/components/Profile/TeamManagementCard.jsx
+ * 
+ * Features:
+ * - Load real team members from database
+ * - Generate activation codes for team members
+ * - Real-time code expiration tracking
+ * - Role-based access (captains see their team, admins see all)
+ * 
+ * UPDATED: Uses real API data instead of mock data
+ * 
+ * @since 2025-08-31
+ * @updated 2025-09-03 - Connected to real backend API
+ */
 
-const TEAM_NAMES = {
-  1: 'Team Alpha',
-  2: 'Team Beta',
-  3: 'Team Gamma'
-};
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 
 const TeamManagementCard = ({ user }) => {
-  const [teamMembers, setTeamMembers] = useState([
-    // Team Alpha
-    { id: 1, username: 'jane.smith', email: 'jane.smith@ypsomed.com', display_name: 'Jane Smith', status: 'active', team_id: 1, activation_code: null, last_login: '2025-08-29T10:30:00Z' },
-    { id: 2, username: 'mike.wilson', email: 'mike.wilson@ypsomed.com', display_name: 'Mike Wilson', status: 'expired', team_id: 1, activation_code: null, last_login: null },
-    { id: 3, username: 'alice.johnson', email: 'alice.johnson@ypsomed.com', display_name: 'Alice Johnson', status: 'pending', team_id: 1, activation_code: 'TMA-101-AAA', code_expires_at: new Date(Date.now() + 3 * 60 * 1000).toISOString(), last_login: null },
-    { id: 4, username: 'bob.miller', email: 'bob.miller@ypsomed.com', display_name: 'Bob Miller', status: 'new', team_id: 1, activation_code: null, last_login: null },
-
-    // Team Beta
-    { id: 5, username: 'sarah.davis', email: 'sarah.davis@ypsomed.com', display_name: 'Sarah Davis', status: 'pending', team_id: 2, activation_code: 'TMA-789-XYZ', code_expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), last_login: null },
-    { id: 6, username: 'lucy.brown', email: 'lucy.brown@ypsomed.com', display_name: 'Lucy Brown', status: 'new', team_id: 2, activation_code: null, last_login: null },
-    { id: 7, username: 'charlie.green', email: 'charlie.green@ypsomed.com', display_name: 'Charlie Green', status: 'active', team_id: 2, activation_code: null, last_login: '2025-08-30T12:00:00Z' },
-    { id: 8, username: 'diana.white', email: 'diana.white@ypsomed.com', display_name: 'Diana White', status: 'expired', team_id: 2, activation_code: null, last_login: null },
-
-    // Team Gamma
-    { id: 9, username: 'tom.harris', email: 'tom.harris@ypsomed.com', display_name: 'Tom Harris', status: 'pending', team_id: 3, activation_code: 'TMA-456-ABC', code_expires_at: new Date(Date.now() + 1 * 60 * 1000).toISOString(), last_login: null },
-    { id: 10, username: 'emma.jones', email: 'emma.jones@ypsomed.com', display_name: 'Emma Jones', status: 'new', team_id: 3, activation_code: null, last_login: null },
-    { id: 11, username: 'frank.lee', email: 'frank.lee@ypsomed.com', display_name: 'Frank Lee', status: 'active', team_id: 3, activation_code: null, last_login: '2025-08-30T08:15:00Z' },
-    { id: 12, username: 'grace.kim', email: 'grace.kim@ypsomed.com', display_name: 'Grace Kim', status: 'expired', team_id: 3, activation_code: null, last_login: null }
-  ]);
-
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [copySuccess, setCopySuccess] = useState({});
   const [codeTimers, setCodeTimers] = useState({});
+  const [error, setError] = useState(null);
 
+  // Load team members on component mount
   useEffect(() => {
-    console.log('Logged-in user:', user);
+    loadTeamMembers();
   }, [user]);
 
+  // Update expiration timers
   useEffect(() => {
     const timers = {};
     teamMembers.forEach(member => {
-      if (member.activation_code && member.code_expires_at) {
-        timers[member.id] = setInterval(() => updateExpirationTimer(member.id, member.code_expires_at), 1000);
+      if (member.otp_expires) {
+        timers[member.id] = setInterval(() => 
+          updateExpirationTimer(member.id, member.otp_expires), 1000
+        );
       }
     });
     return () => Object.values(timers).forEach(timer => clearInterval(timer));
   }, [teamMembers]);
 
+  /**
+   * Load team members from backend API
+   */
+  const loadTeamMembers = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      if (user.role === 'team_captain') {
+        // Team captains see only their team members
+        const response = await api.teams.getMyTeamPlayers();
+        if (response.success) {
+          setTeamMembers(response.players || []);
+        } else {
+          throw new Error('Failed to load team members');
+        }
+      } else if (['admin', 'super_admin'].includes(user.role)) {
+        // Admins see all teams and members
+        const teamsResponse = await api.teams.getAll();
+        if (teamsResponse.success) {
+          // Extract all members from all teams
+          const allMembers = [];
+          teamsResponse.teams.forEach(team => {
+            if (team.members && Array.isArray(team.members)) {
+              team.members.forEach(member => {
+                allMembers.push({
+                  ...member,
+                  team_id: team.id,
+                  team_name: team.name,
+                  is_active: member.is_active,
+                  has_otp: member.has_otp || false,
+                  otp_expires: member.otp_expires || null
+                });
+              });
+            }
+          });
+          setTeamMembers(allMembers);
+        } else {
+          throw new Error('Failed to load teams');
+        }
+      }
+      
+    } catch (error) {
+      console.error('Failed to load team members:', error);
+      setError('Failed to load team members');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Generate activation code for a team member
+   */
+  const generateActivationCode = async (memberId) => {
+    try {
+      const response = await api.teams.generateOtp(memberId);
+      
+      if (response.success) {
+        // Update local state with new OTP info
+        setTeamMembers(prev => prev.map(member => 
+          member.id === memberId 
+            ? { 
+                ...member, 
+                has_otp: true, 
+                otp_expires: response.expires,
+                activation_code: response.otp // Store temporarily for display
+              }
+            : member
+        ));
+        
+        console.log(`Generated activation code for ${response.player_name}: ${response.otp}`);
+      } else {
+        throw new Error(response.message || 'Failed to generate activation code');
+      }
+      
+    } catch (error) {
+      console.error('Failed to generate activation code:', error);
+      alert(`Error: ${error.message || 'Failed to generate activation code'}`);
+    }
+  };
+
+  /**
+   * Update expiration timer display
+   */
   const updateExpirationTimer = (memberId, expiresAt) => {
     const now = new Date();
     const expiry = new Date(expiresAt);
     const diff = expiry - now;
 
     if (diff <= 0) {
-      setTeamMembers(prev =>
-        prev.map(member =>
-          member.id === memberId ? { ...member, status: 'expired', activation_code: null, code_expires_at: null } : member
-        )
-      );
+      // Code expired - update member status
+      setTeamMembers(prev => prev.map(member => 
+        member.id === memberId 
+          ? { ...member, has_otp: false, otp_expires: null, activation_code: null }
+          : member
+      ));
       setCodeTimers(prev => ({ ...prev, [memberId]: 'Expired' }));
     } else {
+      // Format remaining time
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -67,17 +153,9 @@ const TeamManagementCard = ({ user }) => {
     }
   };
 
-  const generateActivationCode = memberId => {
-    const code = `TMA-${Math.floor(Math.random() * 1000)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-    setTeamMembers(prev =>
-      prev.map(member =>
-        member.id === memberId ? { ...member, status: 'pending', activation_code: code, code_expires_at: expiresAt } : member
-      )
-    );
-    console.log(`Generated code for member ${memberId}: ${code}`);
-  };
-
+  /**
+   * Copy activation code to clipboard
+   */
   const copyToClipboard = async (code, memberId) => {
     try {
       await navigator.clipboard.writeText(code);
@@ -85,47 +163,136 @@ const TeamManagementCard = ({ user }) => {
       setTimeout(() => setCopySuccess(prev => ({ ...prev, [memberId]: false })), 2000);
     } catch (err) {
       console.error('Failed to copy code:', err);
+      alert('Failed to copy to clipboard');
     }
   };
 
-  const getStatusBadge = status => {
-    const statusConfig = {
-      new: { class: 'status-new', text: 'NEW' },
-      pending: { class: 'status-pending', text: 'PENDING' },
-      expired: { class: 'status-expired', text: 'EXPIRED' },
-      active: { class: 'status-active', text: 'ACTIVE' }
-    };
-    return <span className={`status-badge ${statusConfig[status]?.class || 'status-new'}`}>{statusConfig[status]?.text || 'NEW'}</span>;
+  /**
+   * Get status based on member data
+   */
+  const getMemberStatus = (member) => {
+    if (member.is_active) return 'active';
+    if (member.has_otp && member.otp_expires) {
+      const now = new Date();
+      const expiry = new Date(member.otp_expires);
+      if (expiry > now) return 'pending';
+      return 'expired';
+    }
+    return 'new';
   };
 
-  const renderActivationCode = member => {
-    if (!member.activation_code) return null;
-    const expired = new Date(member.code_expires_at) < new Date();
-    return (
-      <div className="activation-code">
-        <span>{member.activation_code}</span>
-        {!expired && (
-          <button className="copy-btn" onClick={() => copyToClipboard(member.activation_code, member.id)} title="Copy to clipboard">
+  /**
+   * Get status badge component
+   */
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      new: { class: 'status-badge status-help', text: 'NEW' },
+      pending: { class: 'status-badge status-current', text: 'PENDING' },
+      expired: { class: 'status-badge status-locked', text: 'EXPIRED' },
+      active: { class: 'status-badge status-solved', text: 'ACTIVE' }
+    };
+    
+    const config = statusConfig[status] || statusConfig.new;
+    return <span className={config.class}>{config.text}</span>;
+  };
+
+  /**
+   * Render activation code display
+   */
+  const renderActivationCode = (member) => {
+    const status = getMemberStatus(member);
+    
+    if (status === 'active') return <span className="no-code">Account Active</span>;
+    if (status === 'new' || status === 'expired') return <span className="no-code">No code generated</span>;
+    
+    if (member.activation_code) {
+      return (
+        <div className="activation-code">
+          <span className="code-display">{member.activation_code}</span>
+          <button 
+            className="copy-btn" 
+            onClick={() => copyToClipboard(member.activation_code, member.id)} 
+            title="Copy to clipboard"
+          >
             {copySuccess[member.id] ? '✓' : '📋'}
           </button>
-        )}
-        <small className="expiry-timer">{expired ? 'Expired' : `Expires in: ${codeTimers[member.id]}`}</small>
-      </div>
+          <div className="expiry-timer">
+            Expires in: {codeTimers[member.id] || 'Calculating...'}
+          </div>
+        </div>
+      );
+    }
+    
+    return <span className="no-code">Code pending...</span>;
+  };
+
+  /**
+   * Render action button
+   */
+  const renderActionButton = (member) => {
+    const status = getMemberStatus(member);
+    
+    if (status === 'active') {
+      return <span className="action-text">✓ Active</span>;
+    }
+    
+    if (!member.has_otp || status === 'expired') {
+      return (
+        <button 
+          className="btn btn-primary"
+          onClick={() => generateActivationCode(member.id)}
+          style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+        >
+          Generate Code
+        </button>
+      );
+    }
+    
+    return (
+      <button 
+        className="btn btn-secondary"
+        onClick={() => generateActivationCode(member.id)}
+        style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+      >
+        New Code
+      </button>
     );
   };
 
-  const renderActionButton = member => {
-    if (member.status === 'active') return <span className="action-text">Account Active</span>;
-    if (!member.activation_code)
-      return <button className="btn-primary" onClick={() => generateActivationCode(member.id)}>Generate Code</button>;
-    const expired = new Date(member.code_expires_at) < new Date();
-    return <button className="btn-secondary" onClick={() => generateActivationCode(member.id)}>{expired ? 'Regenerate Code' : 'New Code'}</button>;
-  };
+  // Loading state
+  if (loading) {
+    return (
+      <div className="profile-card">
+        <div className="card-header">👥 Team Management</div>
+        <div className="card-body">
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <div className="loading-spinner"></div>
+            <p>Loading team members...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // --- Attach team_name dynamically ---
-  const membersWithTeamName = teamMembers.map(m => ({ ...m, team_name: TEAM_NAMES[m.team_id] || 'Unknown' }));
+  // Error state
+  if (error) {
+    return (
+      <div className="profile-card">
+        <div className="card-header">👥 Team Management</div>
+        <div className="card-body">
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--danger)' }}>
+            <p>Error: {error}</p>
+            <button className="btn btn-primary" onClick={loadTeamMembers}>
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const visibleMembers = membersWithTeamName.filter(member => {
+  // Filter visible members based on user role
+  const visibleMembers = teamMembers.filter(member => {
     if (['super_admin', 'admin'].includes(user?.role)) return true;
     return Number(member.team_id) === Number(user.team_id);
   });
@@ -134,59 +301,103 @@ const TeamManagementCard = ({ user }) => {
     <div className="profile-card">
       <div className="card-header">👥 Team Management</div>
       <div className="card-body">
-        <div className="team-info">
+        
+        {/* Team info header */}
+        <div className="team-info" style={{ marginBottom: '1.5rem' }}>
           {['super_admin', 'admin'].includes(user?.role) ? (
-            <p className="global-text">
-              You are logged in as a {user.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}.<br />
-              This panel shows all teams and individual member states, including activation codes and expiration timers.
-            </p>
+            <div>
+              <h4>All Teams Overview</h4>
+              <p>You are logged in as <strong>{user.role.replace('_', ' ')}</strong>. 
+                 This panel shows all teams and members with their activation status.</p>
+            </div>
           ) : (
-            <>
-              <h4>Team: {TEAM_NAMES[user.team_id] || 'Team Alpha'}</h4>
-              <p>Manage your team members and activation codes</p>
-            </>
+            <div>
+              <h4>Your Team Management</h4>
+              <p>Generate activation codes for your team members to enable their accounts.</p>
+            </div>
           )}
         </div>
 
-        <table className="team-table">
-          <thead>
-            <tr>
-              <th>Member</th>
-              <th>Status</th>
-              <th>Activation Code</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleMembers.map(member => (
-              <tr key={member.id}>
-                <td>
-                  <div className="member-info">
-                    <div className="member-name">{member.display_name}</div>
-                    <div className="member-email">{member.email}</div>
-                    {['super_admin', 'admin'].includes(user?.role) && (
-                      <div className="member-details">
-                        {member.team_name} | Status: {member.status.toUpperCase()}
-                        {member.last_login && ` | Last login: ${new Date(member.last_login).toLocaleString()}`}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td>{getStatusBadge(member.status)}</td>
-                <td>{renderActivationCode(member)}</td>
-                <td>{renderActionButton(member)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Members table */}
+        {visibleMembers.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+            <p>No team members found.</p>
+          </div>
+        ) : (
+          <>
+            <div className="table-container" style={{ overflowX: 'auto', width: '100%' }}>
+              <table className="table" style={{ width: '100%', tableLayout: 'auto', minWidth: '800px' }}>
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Status</th>
+                    <th>Activation Code</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleMembers.map(member => {
+                    const status = getMemberStatus(member);
+                    
+                    return (
+                      <tr key={member.id}>
+                        <td>
+                          <div className="member-info">
+                            <div className="member-name" style={{ fontWeight: 'bold' }}>
+                              {member.display_name || member.username}
+                            </div>
+                            <div className="member-email" style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {member.email || `${member.username}@ypsomed.com`}
+                            </div>
+                            <div className="member-department" style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {member.department || 'No Department'}
+                            </div>
+                            {['super_admin', 'admin'].includes(user?.role) && (
+                              <div className="member-details" style={{ fontSize: '0.75rem', color: '#999' }}>
+                                {member.team_name} | Role: {member.is_captain ? 'Team Captain 👑' : 'Player'}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td>{getStatusBadge(status)}</td>
+                        <td>{renderActivationCode(member)}</td>
+                        <td>{renderActionButton(member)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-        <div className="team-stats">
-          <div className="stat-item"><strong>Total Members:</strong> {visibleMembers.length}</div>
-          <div className="stat-item"><strong>Active:</strong> {visibleMembers.filter(m => m.status === 'active').length}</div>
-          <div className="stat-item"><strong>Pending:</strong> {visibleMembers.filter(m => m.status === 'pending').length}</div>
-          <div className="stat-item"><strong>Expired:</strong> {visibleMembers.filter(m => m.status === 'expired').length}</div>
-          <div className="stat-item"><strong>New:</strong> {visibleMembers.filter(m => m.status === 'new').length}</div>
-        </div>
+            {/* Team statistics */}
+            <div className="team-stats" style={{ 
+              marginTop: '1.5rem', 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+              gap: '1rem',
+              padding: '1rem',
+              background: 'var(--light-gray)',
+              borderRadius: '8px'
+            }}>
+              <div className="stat-item">
+                <strong>Total:</strong> {visibleMembers.length}
+              </div>
+              <div className="stat-item">
+                <strong>Active:</strong> {visibleMembers.filter(m => getMemberStatus(m) === 'active').length}
+              </div>
+              <div className="stat-item">
+                <strong>Pending:</strong> {visibleMembers.filter(m => getMemberStatus(m) === 'pending').length}
+              </div>
+              <div className="stat-item">
+                <strong>New:</strong> {visibleMembers.filter(m => getMemberStatus(m) === 'new').length}
+              </div>
+              <div className="stat-item">
+                <strong>Expired:</strong> {visibleMembers.filter(m => getMemberStatus(m) === 'expired').length}
+              </div>
+            </div>
+          </>
+        )}
+        
       </div>
     </div>
   );

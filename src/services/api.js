@@ -172,6 +172,9 @@ const api = {
     
     // Get team by ID
     getById: (id) => request('GET', `/api/teams/${id}`),
+
+    // Get team by team_captain ID
+    getMyTeamPlayers: () => request('GET', '/api/teams/my'),
     
     // Create teams using backend algorithm
     create: (players, config) => {

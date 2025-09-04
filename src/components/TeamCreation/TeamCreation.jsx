@@ -1,6 +1,6 @@
 /**
  * Component: TeamCreation.jsx
- * Purpose: Main container for team management system
+ * Purpose: Main container for team management system with data persistence
  * Part of: Easter Quest 2025 Frontend
  * Location: frontend/src/components/TeamCreation/TeamCreation.jsx
  * 
@@ -9,7 +9,13 @@
  * - TeamDisplay (dedicated file)
  * - TeamConfiguration (dedicated file)
  * 
+ * FIXED ISSUES:
+ * - Load existing teams and players on component mount
+ * - Persist data after logout/login
+ * - Handle loading states properly
+ * 
  * @since 2025-08-31
+ * @updated 2025-09-03 - Added data loading on mount
  */
 
 import React, { useState, useEffect } from 'react';
@@ -17,12 +23,14 @@ import './TeamCreation.css';
 import PlayerManagement from './PlayerManagement';
 import TeamConfiguration from './TeamConfiguration';
 import TeamDisplay from './TeamDisplay';
+import api from '../../services/api';
 
 const TeamCreation = () => {
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
   const [config, setConfig] = useState({
@@ -41,14 +49,88 @@ const TeamCreation = () => {
     setDepartments(uniqueDepartments);
   }, [players]);
 
+  /**
+   * Load existing teams and players on component mount
+   * FIXES: Data persistence after logout/login
+   */
+  useEffect(() => {
+    const loadExistingData = async () => {
+      setInitialLoading(true);
+      
+      try {
+        console.log('Loading existing teams and players...');
+        
+        // Load existing teams
+        const teamsResponse = await api.teams.getAll();
+        if (teamsResponse.success && teamsResponse.teams) {
+          setTeams(teamsResponse.teams);
+          console.log(`Loaded ${teamsResponse.teams.length} existing teams`);
+          
+          // Extract players from team members (since /api/users doesn't exist)
+          const allPlayers = [];
+          const playerMap = new Map(); // Avoid duplicates
+          
+          teamsResponse.teams.forEach(team => {
+            if (team.members && Array.isArray(team.members)) {
+              team.members.forEach(member => {
+                if (!playerMap.has(member.username)) {
+                  playerMap.set(member.username, {
+                    id: member.id,
+                    name: member.display_name || member.username,
+                    username: member.username,
+                    department: member.department || 'Unassigned'
+                  });
+                }
+              });
+            }
+          });
+          
+          const playersData = Array.from(playerMap.values());
+          setPlayers(playersData);
+          console.log(`Extracted ${playersData.length} players from team data`);
+        } else {
+          console.log('No existing teams found');
+          setTeams([]);
+          setPlayers([]);
+        }
+        
+      } catch (error) {
+        console.error('Failed to load existing data:', error);
+        showNotification('Failed to load existing data', 'warning');
+        // Set empty arrays on error
+        setTeams([]);
+        setPlayers([]);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadExistingData();
+  }, []); // Run once on mount
+
   const showNotification = (message, type = 'info') => {
     console.log(`${type.toUpperCase()}: ${message}`);
     if (type === 'error') alert(`Error: ${message}`);
   };
 
+  // Show loading state while initial data loads
+  if (initialLoading) {
+    return (
+      <div className="team-creation">
+        <h2 className="team-creation-title">Team Creation & Management</h2>
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <div className="loading-spinner"></div>
+            <p>Loading existing teams and players...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="team-creation">
-      <h2 className="team-creation-title">🏆 Team Creation & Management</h2>
+      <h2 className="team-creation-title">Team Creation & Management</h2>
 
       {loading && (
         <div className="loading-overlay">

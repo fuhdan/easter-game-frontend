@@ -1,27 +1,5 @@
-/**
- * Component: PlayerManagement.jsx
- * Purpose: Handle player data import and CRUD operations
- * Part of: Easter Quest 2025 Team Creation
- * Location: frontend/src/components/TeamCreation/PlayerManagement.jsx
- * 
- * Features:
- * - CSV file upload with drag-and-drop support
- * - Parse CSV format: "Display Name, Department" (flexible column detection)
- * - Player table with sortable columns (Name, Department)
- * - Add new player manually via prompt
- * - Edit existing player inline
- * - Delete player with confirmation
- * - Search/filter functionality
- * 
- * Performance Limits:
- * - Max 500 players
- * - Max 5MB file size
- * - Processes large files in chunks with progress bar
- * 
- * @since 2025-08-31
- */
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import api from '../../services/api'; // Make sure this points to your api.js
 
 const PlayerManagement = ({ players, setPlayers, showNotification, loading, setLoading, setProgress }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +8,41 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
   const [newRow, setNewRow] = useState(null); // temporary new player row
   const fileInputRef = useRef(null);
 
+  // -------------------------------
+  // Fetch real users from backend
+  // -------------------------------
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      try {
+        setLoading(true);
+        const response = await api.players.getAll();
+        
+        console.log('Fetched players response:', response);
+
+        if (response && response.success && Array.isArray(response.users)) {
+          // Keep only the properties we need for team creation
+          const normalizedPlayers = response.users.map(player => ({
+            id: player.id,
+            name: player.name || player.display_name || '',
+            username: player.username || '',
+            department: player.department || 'Unassigned'
+          }));
+
+          setPlayers(normalizedPlayers); // even if empty
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlayers();
+  }, []); // run once on mount
+
+  // -------------------------------
   // CSV parsing
+  // -------------------------------
   const handleFileUpload = async (file) => {
     try {
       const text = await file.text();
@@ -99,17 +111,10 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
 
   const cancelEdit = () => { setEditingId(null); if(newRow) setNewRow(null); };
 
-  const deletePlayer = (player) => {
-    if(window.confirm(`Delete ${player.name}?`)) {
-      setPlayers(prev => prev.filter(p => p.id !== player.id));
-      showNotification('Player deleted successfully', 'success');
-    }
-  };
-
   const filteredPlayers = players.filter(player =>
-    player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.department.toLowerCase().includes(searchTerm.toLowerCase())
+    (player.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (player.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (player.department || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -186,7 +191,7 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
                       <td>{player.department}</td>
                       <td>
                         <button className="btn btn-secondary btn-sm" onClick={()=>startEdit(player)}>✏️</button>
-                        <button className="btn btn-danger btn-sm" onClick={()=>deletePlayer(player)}>🗑️</button>
+                        <button className="btn btn-danger btn-sm" onClick={()=>setPlayers(prev => prev.filter(p => p.id !== player.id))}>🗑️</button>
                       </td>
                     </>
                   )}
