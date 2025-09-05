@@ -20,7 +20,8 @@ import Navigation from './components/Navigation/Navigation';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
 import TeamCreation from './components/TeamCreation/TeamCreation';
 import GamePanel from './components/GamePanel/GamePanel';
-import Profile from './components/Profile/Profile'; 
+import Profile from './components/Profile/Profile';
+import Loader from './components/Loader/Loader';
 import './App.css';
 
 /**
@@ -129,16 +130,8 @@ const App = () => {
         }
     }
 
-    // Loading state
     if (loading) {
-        return (
-            <div className="loading">
-                <div className="ypsomed-logo">
-                    <img src="/assets/ypsomed-logo.png" alt="Ypsomed Logo" />
-                </div>
-                <p>Loading Easter Quest 2026...</p>
-            </div>
-        );
+        return <Loader message="Loading Easter Quest 2026..." />;
     }
 
     // Unauthenticated state
@@ -146,12 +139,16 @@ const App = () => {
         return (
             <Login 
                 onLogin={login}
-                loading={loading}
                 error={error}
             />
         );
     }
 
+    console.log('DEBUGGING:', {
+        activeTab,
+        userRole: user.role,
+        shouldShowDashboard: activeTab === 'dashboard' && (user.role === 'super_admin' || user.role === 'admin')
+    });
     // Authenticated state - component router
     return (
         <div className="app" style={{maxWidth: '1200px'}}>

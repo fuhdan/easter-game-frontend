@@ -18,6 +18,7 @@
  * - All API logic handled by centralized service
  * 
  * @since 2025-08-31
+ * @updated 2025-09-04 - Removed department distribution checkbox
  */
 
 import React from 'react';
@@ -28,7 +29,8 @@ const TeamConfiguration = ({
   setConfig, 
   players, 
   teams, 
-  setTeams, 
+  setTeams,
+  setPlayers,
   departments, 
   showNotification, 
   loading, 
@@ -66,19 +68,6 @@ const TeamConfiguration = ({
     if (players.length < config.minTeamSize) {
       throw new Error(`Need at least ${config.minTeamSize} players to create teams`);
     }
-
-    // Validate department constraints
-    if (config.ensureDepartmentDistribution && config.requiredDepartment) {
-      const requiredDeptPlayers = players.filter(p => p.department === config.requiredDepartment);
-      const estimatedTeams = Math.floor(players.length / config.maxTeamSize);
-      
-      if (requiredDeptPlayers.length < estimatedTeams) {
-        throw new Error(
-          `Need at least ${estimatedTeams} players from ${config.requiredDepartment} department, ` +
-          `but only ${requiredDeptPlayers.length} available`
-        );
-      }
-    }
   };
 
   /**
@@ -95,7 +84,6 @@ const TeamConfiguration = ({
       console.log('Sending to backend:', { players, config });
       
       // Call REAL API service
-      showNotification('Sending players and configuration to backend...', 'info');
       const result = await api.teams.create(players, config);
       
       console.log('Backend response:', result);
@@ -135,7 +123,6 @@ const TeamConfiguration = ({
       
       if (result.success) {
         setTeams([]);
-        showNotification('All teams have been reset', 'success');
       } else {
         throw new Error('Reset failed on backend');
       }
@@ -165,8 +152,7 @@ const TeamConfiguration = ({
       
       // Clear frontend state
       setTeams([]);
-      // Note: setPlayers([]) would be passed from parent component
-      showNotification('All data has been reset', 'success');
+      setPlayers([]);
       
     } catch (error) {
       api.utils.handleError(error, showNotification);
@@ -254,19 +240,6 @@ const TeamConfiguration = ({
           <div className="checkbox-group">
             <input
               type="checkbox"
-              id="ensureDeptDistribution"
-              checked={config.ensureDepartmentDistribution}
-              onChange={(e) => handleConfigChange('ensureDepartmentDistribution', e.target.checked)}
-              disabled={!config.requiredDepartment || loading}
-            />
-            <label htmlFor="ensureDeptDistribution">
-              Ensure each team has at least 1 person from required department
-            </label>
-          </div>
-
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
               id="captainFromRequiredDept"
               checked={config.captainFromRequiredDept}
               onChange={(e) => handleConfigChange('captainFromRequiredDept', e.target.checked)}
@@ -275,29 +248,6 @@ const TeamConfiguration = ({
             <label htmlFor="captainFromRequiredDept">
               Team captain must be from required department
             </label>
-          </div>
-        </div>
-
-        {/* Team Preview */}
-        <div className="config-section">
-          <h4>Team Preview</h4>
-          <div className="team-preview">
-            <div className="preview-stat">
-              <strong>Total Players:</strong> {players.length}
-            </div>
-            <div className="preview-stat">
-              <strong>Estimated Teams:</strong> {estimatedTeams}
-            </div>
-            <div className="preview-stat">
-              <strong>Avg Team Size:</strong> {players.length > 0 && estimatedTeams > 0 ? Math.round(players.length / estimatedTeams) : 0}
-            </div>
-            {config.requiredDepartment && (
-              <div className="preview-stat">
-                <strong>{config.requiredDepartment} Players:</strong> {
-                  players.filter(p => p.department === config.requiredDepartment).length
-                }
-              </div>
-            )}
           </div>
         </div>
 
@@ -327,40 +277,6 @@ const TeamConfiguration = ({
             {loading ? 'Resetting...' : 'Reset All'}
           </button>
         </div>
-
-        {/* Status Information */}
-        <div className="config-status">
-          {players.length === 0 && (
-            <div className="status-message warning">
-              No players loaded. Upload a CSV file first.
-            </div>
-          )}
-          
-          {teams.length > 0 && (
-            <div className="status-message success">
-              {teams.length} teams created with {teams.reduce((sum, team) => sum + (team.members?.length || 0), 0)} players
-            </div>
-          )}
-
-          {loading && (
-            <div className="status-message info">
-              Processing request on backend server...
-            </div>
-          )}
-        </div>
-
-        {/* Debug Info (development only) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="debug-info">
-            <details>
-              <summary>Debug: Current Configuration</summary>
-              <pre>{JSON.stringify(config, null, 2)}</pre>
-              <pre>Players: {players.length}</pre>
-              <pre>Teams: {teams.length}</pre>
-            </details>
-          </div>
-        )}
-
       </div>
     </div>
   );

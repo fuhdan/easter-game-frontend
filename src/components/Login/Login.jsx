@@ -1,21 +1,18 @@
 /**
- * Component: Login (Optimized)
- * Purpose: User authentication interface with Ypsomed branding
+ * Component: Login (Updated for 3 Scenarios)
+ * Purpose: User authentication interface with account activation support
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  * 
- * Optimizations:
- * - Removed inline styles (moved to CSS)
- * - Better error handling
- * - Cleaner logo fallback mechanism
- * - Consistent with global button styles
- * 
- * Props:
- * - onLogin(username, password): Function called on login attempt
- * - loading: External loading state
- * - error: External error message
+ * Handles 3 login scenarios:
+ * 1. Active user - normal login
+ * 2. Inactive user - password change required
+ * 3. Inactive user - password change + OTP required
  */
 
 import React, { useState } from 'react';
+import PasswordChangeModal from '../PasswordChangeModal/PasswordChangeModal.jsx';
+import api from '../../services/api';
+import Loader from '../Loader/Loader.jsx';
 import './Login.css';
 
 const Login = ({ onLogin, loading = false, error = null }) => {
@@ -25,10 +22,20 @@ const Login = ({ onLogin, loading = false, error = null }) => {
   });
   
   const [logoError, setLogoError] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState(null);
+  
+  // Password change modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalData, setModalData] = useState({
+    username: '',
+    currentPassword: '',
+    requiresOTP: false
+  });
+  const [activationLoading, setActivationLoading] = useState(false);
 
   /**
-   * Handle input changes and clear external errors.
-   * @param {Event} e - Input change event
+   * Handle input changes and clear errors.
    */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -36,32 +43,118 @@ const Login = ({ onLogin, loading = false, error = null }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear errors when user types
+    if (loginError) setLoginError(null);
   };
 
   /**
-   * Handle form submission.
-   * @param {Event} e - Form submit event
+   * Handle form submission with 3-scenario support.
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Basic validation
     if (!credentials.username.trim() || !credentials.password.trim()) {
+      setLoginError('Username and password are required');
       return;
     }
     
-    // Call parent login handler
-    await onLogin(credentials.username, credentials.password);
+    setLoginLoading(true);
+    setLoginError(null);
+    
+    try {
+      // Call login API
+      const response = await api.auth.login({
+        username: credentials.username.trim(),
+        password: credentials.password
+      });
+      
+      // All successful responses have success: true now
+      if (response.success) {
+        // Check if password change is required
+        if (response.user.requiresPasswordChange) {
+          // User is authenticated but needs password change
+          setModalData({
+            username: response.user.username,
+            currentPassword: credentials.password,
+            requiresOTP: response.user.requiresOTP || false
+          });
+          setShowPasswordModal(true);
+        } else {
+          // Normal successful login - proceed to dashboard
+          await onLogin(credentials.username, credentials.password);
+        }
+      } else {
+        // This shouldn't happen with the new unified approach
+        setLoginError(response.message || 'Login failed');
+      }
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError(api.utils.handleError(error));
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  /**
+   * Handle account activation (password change)
+   */
+  const handleAccountActivation = async (activationData) => {
+    setActivationLoading(true);
+    
+    try {
+      const response = await api.auth.activateAccount(activationData);
+      
+      if (response.success) {
+        // Account activated successfully - close modal and login
+        setShowPasswordModal(false);
+        
+        // Auto-login with new credentials or use the response
+        if (response.user) {
+          await onLogin(activationData.username, activationData.new_password);
+        }
+      } else {
+        // Handle activation error
+        throw new Error(response.message || 'Account activation failed');
+      }
+      
+    } catch (error) {
+      console.error('Account activation error:', error);
+      setLoginError(api.utils.handleError(error));
+    } finally {
+      setActivationLoading(false);
+    }
+  };
+
+  /**
+   * Handle password modal close
+   */
+  const handlePasswordModalClose = () => {
+    setShowPasswordModal(false);
+    setModalData({
+      username: '',
+      currentPassword: '',
+      requiresOTP: false
+    });
   };
 
   /**
    * Handle logo loading error - show CSS fallback.
-   * @param {Event} e - Image error event
    */
   const handleLogoError = (e) => {
     setLogoError(true);
     e.target.style.display = 'none';
   };
+
+  const isLoading = loading || loginLoading;
+  const currentError = error || loginError;
+
+  // ✅ Show global loader if login is in progress
+  if (isLoading) {
+    return <Loader message="Sign in..." />;
+  }
 
   return (
     <div className="login-container">
@@ -82,10 +175,10 @@ const Login = ({ onLogin, loading = false, error = null }) => {
           <p>Ypsomed Innovation Challenge</p>
         </div>
         
-        <form onSubmit={handleSubmit} className={`login-form ${loading ? 'loading' : ''}`}>
-          {error && (
+        <form onSubmit={handleSubmit} className="login-form">
+          {currentError && (
             <div className="error-message">
-              {error}
+              {currentError}
             </div>
           )}
           
@@ -98,7 +191,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
               value={credentials.username}
               onChange={handleInputChange}
               required
-              disabled={loading}
+              disabled={isLoading}
               autoComplete="username"
             />
           </div>
@@ -112,7 +205,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
               value={credentials.password}
               onChange={handleInputChange}
               required
-              disabled={loading}
+              disabled={isLoading}
               autoComplete="current-password"
             />
           </div>
@@ -120,9 +213,9 @@ const Login = ({ onLogin, loading = false, error = null }) => {
           <button 
             type="submit" 
             className="btn btn-primary login-btn" 
-            disabled={loading || !credentials.username.trim() || !credentials.password.trim()}
+            disabled={isLoading || !credentials.username.trim() || !credentials.password.trim()}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
@@ -130,6 +223,19 @@ const Login = ({ onLogin, loading = false, error = null }) => {
           Welcome to the Ypsomed Easter Challenge 2026 Dashboard. Please log in to continue.
         </p>
       </div>
+
+      {/* Password Change Modal for scenarios 2 & 3 - Only render when needed */}
+      {showPasswordModal && (
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={handlePasswordModalClose}
+          onSuccess={handleAccountActivation}
+          username={modalData.username}
+          requiresOTP={modalData.requiresOTP}
+          currentPassword={modalData.currentPassword}
+          loading={activationLoading}
+        />
+      )}
     </div>
   );
 };

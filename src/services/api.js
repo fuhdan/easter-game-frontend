@@ -142,8 +142,17 @@ const api = {
   // AUTHENTICATION
   // =============================================================================
   auth: {
-    // Login user
-    login: (credentials) => request('POST', '/api/auth/login', credentials),
+    // Login user with 3-scenario support
+    login: (credentials) => {
+      log.info('Attempting login for:', credentials.username);
+      return request('POST', '/api/auth/login', credentials);
+    },
+
+    // Account activation for scenarios 2 & 3
+    activateAccount: (activationData) => {
+      log.info('Activating account for:', activationData.username);
+      return request('POST', '/api/users/change-password', activationData);
+    },
 
     // Logout user
     logout: () => request('POST', '/api/auth/logout'),
@@ -412,9 +421,61 @@ const api = {
 };
 
 /**
- * Utility functions
+ * Utility functions - COMPLETE WITH ALL METHODS
  */
 api.utils = {
+  /**
+   * Handle login response based on scenario
+   * @param {Object} response - Login response from backend
+   * @returns {Object} Processed response with scenario info
+   */
+  processLoginResponse: (response) => {
+    // Scenario 1: Successful login
+    if (response.success === true) {
+      log.success('Login successful - user authenticated');
+      return {
+        success: true,
+        scenario: 1,
+        user: response.user,
+        message: response.message
+      };
+    }
+    
+    // Scenarios 2 & 3: Password change required
+    if (response.success === false) {
+      const user = response.user || {};
+      
+      if (user.requiresOTP === true) {
+        log.info('Login requires password change + OTP (Scenario 3)');
+        return {
+          success: false,
+          scenario: 3,
+          username: user.username,
+          requiresPasswordChange: true,
+          requiresOTP: true,
+          message: response.message
+        };
+      } else if (user.requiresPasswordChange === true) {
+        log.info('Login requires password change only (Scenario 2)');
+        return {
+          success: false,
+          scenario: 2,
+          username: user.username,
+          requiresPasswordChange: true,
+          requiresOTP: false,
+          message: response.message
+        };
+      }
+    }
+    
+    // Fallback
+    return {
+      success: false,
+      scenario: 0,
+      message: response.message || 'Login failed'
+    };
+  },
+
   /**
    * Handle API errors consistently across components
    */

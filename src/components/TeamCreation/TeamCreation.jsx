@@ -23,6 +23,7 @@ import './TeamCreation.css';
 import PlayerManagement from './PlayerManagement';
 import TeamConfiguration from './TeamConfiguration';
 import TeamDisplay from './TeamDisplay';
+import TeamLoader from '../Loader/TeamLoader';
 import api from '../../services/api';
 
 const TeamCreation = () => {
@@ -133,12 +134,7 @@ const TeamCreation = () => {
       <h2 className="team-creation-title">Team Creation & Management</h2>
 
       {loading && (
-        <div className="loading-overlay">
-          <div className="loading-content">
-            <div className="loading-spinner"></div>
-            <p>Processing... {progress > 0 && `${progress}%`}</p>
-          </div>
-        </div>
+        <TeamLoader message={`Processing... ${progress > 0 ? `${progress}%` : ''}`} />
       )}
 
       <div className="main-content">
@@ -171,6 +167,7 @@ const TeamCreation = () => {
         players={players}
         teams={teams}
         setTeams={setTeams}
+        setPlayers={setPlayers}
         departments={departments}
         showNotification={showNotification}
         loading={loading}

@@ -40,13 +40,6 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
   if (teams && teams.length > 0) {
     teams.forEach(team => {
       console.log(`Team: ${team.name} (ID: ${team.id}, Leader ID: ${team.leader_id})`);
-      console.table(team.members?.map(m => ({
-        id: m.id,
-        username: m.username,
-        display_name: m.display_name,
-        department: m.department,
-        is_captain: m.is_captain
-      })));
     });
   }
   // ---- DEBUG LOG END ----

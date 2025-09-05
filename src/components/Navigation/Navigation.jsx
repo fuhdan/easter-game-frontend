@@ -48,7 +48,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
             {(user.role === 'super_admin' || user.role === 'team_captain' || user.role === 'player') && (
                 <button
                     className={`nav-tab ${activeTab === 'game' ? 'active' : ''}`}
-                    onClick={() => onTabChange('gamen')}
+                    onClick={() => onTabChange('game')}
                 >
                     {tabs[2].label}  {/* ✅ Label will show */}
                 </button>
