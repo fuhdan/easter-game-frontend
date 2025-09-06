@@ -363,6 +363,9 @@ const TeamManagementCard = ({ user }) => {
                             <div className="member-email" style={{ fontSize: '0.875rem', color: '#666' }}>
                               {member.email || `${member.username}@ypsomed.com`}
                             </div>
+                            <div className="member-username" style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {member.username || 'No Username'}
+                            </div>
                             <div className="member-department" style={{ fontSize: '0.875rem', color: '#666' }}>
                               {member.department || 'No Department'}
                             </div>

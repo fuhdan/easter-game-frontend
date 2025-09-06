@@ -200,7 +200,7 @@ const PasswordChangeModal = ({
                   onChange={handleInputChange}
                   disabled={loading}
                   maxLength="8"
-                  pattern="[0-9A-Z]{8}"
+                  pattern="[0-9A-Za-z]{8}"
                 />
                 {errors.otp && (
                   <div className="error-text">{errors.otp}</div>
