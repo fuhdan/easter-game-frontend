@@ -1,0 +1,229 @@
+/**
+ * File: Login.css (Optimized)
+ * Purpose: Login component styles - clean and efficient
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ * 
+ * Optimizations:
+ * - Removed duplicate properties and global overrides
+ * - Uses CSS variables consistently
+ * - Added missing form control styles
+ * - CSS-based Ypsomed logo fallback
+ * - Consolidated selectors for better performance
+ */
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.login-box {
+  width: 400px;
+  max-width: 100%;
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--border-radius-lg); /* Use consistent variable */
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  border-top: 6px solid var(--primary-blue);
+}
+
+.login-header {
+  margin-bottom: 2rem;
+}
+
+.login-header h1 {
+  color: var(--primary-blue);
+  font-size: 1.75rem;
+  margin: 0.5rem 0;
+  font-weight: 700;
+}
+
+.login-header p {
+  color: #666;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.login-logo {
+  width: 80px;
+  height: 80px;
+  background: var(--white);
+  border: 3px solid var(--primary-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 20px rgba(0, 93, 160, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+.login-logo img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
+.login-logo::before {
+  content: '';
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 10px solid var(--primary-blue);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.login-logo::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--accent-red);
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.login-logo.fallback::before,
+.login-logo.fallback::after {
+  opacity: 1;
+}
+
+.logo-fallback {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary-blue);
+}
+
+.login-form {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid var(--medium-gray);
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-family: inherit;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(0, 93, 160, 0.1);
+}
+
+.form-control::placeholder {
+  color: #999;
+}
+
+.form-control:disabled {
+  opacity: 0.6;
+  background-color: var(--light-gray);
+  cursor: not-allowed;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 93, 160, 0.3);
+}
+
+.login-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 93, 160, 0.4);
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--danger);
+  padding: 0.75rem;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  border: 1px solid rgba(244, 67, 54, 0.2);
+  text-align: left;
+}
+
+.welcome-text {
+  margin-top: 1.5rem;
+  color: #666;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.login-form.loading .form-control {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 0.5rem;
+  }
+  
+  .login-box {
+    width: 100%;
+    padding: 1.5rem;
+  }
+  
+  .login-logo {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .login-logo img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .login-logo::before {
+    width: 36px;
+    height: 36px;
+    border-width: 8px;
+  }
+  
+  .login-logo::after {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .login-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .demo-credentials {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+}

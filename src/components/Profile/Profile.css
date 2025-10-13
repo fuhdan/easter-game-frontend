@@ -1,0 +1,506 @@
+/**
+ * File: components/Profile/Profile.css
+ * Purpose: Profile component styles with role-based sections
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ */
+
+.profile {
+    background: transparent;
+    width: 100%;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.profile-grid-with-team {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.profile-grid-team-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.profile-card {
+    width: 100%;
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.team-management-full {
+    grid-column: 1 / -1; /* Take full width */
+}
+
+/* Form Elements - Base Styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+.form-control-error {
+    border-color: var(--danger) !important;
+    background-color: rgba(244, 67, 54, 0.05);
+}
+
+.form-error {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Success Message */
+.success-message {
+    background: #d4edda;
+    color: #155724;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #c3e6cb;
+}
+
+/* Form Buttons */
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* Role Info Section */
+.role-info {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #e7f3ff;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.role-title {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-blue);
+}
+
+.role-description {
+    margin: 0;
+    color: #666;
+}
+
+/* Form Elements - Base Styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+.form-control-error {
+    border-color: var(--danger);
+    background-color: rgba(244, 67, 54, 0.05);
+}
+
+.form-error {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Button Styles */
+.btn-primary {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--primary-blue);
+    border-radius: 20px;
+    background: var(--primary-blue);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: var(--dark-blue);
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    background: var(--medium-gray);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--primary-blue);
+    border-radius: 20px;
+    background: white;
+    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.btn-secondary:disabled {
+    background: var(--light-gray);
+    color: var(--medium-gray);
+    cursor: not-allowed;
+}
+
+/* Table Styles - For Team Management */
+.team-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.team-table th {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+}
+
+.team-table td {
+    padding: 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.team-table tr:hover {
+    background-color: rgba(0, 93, 160, 0.02);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    display: inline-block;
+}
+
+.status-pending { 
+    background: #fff3cd; 
+    color: #856404; 
+}
+
+.status-active { 
+    background: #d4edda; 
+    color: #155724; 
+}
+
+.status-new { 
+    background: #cce5ff; 
+    color: #004085; 
+}
+
+.status-expired { 
+    background: #f8d7da; 
+    color: #721c24; 
+}
+
+/* Activation Code Display */
+.activation-code {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    background: var(--light-gray);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.copy-btn {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.copy-btn:hover {
+    background: var(--dark-blue);
+}
+
+/* Star Rating System */
+.star-rating {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0.5rem 0;
+}
+
+.star {
+    font-size: 1.5rem;
+    color: var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.star:hover,
+.star.active {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+/* Rating History */
+.rating-history {
+    margin-top: 2rem;
+}
+
+.rating-history-header {
+    display: flex;
+    justify-content: space-between;  margin-top: 2rem;
+}
+
+.rating-item {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1rem;
+}
+
+.rating-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.rating-date {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* Team Management Styles */
+.team-info {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.team-info h4 {
+    color: var(--primary-blue);
+    margin: 0 0 0.5rem 0;
+}
+
+.team-info p {
+    color: #666;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.team-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.team-table th {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+    color: white;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+}
+
+.team-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+}
+
+.team-table tr:hover {
+    background-color: rgba(0, 93, 160, 0.02);
+}
+
+.member-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.member-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.member-email {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.activation-code {
+    font-family: monospace;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    background: var(--light-gray);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.copy-btn {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background-color 0.2s ease;
+}
+
+.copy-btn:hover {
+    background: var(--dark-blue);
+}
+
+.expiry-timer {
+    display: block;
+    color: #666;
+    font-size: 0.75rem;
+    font-family: inherit;
+}
+
+.team-stats {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.stat-item {
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.action-text {
+    color: var(--success);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .team-table {
+    font-size: 0.875rem;
+  }
+
+  .team-table th,
+  .team-table td {
+    padding: 0.5rem;
+  }
+
+  .activation-code {
+    font-size: 0.9rem;
+  }
+
+  .card-header {
+    padding: 1rem;
+    font-size: 0.75rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .profile-grid-team-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}

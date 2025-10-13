@@ -1,0 +1,149 @@
+/* 
+ * File: App.css
+ * Purpose: Global app styles, variables, and layout fundamentals
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ * 
+ * Contains:
+ * - CSS custom properties (variables)
+ * - Global reset and body styles
+ * - App container and loading states
+ * - Shared utility classes
+ * 
+ * Component-specific styles moved to respective component CSS files
+ */
+
+/* ===== GLOBAL VARIABLES ===== */
+:root {
+  --primary-blue: #005da0;
+  --dark-blue: #004271;
+  --accent-red: #c41e3a;
+  --white: #ffffff;
+  --light-gray: #f8f9fa;
+  --medium-gray: #e9ecef;
+  --border-color: #dee2e6;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #f44336;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  
+  /* Border radius */
+  --border-radius: 12px;
+  --border-radius-sm: 6px;
+  --border-radius-lg: 16px;
+}
+
+/* ===== GLOBAL RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== BODY & MAIN LAYOUT ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: block;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #333;
+}
+
+/* ===== APP CONTAINER ===== */
+.app {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1200px;
+  min-width: 800px;
+  display: block; 
+}
+
+/* ===== LOADING STATES ===== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: white;
+  text-align: center;
+}
+
+.loading .ypsomed-logo {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.loading .ypsomed-logo img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.dashboard-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+}
+
+/* ===== SHARED UTILITY CLASSES ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--dark-blue);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
+}
+
+.btn-outline:hover {
+  background: var(--primary-blue);
+  color: white;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+  
+  .app {
+    max-width: 100%;
+  }
+}

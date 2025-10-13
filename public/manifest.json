@@ -1,0 +1,8 @@
+{
+  "short_name": "Easter Game",
+  "name": "Easter Quest - Ypsomed AG Easter Challenge",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#005da0",
+  "background_color": "#ffffff"
+}

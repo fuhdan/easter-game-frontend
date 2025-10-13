@@ -1,0 +1,19 @@
+/**
+ * File: components/GamePanel/GamePanel.css
+ * Purpose: Game panel layout and styling
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ */
+
+.game-panel {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .game-panel {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
