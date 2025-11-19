@@ -1,0 +1,62 @@
+/**
+ * File: components/Loader/Loader.css
+ * Purpose: Loading spinner component styles
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * Used for general application loading states
+ * For team-specific loading, see TeamLoader.css
+ *
+ * @since 2025-11-19
+ */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: white;
+  text-align: center;
+}
+
+.loading .ypsomed-logo {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 93, 160, 0.3);
+}
+
+.loading .ypsomed-logo img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.loading p {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: white;
+}
+
+/* Spinning animation for logo */
+.loading .ypsomed-logo {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}

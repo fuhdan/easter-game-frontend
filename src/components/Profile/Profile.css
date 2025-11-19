@@ -1,14 +1,28 @@
 /**
  * File: components/Profile/Profile.css
- * Purpose: Profile component styles with role-based sections
+ * Purpose: Profile component and subcomponent styles
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * Shared by:
+ * - Profile.jsx (container)
+ * - TeamNameCard.jsx (team leader only)
+ * - PasswordChangeCard.jsx (all users)
+ * - GameRatingCard.jsx (all users)
+ * - TeamManagementCard.jsx (team leader only)
+ *
+ * NOTE: These components share common card, form, and table styles,
+ * so keeping them in one file reduces duplication.
+ *
+ * @since 2025-11-19
  */
 
+/* ===== PROFILE CONTAINER ===== */
 .profile {
     background: transparent;
     width: 100%;
 }
 
+/* ===== PROFILE GRID LAYOUT ===== */
 .profile-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -30,6 +44,12 @@
     margin-bottom: 1.5rem;
 }
 
+/* Full-width card for team management */
+.team-management-full {
+    grid-column: 1 / -1;
+}
+
+/* ===== SHARED CARD STYLES ===== */
 .profile-card {
     width: 100%;
     background: white;
@@ -54,11 +74,7 @@
     padding: 1.5rem;
 }
 
-.team-management-full {
-    grid-column: 1 / -1; /* Take full width */
-}
-
-/* Form Elements - Base Styles */
+/* ===== SHARED FORM ELEMENTS ===== */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -95,83 +111,25 @@
     margin-top: 0.25rem;
 }
 
-/* Success Message */
-.success-message {
-    background: #d4edda;
-    color: #155724;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    border: 1px solid #c3e6cb;
-}
-
-/* Form Buttons */
 .form-buttons {
     display: flex;
     gap: 1rem;
     margin-top: 1.5rem;
 }
 
-/* Role Info Section */
-.role-info {
-    margin-top: 2rem;
+/* ===== SUCCESS MESSAGE ===== */
+.success-message {
+    background: #d4edda;
+    color: #155724;
     padding: 1rem;
-    background: #e7f3ff;
-    border-radius: 8px;
-    font-size: 0.875rem;
-}
-
-.role-title {
-    margin: 0 0 0.5rem 0;
-    color: var(--primary-blue);
-}
-
-.role-description {
-    margin: 0;
-    color: #666;
-}
-
-/* Form Elements - Base Styles */
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #333;
-}
-
-.form-control {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
+    margin-bottom: 1rem;
+    border: 1px solid #c3e6cb;
 }
 
-.form-control:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-}
-
-.form-control-error {
-    border-color: var(--danger);
-    background-color: rgba(244, 67, 54, 0.05);
-}
-
-.form-error {
-    color: var(--danger);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-/* Button Styles */
+/* ===== BUTTON STYLES ===== */
 .btn-primary {
     padding: 0.4rem 1rem;
-    border: 1px solid var(--primary-blue);
     border-radius: 20px;
     background: var(--primary-blue);
     color: white;
@@ -216,95 +174,26 @@
     cursor: not-allowed;
 }
 
-/* Table Styles - For Team Management */
-.team-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.team-table th {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-    color: white;
-    padding: 1.25rem 1.5rem;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-align: left;
-}
-
-.team-table td {
-    padding: 1.5rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    align-items: center;
-    transition: background-color 0.2s ease;
-}
-
-.team-table tr:hover {
-    background-color: rgba(0, 93, 160, 0.02);
-}
-
-/* Status Badges */
-.status-badge {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-align: center;
-    display: inline-block;
-}
-
-.status-pending { 
-    background: #fff3cd; 
-    color: #856404; 
-}
-
-.status-active { 
-    background: #d4edda; 
-    color: #155724; 
-}
-
-.status-new { 
-    background: #cce5ff; 
-    color: #004085; 
-}
-
-.status-expired { 
-    background: #f8d7da; 
-    color: #721c24; 
-}
-
-/* Activation Code Display */
-.activation-code {
-    font-family: monospace;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--primary-blue);
-    background: var(--light-gray);
-    padding: 0.5rem;
+/* ===== ROLE INFO SECTION ===== */
+.role-info {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #e7f3ff;
     border-radius: var(--border-radius-sm);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    font-size: 0.875rem;
 }
 
-.copy-btn {
-    background: var(--primary-blue);
-    color: white;
-    border: none;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.75rem;
+.role-title {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-blue);
 }
 
-.copy-btn:hover {
-    background: var(--dark-blue);
+.role-description {
+    margin: 0;
+    color: #666;
 }
 
-/* Star Rating System */
+/* ===== STAR RATING SYSTEM (GameRatingCard) ===== */
 .star-rating {
     display: flex;
     gap: 0.25rem;
@@ -324,14 +213,15 @@
     transform: scale(1.1);
 }
 
-/* Rating History */
+/* ===== RATING HISTORY (GameRatingCard) ===== */
 .rating-history {
     margin-top: 2rem;
 }
 
 .rating-history-header {
     display: flex;
-    justify-content: space-between;  margin-top: 2rem;
+    justify-content: space-between;
+    margin-top: 2rem;
 }
 
 .rating-item {
@@ -353,7 +243,7 @@
     color: #666;
 }
 
-/* Team Management Styles */
+/* ===== TEAM MANAGEMENT STYLES (TeamManagementCard) ===== */
 .team-info {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
@@ -371,6 +261,7 @@
     font-size: 0.875rem;
 }
 
+/* Team table */
 .team-table {
     width: 100%;
     border-collapse: collapse;
@@ -380,16 +271,16 @@
 .team-table th {
     background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
     color: white;
-    padding: 1rem;
+    padding: 1.25rem 1.5rem;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     text-align: left;
 }
 
 .team-table td {
-    padding: 1rem;
+    padding: 1.5rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
     vertical-align: top;
 }
@@ -398,6 +289,7 @@
     background-color: rgba(0, 93, 160, 0.02);
 }
 
+/* Member info in table */
 .member-info {
     display: flex;
     flex-direction: column;
@@ -414,9 +306,42 @@
     color: #666;
 }
 
+/* ===== STATUS BADGES ===== */
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    display: inline-block;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-new {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ===== ACTIVATION CODE DISPLAY ===== */
 .activation-code {
     font-family: monospace;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: bold;
     color: var(--primary-blue);
     background: var(--light-gray);
@@ -450,6 +375,7 @@
     font-family: inherit;
 }
 
+/* ===== TEAM STATS ===== */
 .team-stats {
     display: flex;
     gap: 2rem;
@@ -470,9 +396,14 @@
     font-weight: 500;
 }
 
-/* Responsive Design */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .profile-grid-team-row {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
@@ -483,7 +414,7 @@
 
   .team-table th,
   .team-table td {
-    padding: 0.5rem;
+    padding: 0.75rem;
   }
 
   .activation-code {
@@ -499,8 +430,8 @@
     padding: 1rem;
   }
 
-  .profile-grid-team-row {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
+  .team-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
 }

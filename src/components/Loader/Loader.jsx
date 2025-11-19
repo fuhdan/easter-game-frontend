@@ -1,5 +1,5 @@
 import React from "react";
-//import "./Loader.css"; // optional if you want separate styles, otherwise use App.css
+import "./Loader.css";
 
 const Loader = ({ message = "Loading..." }) => {
   return (
