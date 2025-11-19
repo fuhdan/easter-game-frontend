@@ -1,0 +1,141 @@
+/**
+ * Styles: ChatToggleButton
+ * Purpose: Floating chat toggle button styles
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Design: Based on design-preview.html chat widget styles
+ * Colors: Ypsomed brand colors (--primary-blue, --accent-red, etc.)
+ *
+ * @since 2025-11-09
+ */
+
+.chat-toggle-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 70px;
+  height: 70px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 93, 160, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chat-toggle-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 93, 160, 0.4);
+}
+
+.chat-toggle-button:active {
+  transform: scale(0.98);
+}
+
+.chat-toggle-button:focus {
+  outline: 3px solid rgba(0, 93, 160, 0.3);
+  outline-offset: 2px;
+}
+
+/* Ypsomed Logo Image */
+.ypsomed-logo-img {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Unread Badge */
+.chat-toggle-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-red);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(196, 30, 58, 0.4);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Connection Status Indicator */
+.chat-toggle-status {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+
+/* Open State */
+.chat-toggle-button.open {
+  background: var(--medium-gray);
+  color: #333;
+}
+
+.chat-toggle-button.open:hover {
+  background: var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .chat-toggle-button {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .chat-toggle-icon {
+    font-size: 1.25rem;
+  }
+
+  .chat-toggle-text {
+    display: none; /* Hide text on mobile, show only icon */
+  }
+
+  .chat-toggle-button:not(.open) .chat-toggle-text {
+    display: none;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .chat-toggle-button {
+    padding: 0.75rem;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    justify-content: center;
+  }
+
+  .chat-toggle-text {
+    display: none !important;
+  }
+}

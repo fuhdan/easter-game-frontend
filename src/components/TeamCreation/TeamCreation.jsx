@@ -68,7 +68,6 @@ const TeamCreation = () => {
           console.log(`Loaded ${teamsResponse.teams.length} existing teams`);
           
           // Extract players from team members (since /api/users doesn't exist)
-          const allPlayers = [];
           const playerMap = new Map(); // Avoid duplicates
           
           teamsResponse.teams.forEach(team => {
@@ -131,7 +130,6 @@ const TeamCreation = () => {
 
   return (
     <div className="team-creation">
-      <h2 className="team-creation-title">Team Creation & Management</h2>
 
       {loading && (
         <TeamLoader message={`Processing... ${progress > 0 ? `${progress}%` : ''}`} />

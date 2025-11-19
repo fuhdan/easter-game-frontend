@@ -1,0 +1,268 @@
+/**
+ * NotificationCard.css
+ * Purpose: Styles for individual notification cards
+ * Part of: Easter Quest 2025 - Phase 5: Admin Notification Panel
+ *
+ * Design: Matches SystemAdminDashboard config-item style
+ * Colors: Priority indicators (red, yellow, green)
+ */
+
+/* Card Container - Match config-item style */
+.notification-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.notification-card:hover {
+    border-color: #005da0;
+    box-shadow: 0 2px 8px rgba(0, 93, 160, 0.1);
+}
+
+/* Priority Border - Left border like config-key */
+.notification-card.priority-red {
+    border-left: 3px solid #c41e3a;
+}
+
+.notification-card.priority-yellow {
+    border-left: 3px solid #ffc107;
+}
+
+.notification-card.priority-green {
+    border-left: 3px solid #28a745;
+}
+
+/* Resolved Card Style */
+.notification-card.resolved {
+    opacity: 0.7;
+    background: white;
+}
+
+.notification-card.resolved:hover {
+    opacity: 1;
+}
+
+/* Card Header */
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.notification-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.notification-priority {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.priority-icon {
+    font-size: 1rem;
+}
+
+/* Escalation Type Badge - Match config-type style */
+.notification-type {
+    background: #005da0;
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.notification-time {
+    color: #666;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* Team Info - Match config-key style */
+.notification-team {
+    font-family: 'Courier New', Consolas, Monaco, monospace;
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border-left: 3px solid #005da0;
+    display: inline-block;
+}
+
+.repeat-badge {
+    background: #c41e3a;
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+}
+
+/* Message - Match config-description style */
+.notification-message {
+    color: #333;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+/* Triggered By Users */
+.notification-users {
+    color: #666;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.notification-users strong {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Context Data */
+.notification-context {
+    margin: 0.75rem 0;
+}
+
+.notification-context details {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+
+.notification-context summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: #005da0;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    user-select: none;
+}
+
+.notification-context summary:hover {
+    color: #004271;
+}
+
+.notification-context pre {
+    margin: 0.5rem 0 0 0;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    overflow-x: auto;
+    max-height: 150px;
+    overflow-y: auto;
+    font-family: 'Courier New', Consolas, Monaco, monospace;
+}
+
+/* Acknowledged Info */
+.notification-acknowledged-info {
+    color: #005da0;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(0, 93, 160, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #005da0;
+}
+
+/* Resolved Info */
+.notification-resolved-info {
+    color: #28a745;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #28a745;
+}
+
+/* Actions - Match btn style from SystemAdminDashboard */
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.notification-actions button {
+    padding: 0.375rem 0.75rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+}
+
+.notification-actions button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.notification-actions button:active {
+    transform: translateY(0);
+}
+
+.btn-acknowledge {
+    background: white;
+    color: #005da0;
+    border: 2px solid #005da0;
+}
+
+.btn-acknowledge:hover {
+    background: #005da0;
+    color: white;
+}
+
+.btn-resolve {
+    background: #005da0;
+    color: white;
+}
+
+.btn-resolve:hover {
+    background: #004271;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .notification-card {
+        padding: 1rem;
+    }
+
+    .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .notification-actions {
+        flex-direction: column;
+    }
+
+    .notification-actions button {
+        width: 100%;
+    }
+}

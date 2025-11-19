@@ -1,0 +1,403 @@
+/**
+ * Styles: RateLimitCard
+ * Purpose: Rate limit reset card styling matching AdminDashboard design
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * Design principles:
+ * - Matches existing card styling (StatsGrid, TeamProgressTable)
+ * - Uses Ypsomed color palette (#005da0, #c41e3a)
+ * - Responsive design
+ * - Consistent with design-preview.html
+ *
+ * @since 2025-11-06
+ */
+
+:root {
+  --primary-blue: #005da0;
+  --dark-blue: #004271;
+  --accent-red: #c41e3a;
+  --light-gray: #f8f9fa;
+  --medium-gray: #e9ecef;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+}
+
+/* Rate Limit Card Container - Match Profile card style */
+.rate-limit-card {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--medium-gray);
+  margin-bottom: 2rem;
+}
+
+/* Card Header - Match Profile card style */
+.rate-limit-card .card-header {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rate-limit-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Notification Toast */
+.notification {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.notification-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+/* Info Box */
+.rate-limit-info {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: var(--light-gray);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-blue);
+}
+
+.rate-limit-info h4 {
+  margin: 0 0 12px 0;
+  color: var(--primary-blue);
+  font-size: 1rem;
+}
+
+.rate-limit-info ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+}
+
+.rate-limit-info li {
+  margin: 6px 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.rate-limit-info li strong {
+  color: #333;
+}
+
+.info-note {
+  margin: 0;
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ============================================================================
+   BLOCKED IP LIST - Real-Time SSE Section
+   ============================================================================ */
+
+/* Blocked IP List Section */
+.blocked-ip-list-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--medium-gray);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--primary-blue);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--primary-blue);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.last-updated {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* Connection Status Indicator */
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.connection-status.status-connected {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.connection-status.status-connecting {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-status.status-disconnected {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.btn-reconnect {
+  padding: 0.4rem 0.8rem;
+  background: var(--accent-red);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-reconnect:hover:not(:disabled) {
+  background: #a01730;
+}
+
+.btn-reconnect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #28a745;
+  font-size: 1.1rem;
+  background: var(--light-gray);
+  border-radius: 8px;
+  border: 2px dashed var(--medium-gray);
+}
+
+/* Bulk Actions */
+.bulk-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn-select-all,
+.btn-reset-selected {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--medium-gray);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-select-all {
+  background: white;
+  color: var(--primary-blue);
+}
+
+.btn-select-all:hover {
+  background: var(--light-gray);
+}
+
+.btn-reset-selected {
+  background: var(--accent-red);
+  color: white;
+  border-color: var(--accent-red);
+}
+
+.btn-reset-selected:hover:not(:disabled) {
+  background: #a01730;
+  border-color: #a01730;
+}
+
+.btn-reset-selected:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Blocked IP Table */
+.blocked-ip-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blocked-ip-table thead {
+  background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+  color: white;
+}
+
+.blocked-ip-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.blocked-ip-table tbody tr {
+  border-bottom: 1px solid var(--medium-gray);
+  transition: background 0.2s;
+}
+
+.blocked-ip-table tbody tr:hover {
+  background: var(--light-gray);
+}
+
+.blocked-ip-table tbody tr.status-banned {
+  background: #fff5f5;
+}
+
+.blocked-ip-table tbody tr.status-warning {
+  background: #fffbf0;
+}
+
+.blocked-ip-table td {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.blocked-ip-table td.ip-address {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.status-banned {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.status-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.status-active {
+  background: #d4edda;
+  color: #155724;
+}
+
+
+/* Checkbox Styling */
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-blue);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .rate-limit-card {
+    padding: 16px;
+  }
+
+  .rate-limit-card-header h3 {
+    font-size: 1.25rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .bulk-actions {
+    flex-direction: column;
+  }
+
+  .btn-select-all,
+  .btn-reset-selected {
+    width: 100%;
+  }
+
+  .blocked-ip-table {
+    font-size: 0.8rem;
+  }
+
+  .blocked-ip-table th,
+  .blocked-ip-table td {
+    padding: 0.5rem;
+  }
+
+  .blocked-ip-table th:first-child,
+  .blocked-ip-table td:first-child {
+    padding: 0.5rem 0.25rem;
+  }
+}

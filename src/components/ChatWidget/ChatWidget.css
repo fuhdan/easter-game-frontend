@@ -1,0 +1,270 @@
+/**
+ * Styles: ChatWidget
+ * Purpose: Draggable and resizable chat widget container
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Design: Based on design-preview.html
+ * Colors: Ypsomed brand colors
+ *
+ * Features:
+ * - Draggable via header
+ * - Resizable via corner handle
+ * - Positioned above toggle button
+ * - Smooth transitions
+ *
+ * @since 2025-11-09
+ */
+
+.chat-widget {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+/* Chat Popup - Now draggable and resizable */
+.chat-popup {
+  position: fixed;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+  user-select: none; /* Prevent text selection while dragging */
+  z-index: 1001; /* Above toggle button */
+  container-type: inline-size; /* Enable container queries for responsive header */
+  container-name: chat-window;
+}
+
+.chat-popup.dragging {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: none; /* Disable transitions while dragging for smooth movement */
+}
+
+.chat-popup.resizing {
+  transition: none; /* Disable transitions while resizing */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Drag Handle - Makes header draggable */
+.chat-header-drag-handle {
+  cursor: move;
+  user-select: none;
+}
+
+/* Resize Handle - Bottom-right corner */
+.chat-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  z-index: 10;
+}
+
+/* Visual indicator for resize handle */
+.chat-resize-handle::before {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.chat-resize-handle:hover::before {
+  opacity: 1;
+  border-color: var(--primary-blue);
+}
+
+/* Add grip lines to resize handle for better visibility */
+.chat-resize-handle::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background-image:
+    linear-gradient(135deg, transparent 50%, var(--border-color) 50%),
+    linear-gradient(135deg, transparent 50%, var(--border-color) 50%);
+  background-size: 4px 4px;
+  background-position: 0 0, 4px 4px;
+  opacity: 0.6;
+}
+
+/* Header */
+.chat-header {
+  background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  flex-shrink: 0;
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.chat-close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.chat-close-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-close-button:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Body - Now resizable */
+.chat-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  background: var(--light-gray);
+  min-height: 200px; /* Allow smaller minimum */
+}
+
+/* Custom scrollbar */
+.chat-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-body::-webkit-scrollbar-track {
+  background: var(--light-gray);
+}
+
+.chat-body::-webkit-scrollbar-thumb {
+  background: var(--medium-gray);
+  border-radius: 4px;
+}
+
+.chat-body::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color);
+}
+
+/* Footer */
+.chat-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: white;
+  flex-shrink: 0;
+}
+
+.chat-input-placeholder {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.chat-input-placeholder:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+}
+
+.chat-input-placeholder:disabled {
+  background: var(--light-gray);
+  cursor: not-allowed;
+}
+
+/* Mobile Responsive - Disable drag/resize on mobile */
+@media (max-width: 768px) {
+  .chat-widget {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+
+  .chat-popup {
+    /* Override inline styles for mobile */
+    position: fixed !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    bottom: 80px !important;
+    top: auto !important;
+    width: calc(100vw - 2rem) !important;
+    height: auto !important;
+    max-height: calc(100vh - 120px);
+  }
+
+  .chat-header-drag-handle {
+    cursor: default; /* Disable drag cursor on mobile */
+  }
+
+  .chat-resize-handle {
+    display: none; /* Hide resize handle on mobile */
+  }
+
+  .chat-body {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .chat-popup {
+    width: calc(100vw - 1rem) !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    max-height: calc(100vh - 100px);
+  }
+
+  .chat-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .chat-header h3 {
+    font-size: 1rem;
+  }
+
+  .chat-body {
+    max-height: calc(100vh - 240px);
+    min-height: 250px;
+  }
+
+  .chat-footer {
+    padding: 0.75rem;
+  }
+}

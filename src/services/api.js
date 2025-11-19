@@ -60,53 +60,107 @@ class APIError extends Error {
     if (this.status === 401) return 'Please log in again';
     if (this.status === 403) return 'Permission denied';
     if (this.status === 404) return 'Resource not found';
+    if (this.status === 429) {
+      // Rate limit error - try to extract detailed message
+      if (this.data && this.data.detail) {
+        if (typeof this.data.detail === 'object' && this.data.detail.message) {
+          return this.data.detail.message;
+        } else if (typeof this.data.detail === 'string') {
+          return this.data.detail;
+        }
+      }
+      return 'Too many requests. Please wait a moment and try again.';
+    }
     if (this.status >= 500) return 'Server error - please try again';
     return this.message || 'An error occurred';
   }
 }
 
 /**
- * Get auth token
+ * Token refresh mutex to prevent concurrent refresh attempts
+ *
+ * When multiple requests fail with 401 simultaneously, only one should
+ * attempt to refresh the token. Others should wait for that refresh to complete.
  */
-const getAuthToken = () => localStorage.getItem('auth_token') || '';
+let refreshPromise = null;
 
 /**
- * Build headers
+ * Event listeners for token refresh events.
+ * Components (like SSE connections) can subscribe to reconnect after token refresh.
+ */
+const tokenRefreshListeners = new Set();
+
+/**
+ * Subscribe to token refresh events
+ * @param {Function} callback - Function to call when tokens are refreshed
+ * @returns {Function} Unsubscribe function
+ */
+export const onTokenRefresh = (callback) => {
+  tokenRefreshListeners.add(callback);
+  return () => tokenRefreshListeners.delete(callback);
+};
+
+/**
+ * Notify all listeners that tokens were refreshed
+ */
+const notifyTokenRefresh = () => {
+  tokenRefreshListeners.forEach(callback => {
+    try {
+      callback();
+    } catch (error) {
+      console.error('Token refresh listener error:', error);
+    }
+  });
+};
+
+/**
+ * Build headers (without Authorization - using HTTPOnly cookies instead)
+ *
+ * SECURITY: Authentication via HTTPOnly cookies (automatic transmission).
+ * No manual token handling required for browser clients.
  */
 const buildHeaders = (contentType = 'application/json') => {
-  const headers = { 'Authorization': `Bearer ${getAuthToken()}` };
+  const headers = {};
   if (contentType) headers['Content-Type'] = contentType;
   return headers;
 };
 
 /**
- * Core request function with retry logic
+ * Core request function with retry logic and automatic token refresh
+ *
+ * SECURITY: Uses credentials: 'include' to automatically send HTTPOnly cookies
+ *
+ * STEP 7: Automatic Token Refresh Flow
+ * 1. If request returns 401, attempt to refresh tokens
+ * 2. If refresh succeeds, retry original request with new tokens
+ * 3. If refresh fails, throw 401 (user must re-login)
  */
 const request = async (method, endpoint, data = null, options = {}) => {
   const url = `${CONFIG.BASE_URL}${endpoint}`;
   log.request(method, url);
-  
+
   const config = {
     method,
+    credentials: 'include',  // SECURITY: Send HTTPOnly cookies with every request
     headers: buildHeaders(),
     ...options
   };
-  
+
   if (data && method !== 'GET') {
     config.body = JSON.stringify(data);
   }
-  
+
   let lastError;
-  
+
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRIES; attempt++) {
     try {
       const response = await fetch(url, config);
       log.response(method, url, response.status);
-      
+
       const responseData = response.headers.get('content-type')?.includes('application/json')
         ? await response.json()
         : await response.text();
-      
+
       if (!response.ok) {
         throw new APIError(
           responseData?.message || `HTTP ${response.status}`,
@@ -114,13 +168,89 @@ const request = async (method, endpoint, data = null, options = {}) => {
           responseData
         );
       }
-      
+
       return responseData;
-      
+
     } catch (error) {
       lastError = error;
       log.error(`Attempt ${attempt} failed:`, error.message);
-      
+
+      // STEP 7: Handle 401 with automatic token refresh (with mutex)
+      if (error.status === 401 && endpoint !== '/api/auth/refresh' && endpoint !== '/api/auth/login') {
+        log.info('401 Unauthorized - attempting token refresh');
+
+        try {
+          // MUTEX: Check if a refresh is already in progress
+          if (!refreshPromise) {
+            log.info('Starting token refresh (no refresh in progress)');
+
+            // Start the refresh and store the promise
+            // eslint-disable-next-line no-loop-func
+            refreshPromise = fetch(`${CONFIG.BASE_URL}/api/auth/refresh`, {
+              method: 'POST',
+              credentials: 'include'
+            })
+            // eslint-disable-next-line no-loop-func
+            .then(async (response) => {
+              if (!response.ok) {
+                // Clear the promise on failure
+                refreshPromise = null;
+                throw new APIError(`Refresh failed: HTTP ${response.status}`, response.status);
+              }
+              // Clear the promise on success
+              refreshPromise = null;
+              log.success('Token refresh completed successfully');
+              return response;
+            })
+            // eslint-disable-next-line no-loop-func
+            .catch((err) => {
+              // Clear the promise on error
+              refreshPromise = null;
+              throw err;
+            });
+          } else {
+            log.info('Token refresh already in progress - waiting for it to complete');
+          }
+
+          // Wait for the refresh to complete (either this one or an existing one)
+          await refreshPromise;
+
+          log.success('Token refresh successful - retrying original request');
+
+          // Notify listeners (e.g., SSE connections) to reconnect with new tokens
+          notifyTokenRefresh();
+
+          // Retry original request with new tokens (don't count as retry attempt)
+          const retryResponse = await fetch(url, config);
+          const retryData = retryResponse.headers.get('content-type')?.includes('application/json')
+            ? await retryResponse.json()
+            : await retryResponse.text();
+
+          if (!retryResponse.ok) {
+            throw new APIError(
+              retryData?.message || `HTTP ${retryResponse.status}`,
+              retryResponse.status,
+              retryData
+            );
+          }
+
+          return retryData;
+
+        } catch (refreshError) {
+          log.error('Token refresh failed:', refreshError);
+
+          // STEP 8: Dispatch auth-error event for AuthContext to handle
+          window.dispatchEvent(new CustomEvent('auth-error', {
+            detail: { error, refreshError }
+          }));
+
+          // If refresh fails, throw original 401 error
+          // Frontend should redirect to login
+          throw error;
+        }
+      }
+
+      // Retry logic for 5xx errors
       if (attempt < CONFIG.MAX_RETRIES && error.status >= 500) {
         await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * attempt));
       } else {
@@ -128,7 +258,7 @@ const request = async (method, endpoint, data = null, options = {}) => {
       }
     }
   }
-  
+
   throw lastError;
 };
 
@@ -160,8 +290,11 @@ const api = {
     // Refresh token
     refresh: () => request('POST', '/api/auth/refresh'),
 
-    // Verify token
-    verify: () => request('GET', '/api/auth/verify')
+    // Get current user (also validates authentication)
+    me: () => request('GET', '/api/auth/me'),
+
+    // Verify token (alias for me())
+    verify: () => request('GET', '/api/auth/me')
   },
   
   // =============================================================================
@@ -242,7 +375,13 @@ const api = {
     removeMember: (teamId, userId) => request('DELETE', `/api/teams/${teamId}/members/${userId}`),
     
     // Set team captain
-    setCaptain: (teamId, userId) => request('PUT', `/api/teams/${teamId}/captain`, { userId })
+    setCaptain: (teamId, userId) => request('PUT', `/api/teams/${teamId}/captain`, { userId }),
+
+    // Update team name (team leaders only)
+    updateMyTeamName: (name) => {
+      log.info('Updating team name to:', name);
+      return request('PUT', '/api/teams/my-team/name', { name });
+    }
   },
   
   // =============================================================================
@@ -282,7 +421,36 @@ const api = {
       return request('POST', `/api/players/${playerId}/generate-otp`);
     }
   },
-  
+
+  // =============================================================================
+  // EVENT MANAGEMENT
+  // =============================================================================
+  events: {
+    // Get all events
+    getAll: () => {
+      log.info('Fetching all events');
+      return request('GET', '/api/events');
+    },
+
+    // Get currently active event with full story
+    getActive: () => {
+      log.info('Fetching active event with story');
+      return request('GET', '/api/events/active');
+    },
+
+    // Get event by year
+    getByYear: (year) => {
+      log.info(`Fetching event for year ${year}`);
+      return request('GET', `/api/events/${year}`);
+    },
+
+    // Get all games for an event
+    getGames: (eventId) => {
+      log.info(`Fetching games for event ${eventId}`);
+      return request('GET', `/api/events/${eventId}/games`);
+    }
+  },
+
   // =============================================================================
   // GAME MANAGEMENT
   // =============================================================================
@@ -350,7 +518,19 @@ const api = {
     demoteUser: (userId) => request('PUT', `/api/admin/users/${userId}/demote`),
     
     // Game content management
-    updateGameContent: (gameId, content) => request('PUT', `/api/admin/games/${gameId}/content`, content)
+    updateGameContent: (gameId, content) => request('PUT', `/api/admin/games/${gameId}/content`, content),
+
+    // Rate limit management
+    resetRateLimit: (target, identifier) => {
+      log.info(`Resetting ${target} rate limit for: ${identifier}`);
+      return request('POST', '/api/admin/reset-rate-limit', { target, identifier });
+    },
+
+    // Bulk rate limit reset
+    resetRateLimitBulk: (ips) => {
+      log.info(`Bulk resetting rate limits for ${ips.length} IP(s)`);
+      return request('POST', '/api/admin/reset-rate-limit-bulk', { ips });
+    }
   },
   
   // =============================================================================
@@ -416,7 +596,212 @@ const api = {
     version: () => request('GET', '/api/version'),
 
     // Basic ping test
-    ping: () => request('GET', '/api/ping')
+    ping: () => request('GET', '/api/ping'),
+
+    // =============================================================================
+    // SYSTEM CONFIGURATION (super_admin only)
+    // =============================================================================
+
+    // Get all system configuration (optionally filtered by category)
+    getConfig: (category = null) => {
+      const url = category ? `/api/system/config?category=${category}` : '/api/system/config';
+      log.info(`Fetching system configuration${category ? ` (category: ${category})` : ''}`);
+      return request('GET', url);
+    },
+
+    // Update a configuration value
+    updateConfig: (key, value) => {
+      log.info(`Updating configuration: ${key} = ${value}`);
+      return request('PATCH', `/api/system/config/${key}`, { value });
+    },
+
+    // Reload configuration cache
+    reloadConfig: () => {
+      log.info('Reloading configuration cache');
+      return request('POST', '/api/system/config/reload');
+    }
+  },
+
+  // =============================================================================
+  // AI TRAINING MANAGEMENT (super_admin only)
+  // =============================================================================
+  aiTraining: {
+    // Get all training hints (with optional filters)
+    getHints: (filters = {}) => {
+      const params = new URLSearchParams();
+      if (filters.game_id) params.append('game_id', filters.game_id);
+      if (filters.hint_type) params.append('hint_type', filters.hint_type);
+      if (filters.hint_level) params.append('hint_level', filters.hint_level);
+
+      const url = `/api/admin/ai/training-hints${params.toString() ? '?' + params.toString() : ''}`;
+      log.info('Fetching AI training hints', filters);
+      return request('GET', url);
+    },
+
+    // Get training hints organized by game
+    getHintsByGame: () => {
+      log.info('Fetching AI training hints by game');
+      return request('GET', '/api/admin/ai/training-hints/by-game');
+    },
+
+    // Create new training hint
+    createHint: (hintData) => {
+      log.info('Creating AI training hint', hintData);
+      return request('POST', '/api/admin/ai/training-hints', hintData);
+    },
+
+    // Update existing training hint
+    updateHint: (hintId, updates) => {
+      log.info(`Updating AI training hint ${hintId}`, updates);
+      return request('PUT', `/api/admin/ai/training-hints/${hintId}`, updates);
+    },
+
+    // Delete training hint
+    deleteHint: (hintId) => {
+      log.info(`Deleting AI training hint ${hintId}`);
+      return request('DELETE', `/api/admin/ai/training-hints/${hintId}`);
+    },
+
+    // Bulk delete hints for a game (cleanup old year)
+    bulkDeleteHints: (gameId) => {
+      log.info(`Bulk deleting AI training hints for game ${gameId}`);
+      return request('POST', '/api/admin/ai/training-hints/bulk-delete', { game_id: gameId });
+    },
+
+    // Get system prompts
+    getSystemPrompts: () => {
+      log.info('Fetching AI system prompts');
+      return request('GET', '/api/admin/ai/system-prompts');
+    },
+
+    // Create system prompt
+    createSystemPrompt: (promptData) => {
+      log.info('Creating AI system prompt', promptData);
+      return request('POST', '/api/admin/ai/system-prompts', promptData);
+    },
+
+    // Update system prompt
+    updateSystemPrompt: (promptId, updates) => {
+      log.info(`Updating AI system prompt ${promptId}`, updates);
+      return request('PUT', `/api/admin/ai/system-prompts/${promptId}`, updates);
+    },
+
+    // Delete system prompt
+    deleteSystemPrompt: (promptId) => {
+      log.info(`Deleting AI system prompt ${promptId}`);
+      return request('DELETE', `/api/admin/ai/system-prompts/${promptId}`);
+    },
+
+    // Get admin guide
+    getAdminGuide: () => {
+      log.info('Fetching AI training admin guide');
+      return request('GET', '/api/admin/ai/admin-guide');
+    },
+
+    // Event Management
+    getEvents: () => {
+      log.info('Fetching all events');
+      return request('GET', '/api/admin/ai/events');
+    },
+
+    getEvent: (eventId) => {
+      log.info(`Fetching event ${eventId}`);
+      return request('GET', `/api/admin/ai/events/${eventId}`);
+    },
+
+    createEvent: (eventData) => {
+      log.info('Creating new event', eventData);
+      return request('POST', '/api/admin/events/', eventData);
+    },
+
+    updateEvent: (eventId, updates) => {
+      log.info(`Updating event ${eventId}`, updates);
+      return request('PUT', `/api/admin/ai/events/${eventId}`, updates);
+    },
+
+    deleteEvent: (eventId) => {
+      log.info(`Deleting event ${eventId}`);
+      return request('DELETE', `/api/admin/events/${eventId}`);
+    },
+
+    // System Prompts (reusing existing methods above)
+    getSystemPrompts: () => {
+      log.info('Fetching AI system prompts');
+      return request('GET', '/api/admin/ai/system-prompts');
+    },
+
+    createSystemPrompt: (promptData) => {
+      log.info('Creating AI system prompt', promptData);
+      return request('POST', '/api/admin/ai/system-prompts', promptData);
+    },
+
+    updateSystemPrompt: (promptId, updates) => {
+      log.info(`Updating AI system prompt ${promptId}`, updates);
+      return request('PUT', `/api/admin/ai/system-prompts/${promptId}`, updates);
+    },
+
+    deleteSystemPrompt: (promptId) => {
+      log.info(`Deleting AI system prompt ${promptId}`);
+      return request('DELETE', `/api/admin/ai/system-prompts/${promptId}`);
+    },
+
+    // Game Categories
+    getCategories: (activeOnly = false) => {
+      const url = `/api/admin/ai/categories${activeOnly ? '?active_only=true' : ''}`;
+      log.info('Fetching game categories');
+      return request('GET', url);
+    },
+
+    createCategory: (categoryData) => {
+      log.info('Creating game category', categoryData);
+      return request('POST', '/api/admin/ai/categories', categoryData);
+    },
+
+    updateCategory: (categoryId, updates) => {
+      log.info(`Updating game category ${categoryId}`, updates);
+      return request('PUT', `/api/admin/ai/categories/${categoryId}`, updates);
+    },
+
+    deleteCategory: (categoryId) => {
+      log.info(`Deleting game category ${categoryId}`);
+      return request('DELETE', `/api/admin/ai/categories/${categoryId}`);
+    }
+  },
+
+  // =============================================================================
+  // GAME CONTENT MANAGEMENT (super_admin only)
+  // =============================================================================
+  games: {
+    // Get all games with full content
+    getAll: (includeInactive = false) => {
+      const url = `/api/admin/ai/games${includeInactive ? '?include_inactive=true' : ''}`;
+      log.info('Fetching all games with full content');
+      return request('GET', url);
+    },
+
+    // Get single game with full content
+    get: (gameId) => {
+      log.info(`Fetching game ${gameId} with full content`);
+      return request('GET', `/api/admin/ai/games/${gameId}`);
+    },
+
+    // Create new game
+    create: (gameData) => {
+      log.info('Creating new game', gameData);
+      return request('POST', '/api/admin/ai/games', gameData);
+    },
+
+    // Update game content
+    update: (gameId, updates) => {
+      log.info(`Updating game ${gameId}`, updates);
+      return request('PUT', `/api/admin/ai/games/${gameId}`, updates);
+    },
+
+    // Delete game (soft delete)
+    delete: (gameId) => {
+      log.info(`Deleting game ${gameId}`);
+      return request('DELETE', `/api/admin/ai/games/${gameId}`);
+    }
   }
 };
 
@@ -480,40 +865,36 @@ api.utils = {
    * Handle API errors consistently across components
    */
   handleError: (error, showNotification) => {
-    const message = error instanceof APIError 
-      ? error.getUserMessage() 
+    const message = error instanceof APIError
+      ? error.getUserMessage()
       : 'An unexpected error occurred';
-    
+
     log.error('API Error:', error);
     if (showNotification) {
       showNotification(message, 'error');
     }
-    
+
     return message;
   },
-  
+
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated (async - checks session with backend)
+   *
+   * SECURITY: Cannot read HTTPOnly cookies from JavaScript.
+   * Instead, verify session by calling /api/auth/me endpoint.
    */
-  isAuthenticated: () => {
-    return !!getAuthToken();
-  },
-  
-  /**
-   * Clear authentication
-   */
-  clearAuth: () => {
-    localStorage.removeItem('auth_token');
-    log.info('Authentication cleared');
-  },
-  
-  /**
-   * Set authentication token
-   */
-  setAuth: (token) => {
-    localStorage.setItem('auth_token', token);
-    log.info('Authentication token set');
+  isAuthenticated: async () => {
+    try {
+      await request('GET', '/api/auth/me');
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
+
+  // REMOVED: clearAuth() - Cookie cleared by backend on logout
+  // REMOVED: setAuth() - Cookie set by backend on login
+  // REMOVED: getAuthToken() - Cannot access HTTPOnly cookies from JavaScript
 };
 
 export default api;

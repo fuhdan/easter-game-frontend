@@ -165,22 +165,21 @@ const TeamConfiguration = ({
    * Calculate estimated number of teams based on current settings
    * Provides user feedback on configuration impact
    */
-  const getEstimatedTeams = () => {
-    if (players.length === 0) return 0;
-    
-    const totalPlayers = players.length;
-    const optimalTeams = Math.floor(totalPlayers / config.maxTeamSize);
-    const remainingPlayers = totalPlayers % config.maxTeamSize;
-    
-    return remainingPlayers >= config.minTeamSize ? optimalTeams + 1 : optimalTeams;
-  };
-
-  const estimatedTeams = getEstimatedTeams();
+  // Commented out - not currently used in UI
+  // const getEstimatedTeams = () => {
+  //   if (players.length === 0) return 0;
+  //
+  //   const totalPlayers = players.length;
+  //   const optimalTeams = Math.floor(totalPlayers / config.maxTeamSize);
+  //   const remainingPlayers = totalPlayers % config.maxTeamSize;
+  //
+  //   return remainingPlayers >= config.minTeamSize ? optimalTeams + 1 : optimalTeams;
+  // };
 
   return (
     <div className="options-panel">
       <div className="options-panel-header">
-        <h3 className="options-panel-title">Team Configuration</h3>
+        <h3 className="options-panel-title">⚙️ Team Configuration</h3>
       </div>
       <div className="options-panel-body">
         

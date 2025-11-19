@@ -18,10 +18,14 @@ import Login from './components/Login/Login';
 import Header from './components/Header/Header';
 import Navigation from './components/Navigation/Navigation';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
+import SystemAdminDashboard from './components/SystemAdminDashboard/SystemAdminDashboard';
+import { NotificationsDashboard } from './components/AdminNotifications';
 import TeamCreation from './components/TeamCreation/TeamCreation';
 import GamePanel from './components/GamePanel/GamePanel';
 import Profile from './components/Profile/Profile';
 import Loader from './components/Loader/Loader';
+import { ChatProvider } from './contexts/ChatContext';
+import { ChatWidget } from './components/ChatWidget';
 import './App.css';
 
 /**
@@ -34,11 +38,29 @@ const App = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState(null);
 
     useEffect(() => {
         checkAuthStatus();
     }, []);
+
+    /**
+     * Set default tab based on user role when user logs in.
+     */
+    useEffect(() => {
+        if (user && !activeTab) {
+            // Set default tab based on role
+            if (user.role === 'super_admin') {
+                setActiveTab('system_admin');
+            } else if (user.role === 'admin') {
+                setActiveTab('dashboard');
+            } else if (user.role === 'team_captain' || user.role === 'player') {
+                setActiveTab('game');
+            } else {
+                setActiveTab('profile'); // Fallback
+            }
+        }
+    }, [user, activeTab]);
 
     /**
      * Validate current user session with backend.
@@ -151,38 +173,54 @@ const App = () => {
     });
     // Authenticated state - component router
     return (
-        <div className="app" style={{maxWidth: '1200px'}}>
-            <Header 
-                user={user} 
-                onLogout={logout} 
-            />
-            
-            <Navigation 
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                user={user}
-            />
+        <ChatProvider user={user}>
+            <div className="app" style={{maxWidth: '1200px'}}>
 
-            {/* Route to appropriate component based on active tab */}
-            {activeTab === 'dashboard' && (user.role === 'super_admin' || user.role === 'admin') && (
-                <AdminDashboard user={user} />
-            )}
+                <Header
+                    user={user}
+                    onLogout={logout}
+                />
 
-            {/* ✅ Only super_admin can see this tab */}
-            {activeTab === 'team_creation' && user.role === 'super_admin' && (
-                <TeamCreation user={user} />
-            )}
+                <Navigation
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    user={user}
+                />
 
-            {/* Game Panel - All authenticated users */}
-            {activeTab === 'game' && (
-                <GamePanel user={user} />
-            )}
+                {/* System Admin Dashboard - Only super_admin can see this */}
+                {activeTab === 'system_admin' && user.role === 'super_admin' && (
+                    <SystemAdminDashboard user={user} />
+                )}
 
-            {/* Profile always available */}
-            {activeTab === 'profile' && (
-                <Profile user={user} />
-            )}
-        </div>
+                {/* Route to appropriate component based on active tab */}
+                {activeTab === 'dashboard' && (user.role === 'super_admin' || user.role === 'admin') && (
+                    <AdminDashboard user={user} />
+                )}
+
+                {/* Notifications Dashboard - Only admin and super_admin can see this */}
+                {activeTab === 'notifications' && (user.role === 'super_admin' || user.role === 'admin') && (
+                    <NotificationsDashboard user={user} />
+                )}
+
+                {/* ✅ Only super_admin can see this tab */}
+                {activeTab === 'team_creation' && user.role === 'super_admin' && (
+                    <TeamCreation user={user} />
+                )}
+
+                {/* Game Panel - All authenticated users */}
+                {activeTab === 'game' && (
+                    <GamePanel user={user} />
+                )}
+
+                {/* Profile always available */}
+                {activeTab === 'profile' && (
+                    <Profile user={user} />
+                )}
+            </div>
+
+            {/* Chat Widget - Available to all authenticated users */}
+            <ChatWidget />
+        </ChatProvider>
     );
 };
 

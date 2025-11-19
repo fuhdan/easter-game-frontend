@@ -1,34 +1,60 @@
 /**
  * File: components/AdminDashboard/TeamProgressTable.css
- * Purpose: Team progress table component styles - separate card layout
+ * Purpose: Team progress table component styles - card container layout
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  */
 
+/* Main card container - Match Profile card style */
+.team-progress-card-container {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  margin-bottom: 2rem;
+}
+
+.team-progress-card-container .card-header {
+  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.team-progress-card-container .card-body {
+  padding: 0;
+}
+
 .team-progress-section {
-  padding: 0 0 2rem 0;
+  padding: 0;
   width: 100%;
 }
 
 .data-table {
   width: 100%;
-  background: white;
-  border-radius: var(--border-radius);
+  background: transparent;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  box-shadow: none;
+  border: none;
 }
 
 .table-header {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-  color: white;
-  padding: 1.25rem 1.5rem;
+  background: #f8f9fa;
+  color: #005da0;
+  padding: 1rem 1.5rem;
   display: grid;
   grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
   gap: 1.5rem;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-bottom: 2px solid #e9ecef;
 }
 
 .table-row {

@@ -1,0 +1,217 @@
+/**
+ * Component: ChatFooter
+ * Purpose: Chat input area with send button
+ */
+
+import React, { useState, useRef, useEffect } from 'react';
+import { useChat } from '../../contexts/ChatContext';
+import './ChatFooter.css';
+
+const ChatFooter = () => {
+  const {
+    sendMessage,
+    chatMode,
+    connectionStatus,
+    rateLimitStatus,
+    setRateLimitStatus,
+    sendTeamPrivateMessage,
+    sendTeamBroadcast,
+    sendAdminTeamBroadcast,
+    selectedTeamMember,
+    selectedTeam,
+    user
+  } = useChat();
+  const [inputValue, setInputValue] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const textareaRef = useRef(null);
+
+  const MAX_LENGTH = 2000;
+
+  // Countdown timer for rate limit
+  useEffect(() => {
+    if (!rateLimitStatus.exceeded || !rateLimitStatus.resetTime) {
+      setRemainingSeconds(0);
+      return;
+    }
+
+    // Calculate initial remaining time
+    const updateRemainingTime = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((rateLimitStatus.resetTime - now) / 1000));
+      setRemainingSeconds(remaining);
+
+      // Auto-clear rate limit when countdown reaches 0
+      if (remaining <= 0 && rateLimitStatus.exceeded) {
+        console.log('[ChatFooter] Rate limit countdown complete, clearing status');
+        setRateLimitStatus({
+          exceeded: false,
+          limit_type: null,
+          retry_after: 0,
+          resetTime: null
+        });
+      }
+    };
+
+    // Update immediately
+    updateRemainingTime();
+
+    // Update every second
+    const intervalId = setInterval(updateRemainingTime, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [rateLimitStatus, setRateLimitStatus]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 100)}px`;
+    }
+  }, [inputValue]);
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    if (value.length <= MAX_LENGTH) {
+      setInputValue(value);
+    }
+  };
+
+  const handleSend = async () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    if (rateLimitStatus.exceeded) return;
+    if (connectionStatus !== 'connected') return;
+
+    setIsSending(true);
+
+    try {
+      let success = false;
+
+      // Team chat mode
+      if (chatMode === 'team') {
+        if (selectedTeamMember) {
+          // Private message to specific member
+          success = sendTeamPrivateMessage(selectedTeamMember.id, trimmed);
+        } else if (selectedTeam) {
+          // Admin broadcast to specific team
+          success = sendAdminTeamBroadcast(selectedTeam.id, trimmed);
+        } else {
+          // Regular team broadcast (user's own team)
+          success = sendTeamBroadcast(trimmed);
+        }
+      } else {
+        // AI/Admin mode
+        success = sendMessage(trimmed);
+      }
+
+      if (success) {
+        setInputValue('');
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+      }
+    } catch (error) {
+      console.error('[ChatFooter] Send failed:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const isSendDisabled = () => {
+    return (
+      !inputValue.trim() ||
+      isSending ||
+      connectionStatus !== 'connected' ||
+      rateLimitStatus.exceeded
+    );
+  };
+
+  const getPlaceholder = () => {
+    if (rateLimitStatus.exceeded && remainingSeconds > 0) {
+      return `Rate limit exceeded. Wait ${remainingSeconds}s...`;
+    }
+    if (connectionStatus !== 'connected') {
+      return 'Connecting...';
+    }
+
+    if (chatMode === 'team') {
+      // Team chat mode - show who the message is going to
+      if (selectedTeamMember) {
+        return `Message ${selectedTeamMember.display_name || selectedTeamMember.username}...`;
+      } else if (selectedTeam) {
+        return `Broadcast to ${selectedTeam.name}...`;
+      } else {
+        return 'Message your team...';
+      }
+    }
+
+    switch (chatMode) {
+      case 'ai': return 'Ask AI for help with your current game...';
+      case 'admin': return 'Message admin for support...';
+      default: return 'Type your message...';
+    }
+  };
+
+  const getModeStatus = () => {
+    switch (chatMode) {
+      case 'ai': return 'AI mode - Smart context-aware assistance';
+      case 'admin': return 'Admin mode - Direct human support';
+      case 'team': return 'Team mode - Chat with teammates';
+      default: return '';
+    }
+  };
+
+  return (
+    <div className="chat-footer">
+      <div className="chat-input-container">
+        <textarea
+          ref={textareaRef}
+          className="chat-input"
+          placeholder={getPlaceholder()}
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          disabled={connectionStatus !== 'connected' || rateLimitStatus.exceeded}
+          rows={1}
+          aria-label="Message input"
+          maxLength={MAX_LENGTH}
+        />
+
+        <button
+          className="chat-send-btn"
+          onClick={handleSend}
+          disabled={isSendDisabled()}
+          aria-label="Send message"
+          title="Send message (Enter)"
+        >
+          {isSending ? '...' : '>'}
+        </button>
+      </div>
+
+      <div className="chat-footer-info">
+        <span className="chat-mode-status">{getModeStatus()}</span>
+
+        {inputValue.length > MAX_LENGTH * 0.8 && (
+          <span className="chat-char-counter">
+            {inputValue.length} / {MAX_LENGTH}
+          </span>
+        )}
+
+        {rateLimitStatus.exceeded && remainingSeconds > 0 && (
+          <span className="chat-rate-limit-warning">
+            Rate limit: wait {remainingSeconds}s
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ChatFooter;

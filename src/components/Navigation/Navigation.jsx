@@ -16,7 +16,9 @@ import './Navigation.css';
  */
 const Navigation = ({ activeTab, onTabChange, user }) => {
     const tabs = [
-        { id: 'dashboard', label: '📊 Admin Dashboard' },
+        { id: 'system_admin', label: '⚙️ System Admin Dashboard' },
+        { id: 'dashboard', label: '📊 Game Admin Dashboard' },
+        { id: 'notifications', label: '🔔 Notifications' },
         { id: 'teams', label: '👥 Team Creation' },
         { id: 'game', label: '🎮 Game Panel' },
         { id: 'profile', label: '👤 Profile' }
@@ -24,13 +26,34 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
 
     return (
         <nav className="nav-tabs">
+
+            {/* ✅ Only show System Admin Dashboard for super_admin */}
+            {user.role === 'super_admin' && (
+                <button
+                    className={`nav-tab ${activeTab === 'system_admin' ? 'active' : ''}`}
+                    onClick={() => onTabChange('system_admin')}
+                >
+                {tabs[0].label}  {/* ✅ Label will show */}
+                </button>
+            )}
+
             {/* ✅ Only show Dashboard for admin and super_admin */}
             {(user.role === 'super_admin' || user.role === 'admin') && (
                 <button
                 className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                 onClick={() => onTabChange('dashboard')}
                 >
-                {tabs[0].label}  {/* ✅ Label will show */}
+                {tabs[1].label}  {/* ✅ Label will show */}
+                </button>
+            )}
+
+            {/* ✅ Only show Notifications for admin and super_admin */}
+            {(user.role === 'super_admin' || user.role === 'admin') && (
+                <button
+                className={`nav-tab ${activeTab === 'notifications' ? 'active' : ''}`}
+                onClick={() => onTabChange('notifications')}
+                >
+                {tabs[2].label}  {/* ✅ Label will show */}
                 </button>
             )}
 
@@ -40,7 +63,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                     className={`nav-tab ${activeTab === 'team_creation' ? 'active' : ''}`}
                     onClick={() => onTabChange('team_creation')}
                 >
-                    {tabs[1].label}  {/* ✅ Label will show */}
+                    {tabs[3].label}  {/* ✅ Label will show */}
                 </button>
             )}
 
@@ -50,7 +73,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                     className={`nav-tab ${activeTab === 'game' ? 'active' : ''}`}
                     onClick={() => onTabChange('game')}
                 >
-                    {tabs[2].label}  {/* ✅ Label will show */}
+                    {tabs[4].label}  {/* ✅ Label will show */}
                 </button>
             )}
 
@@ -58,7 +81,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                 className={`nav-tab ${activeTab === 'profile' ? 'active' : ''}`}
                 onClick={() => onTabChange('profile')}
             >
-                {tabs[3].label}  {/* ✅ Label will show */}
+                {tabs[5].label}  {/* ✅ Label will show */}
             </button>
         </nav>
     );

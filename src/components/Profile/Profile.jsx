@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import PasswordChangeCard from './PasswordChangeCard';
 import TeamManagementCard from './TeamManagementCard';
 import GameRatingCard from './GameRatingCard';
+import TeamNameCard from './TeamNameCard';
 import './Profile.css';
 
 const Profile = ({ user }) => {
@@ -60,14 +61,15 @@ const Profile = ({ user }) => {
                     {/* Top row: Smaller cards side by side */}
                     <div className="profile-grid-team-row">
                         <PasswordChangeCard />
+                        {currentUser.role === 'team_captain' && <TeamNameCard user={currentUser} />}
                         {currentUser.role === 'team_captain' && <GameRatingCard />}
                     </div>
-                    
+
                     {/* Full width: Team Management */}
                     <div className="team-management-full">
                         <TeamManagementCard user={currentUser} />
                     </div>
-                    
+
                     {/* Super admin card if needed */}
                     {currentUser.role === 'super_admin' && <SuperAdminCard />}
                 </div>
@@ -84,7 +86,7 @@ const Profile = ({ user }) => {
                 </h4>
                 <p className="role-description">
                     {currentUser.role === 'player' && 'You can change your password.'}
-                    {currentUser.role === 'team_captain' && 'You can manage your team members, change your password, and rate games.'}
+                    {currentUser.role === 'team_captain' && 'You can manage your team members, change your team name, change your password, and rate games.'}
                     {currentUser.role === 'admin' && 'You can change your password and manage team members.'}
                     {currentUser.role === 'super_admin' && 'You have full system access including admin management and system configuration.'}
                 </p>

@@ -1,0 +1,275 @@
+/**
+ * Styles: AdminTeamList
+ * Purpose: Admin view of all teams with expandable members
+ */
+
+.admin-team-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--light-gray);
+  border-right: 1px solid var(--medium-gray);
+  overflow: hidden;
+}
+
+.admin-team-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+  color: white;
+  border-bottom: 1px solid var(--medium-gray);
+}
+
+.admin-team-list-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.admin-team-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.admin-team-list-items {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Loading and Empty States */
+.admin-team-list-loading,
+.admin-team-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--medium-gray);
+  font-style: italic;
+}
+
+/* Team Item */
+.admin-team-item {
+  border-bottom: 1px solid var(--medium-gray);
+  background: white;
+}
+
+.admin-team-item:last-child {
+  border-bottom: none;
+}
+
+/* Team Header (Clickable to expand) */
+.admin-team-header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.admin-team-header:hover {
+  background: var(--light-gray);
+}
+
+.admin-team-expand-icon {
+  font-size: 0.75rem;
+  color: var(--primary-blue);
+  margin-right: 0.75rem;
+  transition: transform 0.2s;
+  min-width: 12px;
+}
+
+.admin-team-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-team-name {
+  font-weight: 600;
+  color: var(--dark-blue);
+  font-size: 0.95rem;
+}
+
+.admin-team-status {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Expanded Team Members */
+.admin-team-members {
+  padding: 0.5rem 1rem 1rem 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid var(--medium-gray);
+}
+
+/* Broadcast Button */
+.admin-team-broadcast-btn {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 0.75rem;
+  background: white;
+  color: var(--primary-blue);
+  border: 1px solid var(--primary-blue);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-team-broadcast-btn:hover {
+  background: #f0f7ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 93, 160, 0.15);
+}
+
+.admin-team-broadcast-btn:active {
+  transform: translateY(0);
+}
+
+/* Selected broadcast button - blue background with white text */
+.admin-team-broadcast-btn.selected {
+  background: var(--primary-blue);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 93, 160, 0.2);
+}
+
+.admin-team-broadcast-btn.selected:hover {
+  background: var(--dark-blue);
+  box-shadow: 0 2px 8px rgba(0, 93, 160, 0.3);
+}
+
+/* Member List */
+.admin-team-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-team-member {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  background: white;
+  border: 1px solid var(--medium-gray);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-team-member:hover {
+  background: var(--light-gray);
+  border-color: var(--primary-blue);
+  transform: translateX(4px);
+}
+
+/* Selected member - blue background with white text */
+.admin-team-member.selected {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  box-shadow: 0 2px 4px rgba(0, 93, 160, 0.2);
+}
+
+.admin-team-member.selected:hover {
+  background: var(--dark-blue);
+}
+
+.admin-team-member.selected .admin-member-name,
+.admin-team-member.selected .admin-member-username {
+  color: white;
+}
+
+.admin-member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0; /* Allow text overflow */
+}
+
+.admin-member-name {
+  font-weight: 500;
+  color: var(--dark-blue);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-member-username {
+  font-size: 0.75rem;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-member-badge {
+  background: #ffc107;
+  color: #333;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.admin-team-no-members {
+  text-align: center;
+  padding: 1rem;
+  color: #999;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Scrollbar Styling */
+.admin-team-list-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-team-list-items::-webkit-scrollbar-track {
+  background: var(--light-gray);
+}
+
+.admin-team-list-items::-webkit-scrollbar-thumb {
+  background: var(--medium-gray);
+  border-radius: 3px;
+}
+
+.admin-team-list-items::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-team-list-header {
+    padding: 0.75rem;
+  }
+
+  .admin-team-header {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .admin-team-members {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .admin-member-name,
+  .admin-team-name {
+    font-size: 0.85rem;
+  }
+
+  .admin-member-username,
+  .admin-team-status {
+    font-size: 0.75rem;
+  }
+}

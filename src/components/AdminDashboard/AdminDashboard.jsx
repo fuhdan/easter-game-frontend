@@ -12,6 +12,7 @@
 import React, { useState, useEffect } from 'react';
 import StatsGrid from './StatsGrid';
 import TeamProgressTable from './TeamProgressTable.jsx';
+import RateLimitCard from './RateLimitCard.jsx';
 import './AdminDashboard.css';
 
 /**
@@ -26,68 +27,53 @@ const AdminDashboard = ({ user }) => {
 
     useEffect(() => {
         loadDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [viewMode]);
 
     /**
-     * Load dashboard data from API based on current view mode.
+     * Load dashboard data from API.
+     * Uses the admin dashboard endpoint that already aggregates all stats.
      * @async
      * @returns {Promise<void>}
      */
     async function loadDashboardData() {
         try {
-            // No loading state - components show defaults immediately
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            const mockData = {
+            // Fetch dashboard data from admin endpoint
+            const response = await fetch('/api/admin/dashboard', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch dashboard data');
+            }
+
+            const data = await response.json();
+
+            // Backend returns: stats (active_teams, games_completed, participation_rate, average_rating, total_games) and teams array
+            const totalGames = data.stats.total_games || 0;
+
+            const realData = {
                 stats: {
-                    active_teams: 26,  // Slightly different to show update
-                    games_completed: 158,
-                    participation_rate: 91,
-                    avg_rating: 4.3
+                    active_teams: data.stats.active_teams,
+                    games_completed: data.stats.games_completed,
+                    participation_rate: data.stats.participation_rate,
+                    avg_rating: data.stats.average_rating
                 },
-                teams: [
-                    {
-                        id: 1,
-                        name: 'Team Alpha',
-                        progress: 96,
-                        games_completed: 9,
-                        total_games: 10,
-                        help_requests: 2,
-                        status: 'active'
-                    },
-                    {
-                        id: 2,
-                        name: 'Team Beta',
-                        progress: 100,
-                        games_completed: 10,
-                        total_games: 10,
-                        help_requests: 1,
-                        status: 'completed'
-                    },
-                    {
-                        id: 3,
-                        name: 'Team Gamma',
-                        progress: 72,
-                        games_completed: 7,
-                        total_games: 10,
-                        help_requests: 6,
-                        status: 'needs_help'
-                    },
-                    {
-                        id: 4,
-                        name: 'Team Delta',
-                        progress: 45,
-                        games_completed: 4,
-                        total_games: 10,
-                        help_requests: 2,
-                        status: 'active'
-                    }
-                ]
+                teams: (data.teams || []).map(team => ({
+                    ...team,
+                    total_games: totalGames,  // Add total_games to each team
+                    games_completed: team.completed_games || 0,  // Backend uses completed_games
+                    progress: team.progress_percentage || 0  // Backend uses progress_percentage
+                }))
             };
-            
-            console.log(`Mock: Dashboard data updated for view: ${viewMode}`);
-            setDashboardData(mockData);
-            
+
+            console.log(`Dashboard data loaded: ${realData.stats.active_teams} teams, ${realData.stats.games_completed} games completed, ${totalGames} total games`);
+            setDashboardData(realData);
+
         } catch (err) {
             console.error('Failed to load dashboard data:', err);
             // Keep showing default data on error - no error state needed
@@ -97,12 +83,15 @@ const AdminDashboard = ({ user }) => {
     return (
         <div className="admin-dashboard">
             <StatsGrid data={dashboardData?.stats} />
-            
+
             <TeamProgressTable
                 data={dashboardData?.teams}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
             />
+
+            <RateLimitCard user={user} />
+
         </div>
     );
 };

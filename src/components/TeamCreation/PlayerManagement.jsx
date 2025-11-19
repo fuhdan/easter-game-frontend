@@ -16,7 +16,7 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
       try {
         setLoading(true);
         const response = await api.players.getAll();
-        
+
         console.log('Fetched players response:', response);
 
         if (response && response.success && Array.isArray(response.users)) {
@@ -38,6 +38,7 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
     };
 
     fetchPlayers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount
 
   // -------------------------------

@@ -29,6 +29,7 @@ const TeamManagementCard = ({ user }) => {
   // Load team members on component mount
   useEffect(() => {
     loadTeamMembers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Update expiration timers

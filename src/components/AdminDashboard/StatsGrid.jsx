@@ -31,22 +31,29 @@ const StatsGrid = ({ data }) => {
     const stats = data || defaultStats;
 
     return (
-        <div className="stats-grid">
-            <div className="stat-card">
-                <div className="stat-number">{stats.active_teams}</div>
-                <div className="stat-label">Active Teams</div>
+        <div className="stats-card-container">
+            <div className="card-header">
+                📊 Dashboard Statistics
             </div>
-            <div className="stat-card">
-                <div className="stat-number">{stats.games_completed}</div>
-                <div className="stat-label">Games Completed</div>
-            </div>
-            <div className="stat-card">
-                <div className="stat-number">{stats.participation_rate}%</div>
-                <div className="stat-label">Participation Rate</div>
-            </div>
-            <div className="stat-card">
-                <div className="stat-number">{stats.avg_rating}</div>
-                <div className="stat-label">Avg Rating</div>
+            <div className="card-body">
+                <div className="stats-grid">
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.active_teams}</div>
+                        <div className="stat-label">Active Teams</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.games_completed}</div>
+                        <div className="stat-label">Games Completed</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.participation_rate}%</div>
+                        <div className="stat-label">Participation Rate</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.avg_rating}</div>
+                        <div className="stat-label">Avg Rating</div>
+                    </div>
+                </div>
             </div>
         </div>
     );

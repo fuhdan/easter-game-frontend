@@ -56,7 +56,9 @@ const TeamProgressTable = ({ data, viewMode = 'summary', onViewModeChange }) => 
     ];
 
     // Use API data when available, fallback to defaults
-    const teams = data || defaultTeams;
+    // SECURITY: Filter out system teams (is_system_team=true) from display
+    const allTeams = data || defaultTeams;
+    const teams = allTeams.filter(team => !team.is_system_team);
 
     /**
      * Get appropriate CSS class for status badge.
@@ -89,12 +91,17 @@ const TeamProgressTable = ({ data, viewMode = 'summary', onViewModeChange }) => 
     };
 
     return (
-        <div className="team-progress-section">
-            <div className="data-table">
-                {/* Integrated toolbar */}
-                <div className="table-toolbar">
-                    <span className="toolbar-title">View Options</span>
-                    <div className="toolbar-buttons">
+        <div className="team-progress-card-container">
+            <div className="card-header">
+                📈 Team Progress
+            </div>
+            <div className="card-body">
+                <div className="team-progress-section">
+                    <div className="data-table">
+                        {/* Integrated toolbar */}
+                        <div className="table-toolbar">
+                            <span className="toolbar-title">View Options</span>
+                            <div className="toolbar-buttons">
                         <button 
                             className={`toolbar-btn ${viewMode === 'summary' ? 'active' : ''}`}
                             onClick={() => onViewModeChange('summary')}
@@ -151,6 +158,8 @@ const TeamProgressTable = ({ data, viewMode = 'summary', onViewModeChange }) => 
                             </div>
                         </div>
                     ))}
+                </div>
+            </div>
                 </div>
             </div>
         </div>

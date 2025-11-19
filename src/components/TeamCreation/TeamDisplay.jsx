@@ -35,10 +35,14 @@ import api from '../../services/api';
 const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
   const [exportLoading, setExportLoading] = useState(false);
 
+  // SECURITY: Filter out system teams (is_system_team=true) from display
+  const displayTeams = teams ? teams.filter(team => !team.is_system_team) : [];
+
   // ---- DEBUG LOG START ----
   console.log("DEBUG: Received teams from backend:", teams);
-  if (teams && teams.length > 0) {
-    teams.forEach(team => {
+  console.log("DEBUG: Display teams (filtered):", displayTeams);
+  if (displayTeams && displayTeams.length > 0) {
+    displayTeams.forEach(team => {
       console.log(`Team: ${team.name} (ID: ${team.id}, Leader ID: ${team.leader_id})`);
     });
   }
@@ -48,7 +52,7 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
    * Calculate team statistics from real backend data
    */
   const calculateStats = () => {
-    if (!teams || teams.length === 0) {
+    if (!displayTeams || displayTeams.length === 0) {
       return {
         totalTeams: 0,
         totalPlayers: 0,
@@ -59,15 +63,15 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
       };
     }
 
-    const totalPlayers = teams.reduce((sum, team) => sum + (team.members?.length || 0), 0);
-    const teamSizes = teams.map(team => team.members?.length || 0);
+    const totalPlayers = displayTeams.reduce((sum, team) => sum + (team.members?.length || 0), 0);
+    const teamSizes = displayTeams.map(team => team.members?.length || 0);
     const minTeamSize = Math.min(...teamSizes);
     const maxTeamSize = Math.max(...teamSizes);
-    const avgTeamSize = totalPlayers > 0 ? (totalPlayers / teams.length) : 0;
+    const avgTeamSize = totalPlayers > 0 ? (totalPlayers / displayTeams.length) : 0;
 
     // Calculate department distribution
     const departmentDistribution = {};
-    teams.forEach(team => {
+    displayTeams.forEach(team => {
       (team.members || []).forEach(member => {
         const dept = member.department || 'Unassigned';
         departmentDistribution[dept] = (departmentDistribution[dept] || 0) + 1;
@@ -75,7 +79,7 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
     });
 
     return {
-      totalTeams: teams.length,
+      totalTeams: displayTeams.length,
       totalPlayers,
       avgTeamSize: Math.round(avgTeamSize * 10) / 10,
       minTeamSize,
@@ -88,7 +92,7 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
    * Handle CSV export via backend API
    */
   const handleExportCSV = async () => {
-    if (!teams || teams.length === 0) {
+    if (!displayTeams || displayTeams.length === 0) {
       showNotification('No teams to export', 'warning');
       return;
     }
@@ -120,34 +124,8 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
   };
 
   /**
-   * Get captain for a team - FIXED VERSION
-   * Backend uses leader_id field, not captain_id
-   */
-  const getTeamCaptain = (team) => {
-    if (!team.members || team.members.length === 0) {
-      console.warn(`Team ${team.name} has no members`);
-      return null;
-    }
-
-    if (!team.leader_id) {
-      console.warn(`Team ${team.name} has no leader_id set`);
-      return null;
-    }
-
-    // Find captain by leader_id (backend field)
-    const captain = team.members.find(member => member.id === team.leader_id);
-    
-    if (!captain) {
-      console.warn(`Team ${team.name}: Captain with ID ${team.leader_id} not found in members`);
-      console.log('Available members:', team.members.map(m => ({ id: m.id, name: m.display_name })));
-      return null;
-    }
-
-    return captain;
-  };
-
-  /**
    * Check if member is captain - FIXED VERSION
+   * Backend uses leader_id field, not captain_id
    */
   const isCaptain = (member, team) => {
     return team.leader_id && member.id === team.leader_id;
@@ -189,11 +167,11 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
           <h3 className="card-title">Generated Teams ({teams.length})</h3>
           <div className="header-actions">
             <button
-              className="btn btn-primary"
+              className="btn-header-action"
               onClick={handleExportCSV}
               disabled={exportLoading}
             >
-              {exportLoading ? 'Exporting...' : 'Export CSV'}
+              {exportLoading ? '⏳ Exporting...' : '📥 Export CSV'}
             </button>
           </div>
         </div>
@@ -240,10 +218,7 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
 
         {/* Teams Grid */}
         <div className="teams-grid">
-          {teams.map(team => {
-            const captain = getTeamCaptain(team);
-            
-            return (
+          {displayTeams.map(team => (
               <div key={team.id} className="team-card">
                 
                 {/* Team Header */}
@@ -287,10 +262,9 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
                     </ul>
                   )}
                 </div>
-                
+
               </div>
-            );
-          })}
+          ))}
         </div>
 
         {/* Footer Info */}

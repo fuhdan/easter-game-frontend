@@ -2,26 +2,35 @@
  * Component: AuthContext
  * Purpose: React Context for authentication state management
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
- * 
+ *
  * Features:
  * - User authentication state
  * - Login/logout functions
  * - HTTPOnly cookie-based auth
  * - Automatic token validation
+ * - Automatic token refresh (via api.js)
+ * - Session expiry handling
  * - Loading states
  * - Uses centralized API service
- * 
+ *
+ * STEP 8: Session Expiry Handling
+ * - Listens for 401 errors from API layer
+ * - Automatically logs out when refresh token expires
+ * - Provides session timeout notifications
+ * - Integrates with automatic token refresh in api.js
+ *
  * Usage:
  * - Wrap App with AuthProvider
  * - Use useAuth() hook in components
- * 
+ *
  * Security:
  * - HTTPOnly cookies prevent XSS access
  * - Automatic session validation
  * - Secure logout with cookie clearing
+ * - Session expiry detection and handling
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext();
@@ -51,6 +60,20 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [sessionExpired, setSessionExpired] = useState(false);
+
+    /**
+     * STEP 8: Handle session expiry
+     * Called when refresh token expires or is revoked
+     *
+     * @param {string} reason - Reason for session expiry (optional)
+     */
+    const handleSessionExpiry = useCallback((reason = 'Session expired') => {
+        console.log('🔴 Session expired:', reason);
+        setUser(null);
+        setSessionExpired(true);
+        setError('Your session has expired. Please log in again.');
+    }, []);
 
     /**
      * Check if user is authenticated on app load
@@ -61,14 +84,48 @@ export function AuthProvider({ children }) {
     }, []);
 
     /**
+     * STEP 8: Listen for global 401 errors (session expiry)
+     * This catches 401 errors that couldn't be recovered by auto-refresh
+     */
+    useEffect(() => {
+        const handleUnauthorized = (event) => {
+            // Only handle if user was previously authenticated
+            if (user) {
+                console.log('🔴 Unauthorized event detected - session expired');
+                handleSessionExpiry('Authentication failed');
+            }
+        };
+
+        // Listen for custom auth-error events from API layer
+        window.addEventListener('auth-error', handleUnauthorized);
+
+        return () => {
+            window.removeEventListener('auth-error', handleUnauthorized);
+        };
+    }, [user, handleSessionExpiry]);
+
+    /**
      * Validate current authentication status
-     * Uses api.auth.verify() to check HTTPOnly cookie
+     * Uses /api/auth/me to check HTTPOnly cookie
+     *
+     * STEP 8: Updated to use /auth/me instead of /auth/verify
      */
     async function checkAuthStatus() {
         try {
             setLoading(true);
-            const userData = await api.auth.verify();
-            setUser(userData);
+            // Use /auth/me to validate session (benefits from auto-refresh)
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+                setSessionExpired(false);
+            } else {
+                setUser(null);
+            }
         } catch (err) {
             console.error('Auth check failed:', err);
             setUser(null);
@@ -79,7 +136,9 @@ export function AuthProvider({ children }) {
 
     /**
      * Login user with credentials using API service
-     * 
+     *
+     * STEP 8: Clears session expiry flag on successful login
+     *
      * @param {string} username - User login name
      * @param {string} password - User password
      * @returns {Promise<Object>} Login result with success status
@@ -89,6 +148,7 @@ export function AuthProvider({ children }) {
         try {
             setError(null);
             setLoading(true);
+            setSessionExpired(false);  // STEP 8: Clear expiry flag on login attempt
 
             const response = await api.auth.login({
                 username: username.trim(),
@@ -116,23 +176,27 @@ export function AuthProvider({ children }) {
     /**
      * Logout current user using API service
      * Clears HTTPOnly cookie and local state
-     * 
+     *
+     * STEP 8: Also clears session expiry flag
+     *
      * @returns {Promise<void>}
      */
     async function logout() {
         try {
             setLoading(true);
-            
+
             await api.auth.logout();
 
             // Clear local state
             setUser(null);
             setError(null);
+            setSessionExpired(false);  // STEP 8: Clear expiry flag
         } catch (err) {
             console.error('Logout error:', err);
             // Still clear local state even if API call fails
             setUser(null);
             setError(null);
+            setSessionExpired(false);
         } finally {
             setLoading(false);
         }
@@ -140,9 +204,12 @@ export function AuthProvider({ children }) {
 
     /**
      * Clear error state
+     *
+     * STEP 8: Also clears session expiry flag
      */
     function clearError() {
         setError(null);
+        setSessionExpired(false);
     }
 
     const value = {
@@ -154,7 +221,9 @@ export function AuthProvider({ children }) {
         clearError,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
-        isPlayer: user?.role === 'player'
+        isPlayer: user?.role === 'player',
+        sessionExpired,  // STEP 8: Expose session expiry state
+        handleSessionExpiry  // STEP 8: Expose expiry handler for components
     };
 
     return (
