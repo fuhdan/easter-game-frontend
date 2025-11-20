@@ -30,7 +30,7 @@
  */
 
 import React, { useState } from 'react';
-import api from '../../services/api';
+import { exportTeams, utils } from '../../services';
 
 const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
   const [exportLoading, setExportLoading] = useState(false);
@@ -100,7 +100,7 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
     setExportLoading(true);
     
     try {
-      const csvData = await api.teams.export();
+      const csvData = await exportTeams();
       
       // Create and download CSV file
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
@@ -117,7 +117,7 @@ const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
       showNotification('Teams exported successfully', 'success');
       
     } catch (error) {
-      api.utils.handleError(error, showNotification);
+      utils.handleError(error, showNotification);
     } finally {
       setExportLoading(false);
     }

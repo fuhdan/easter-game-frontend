@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import { getCategories, getAllGames, submitSolution } from '../../services';
 
 const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   const [selectedGame, setSelectedGame] = useState(null);
@@ -25,7 +25,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
    */
   async function loadCategories() {
     try {
-      const response = await api.aiTraining.getCategories(true);
+      const response = await getCategories(true);
       setCategories(response.categories || []);
     } catch (err) {
       console.error('Failed to load categories:', err);
@@ -37,7 +37,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
    */
   async function loadGameProgress() {
     try {
-      const response = await api.games.getAll();
+      const response = await getAllGames();
       const progressMap = {};
       if (response && response.games) {
         response.games.forEach(game => {
@@ -77,7 +77,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
       setSubmitting(true);
       setMessage(null);
 
-      const result = await api.games.submitSolution(selectedGame.id, solution.trim());
+      const result = await submitSolution(selectedGame.id, solution.trim());
 
       if (result.success) {
         setMessage({ type: 'success', text: result.message });

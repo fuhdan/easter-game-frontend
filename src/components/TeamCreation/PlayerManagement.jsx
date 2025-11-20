@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import api from '../../services/api'; // Make sure this points to your api.js
+import { getAllPlayers } from '../../services';
 
 const PlayerManagement = ({ players, setPlayers, showNotification, loading, setLoading, setProgress }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +15,7 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
     const fetchPlayers = async () => {
       try {
         setLoading(true);
-        const response = await api.players.getAll();
+        const response = await getAllPlayers();
 
         console.log('Fetched players response:', response);
 

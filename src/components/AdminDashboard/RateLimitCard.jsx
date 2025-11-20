@@ -14,8 +14,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { onTokenRefresh } from '../../services/api';
-import api from '../../services/api';
+import { onTokenRefresh, getConfig, resetRateLimitBulk, utils, getCurrentUser } from '../../services';
 import './RateLimitCard.css';
 
 /**
@@ -51,7 +50,7 @@ const RateLimitCard = ({ user }) => {
      */
     const loadRateLimitConfig = async () => {
         try {
-            const response = await api.system.getConfig();
+            const response = await getConfig();
 
             // Extract rate limit config from system config
             const configs = response.configs || [];
@@ -184,7 +183,7 @@ const RateLimitCard = ({ user }) => {
 
         try {
             // Use api service instead of raw fetch - this handles token refresh automatically
-            const data = await api.admin.resetRateLimitBulk(Array.from(selectedIPs));
+            const data = await resetRateLimitBulk(Array.from(selectedIPs));
 
             if (data.success) {
                 showNotification(`Successfully reset ${data.reset_count} IP(s)`, 'success');
@@ -205,7 +204,7 @@ const RateLimitCard = ({ user }) => {
         } catch (error) {
             console.error('Error resetting IPs:', error);
             // Handle API error response
-            api.utils.handleError(error, showNotification);
+            utils.handleError(error, showNotification);
         } finally {
             setLoading(false);
         }
@@ -248,7 +247,7 @@ const RateLimitCard = ({ user }) => {
             // Make a lightweight API call to trigger token refresh if needed
             // This will use the existing token refresh mechanism in api.js
             console.log('Checking authentication before SSE reconnect...');
-            await api.auth.me();
+            await getCurrentUser();
 
             // Small delay to ensure cookies are properly set
             setTimeout(() => {

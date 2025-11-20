@@ -4,14 +4,18 @@
  * Part of: Easter Quest Frontend - Chat System
  *
  * Features:
- * - Auto-reconnection with exponential backoff
- * - Message queuing during disconnection
+ * - Auto-reconnection with exponential backoff (via ReconnectionManager)
+ * - Message queuing during disconnection (via MessageQueue)
  * - Event-based message handling
- * - Heartbeat/ping management
+ * - Heartbeat/ping management (via HeartbeatManager)
  * - Token refresh integration support
  *
  * @since 2025-11-09
  */
+
+import { ReconnectionManager } from './reconnectionManager';
+import { MessageQueue } from './messageQueue';
+import { HeartbeatManager } from './heartbeatManager';
 
 /**
  * ChatWebSocket - Manages WebSocket connection for chat
@@ -46,18 +50,16 @@ class ChatWebSocket {
     }
 
     this.ws = null;
-    this.reconnectAttempts = 0;
-    this.reconnectTimer = null;
-    this.heartbeatTimer = null;
-    this.messageQueue = [];
 
-    // Configuration
-    this.config = {
-      reconnectInterval: options.reconnectInterval || 1000,
-      maxReconnectInterval: options.maxReconnectInterval || 30000,
-      heartbeatInterval: options.heartbeatInterval || 30000,
-      maxQueueSize: options.maxQueueSize || 100
-    };
+    // Initialize managers
+    this.reconnectionManager = new ReconnectionManager({
+      baseDelay: options.reconnectInterval || 1000,
+      maxDelay: options.maxReconnectInterval || 30000
+    });
+
+    this.messageQueue = new MessageQueue(options.maxQueueSize || 100);
+
+    this.heartbeatManager = new HeartbeatManager(options.heartbeatInterval || 30000);
 
     // Event listeners
     this.listeners = {
@@ -87,7 +89,7 @@ class ChatWebSocket {
     }
 
     this.manualClose = false;
-    this.updateStatus('connecting');
+    this._updateStatus('connecting');
 
     return new Promise((resolve, reject) => {
       try {
@@ -99,10 +101,10 @@ class ChatWebSocket {
         // Connection opened
         this.ws.onopen = () => {
           console.log('[ChatWebSocket] Connected successfully');
-          this.reconnectAttempts = 0;
-          this.updateStatus('connected');
-          this.startHeartbeat();
-          this.flushMessageQueue();
+          this.reconnectionManager.resetAttempts();
+          this._updateStatus('connected');
+          this._startHeartbeat();
+          this._flushMessageQueue();
           this.emit('open');
           resolve();
         };
@@ -110,8 +112,8 @@ class ChatWebSocket {
         // Connection closed
         this.ws.onclose = (event) => {
           console.log('[ChatWebSocket] Connection closed:', event.code, event.reason);
-          this.stopHeartbeat();
-          this.updateStatus('disconnected');
+          this._stopHeartbeat();
+          this._updateStatus('disconnected');
           this.emit('close', { code: event.code, reason: event.reason });
 
           // Don't reconnect if server closed due to logout
@@ -123,7 +125,7 @@ class ChatWebSocket {
 
           // Auto-reconnect if not manually closed
           if (!this.manualClose) {
-            this.scheduleReconnect();
+            this._scheduleReconnect();
           }
         };
 
@@ -139,14 +141,14 @@ class ChatWebSocket {
           try {
             const data = JSON.parse(event.data);
             console.log('[ChatWebSocket] Message received:', data.type);
-            this.handleIncomingMessage(data);
+            this._handleIncomingMessage(data);
           } catch (error) {
             console.error('[ChatWebSocket] Failed to parse message:', error);
           }
         };
       } catch (error) {
         console.error('[ChatWebSocket] Failed to create WebSocket:', error);
-        this.updateStatus('disconnected');
+        this._updateStatus('disconnected');
         reject(error);
       }
     });
@@ -161,15 +163,15 @@ class ChatWebSocket {
   disconnect(code = 1000, reason = 'Manual disconnect') {
     console.log('[ChatWebSocket] Disconnecting:', reason);
     this.manualClose = true;
-    this.stopHeartbeat();
-    this.clearReconnectTimer();
+    this._stopHeartbeat();
+    this.reconnectionManager.clearTimer();
 
     if (this.ws) {
       this.ws.close(code, reason);
       this.ws = null;
     }
 
-    this.updateStatus('disconnected');
+    this._updateStatus('disconnected');
   }
 
   /**
@@ -189,30 +191,14 @@ class ChatWebSocket {
         return true;
       } catch (error) {
         console.error('[ChatWebSocket] Failed to send message:', error);
-        this.queueMessage(message);
+        this.messageQueue.enqueue(message);
         return false;
       }
     } else {
       console.log('[ChatWebSocket] Not connected, queueing message:', type);
-      this.queueMessage(message);
+      this.messageQueue.enqueue(message);
       return false;
     }
-  }
-
-  /**
-   * Queue message for later sending
-   *
-   * @param {object} message - Message to queue
-   * @private
-   */
-  queueMessage(message) {
-    if (this.messageQueue.length >= this.config.maxQueueSize) {
-      console.warn('[ChatWebSocket] Message queue full, dropping oldest message');
-      this.messageQueue.shift();
-    }
-
-    this.messageQueue.push(message);
-    console.log('[ChatWebSocket] Message queued, queue size:', this.messageQueue.length);
   }
 
   /**
@@ -220,23 +206,18 @@ class ChatWebSocket {
    *
    * @private
    */
-  flushMessageQueue() {
-    if (this.messageQueue.length === 0) return;
+  _flushMessageQueue() {
+    if (this.messageQueue.isEmpty()) return;
 
-    console.log('[ChatWebSocket] Flushing message queue:', this.messageQueue.length);
+    console.log('[ChatWebSocket] Flushing message queue');
 
-    while (this.messageQueue.length > 0 && this.ws.readyState === WebSocket.OPEN) {
-      const message = this.messageQueue.shift();
-      try {
+    this.messageQueue.flush((message) => {
+      if (this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify(message));
-        console.log('[ChatWebSocket] Queued message sent:', message.type);
-      } catch (error) {
-        console.error('[ChatWebSocket] Failed to send queued message:', error);
-        // Put it back at the front
-        this.messageQueue.unshift(message);
-        break;
+        return true;
       }
-    }
+      return false;
+    });
   }
 
   /**
@@ -245,7 +226,7 @@ class ChatWebSocket {
    * @param {object} data - Parsed message data
    * @private
    */
-  handleIncomingMessage(data) {
+  _handleIncomingMessage(data) {
     // Handle pong (heartbeat response)
     if (data.type === 'pong') {
       console.log('[ChatWebSocket] Pong received');
@@ -261,16 +242,11 @@ class ChatWebSocket {
    *
    * @private
    */
-  startHeartbeat() {
-    this.stopHeartbeat();
-
-    this.heartbeatTimer = setInterval(() => {
-      if (this.status === 'connected' && this.ws.readyState === WebSocket.OPEN) {
-        this.send('ping');
-      }
-    }, this.config.heartbeatInterval);
-
-    console.log('[ChatWebSocket] Heartbeat started');
+  _startHeartbeat() {
+    this.heartbeatManager.start(
+      () => this.send('ping'),
+      () => this.status === 'connected' && this.ws?.readyState === WebSocket.OPEN
+    );
   }
 
   /**
@@ -278,12 +254,8 @@ class ChatWebSocket {
    *
    * @private
    */
-  stopHeartbeat() {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-      console.log('[ChatWebSocket] Heartbeat stopped');
-    }
+  _stopHeartbeat() {
+    this.heartbeatManager.stop();
   }
 
   /**
@@ -291,35 +263,12 @@ class ChatWebSocket {
    *
    * @private
    */
-  scheduleReconnect() {
-    this.clearReconnectTimer();
-
-    // Calculate backoff delay (exponential)
-    const delay = Math.min(
-      this.config.reconnectInterval * Math.pow(2, this.reconnectAttempts),
-      this.config.maxReconnectInterval
-    );
-
-    console.log(`[ChatWebSocket] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1})`);
-
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectAttempts++;
-      this.connect().catch((error) => {
-        console.error('[ChatWebSocket] Reconnection failed:', error);
-      });
-    }, delay);
-  }
-
-  /**
-   * Clear reconnect timer
-   *
-   * @private
-   */
-  clearReconnectTimer() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
+  _scheduleReconnect() {
+    this.reconnectionManager.scheduleReconnect(() => {
+      return this.connect();
+    }).catch((error) => {
+      console.error('[ChatWebSocket] Reconnection failed:', error);
+    });
   }
 
   /**
@@ -328,7 +277,7 @@ class ChatWebSocket {
    * @param {string} newStatus - New status
    * @private
    */
-  updateStatus(newStatus) {
+  _updateStatus(newStatus) {
     if (this.status !== newStatus) {
       console.log(`[ChatWebSocket] Status: ${this.status} -> ${newStatus}`);
       this.status = newStatus;
@@ -403,7 +352,7 @@ class ChatWebSocket {
    * @returns {number}
    */
   getQueueSize() {
-    return this.messageQueue.length;
+    return this.messageQueue.size();
   }
 }
 

@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import CurrentGame from './CurrentGame';
 import TeamProgress from './TeamProgress';
-import api from '../../services/api';
+import { getActive, getGames } from '../../services';
 import './GamePanel.css';
 
 /**
@@ -72,12 +72,12 @@ const GamePanel = ({ user }) => {
             setLoading(true);
 
             // Fetch active event with full story
-            const event = await api.events.getActive();
+            const event = await getActive();
             setActiveEvent(event);
 
             // Fetch games for this event
             if (event && event.id) {
-                const eventGames = await api.events.getGames(event.id);
+                const eventGames = await getGames(event.id);
                 setGames(eventGames);
             }
         } catch (err) {

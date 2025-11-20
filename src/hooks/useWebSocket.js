@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ChatWebSocket from '../services/websocket/chatWebSocket';
-import { onTokenRefresh } from '../services/api';
+import { onTokenRefresh } from '../services';
 
 /**
  * useWebSocket - React hook for managing WebSocket connection

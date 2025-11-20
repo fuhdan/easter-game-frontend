@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import { getMyTeamPlayers, getAllTeams, generateOtp } from '../../services';
 
 const TeamManagementCard = ({ user }) => {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -55,7 +55,7 @@ const TeamManagementCard = ({ user }) => {
     try {
       if (user.role === 'team_captain') {
         // Team captains see only their team members
-        const response = await api.teams.getMyTeamPlayers();
+        const response = await getMyTeamPlayers();
         if (response.success) {
           setTeamMembers(response.players || []);
         } else {
@@ -63,7 +63,7 @@ const TeamManagementCard = ({ user }) => {
         }
       } else if (['admin', 'super_admin'].includes(user.role)) {
         // Admins see all teams and members
-        const teamsResponse = await api.teams.getAll();
+        const teamsResponse = await getAllTeams();
         if (teamsResponse.success) {
           // Extract all members from all teams
           const allMembers = [];
@@ -101,7 +101,7 @@ const TeamManagementCard = ({ user }) => {
   const generateActivationCode = async (memberId) => {
     try {
       console.log('About to generate OTP for member ID:', memberId);
-      const response = await api.players.generateOtp(memberId);
+      const response = await generateOtp(memberId);
       
       if (response.success) {
         console.log('OTP response:', response);

@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import PasswordChangeModal from '../PasswordChangeModal/PasswordChangeModal.jsx';
-import api from '../../services/api';
+import { login, auth, utils } from '../../services';
 import Loader from '../Loader/Loader.jsx';
 import './Login.css';
 
@@ -65,7 +65,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
     
     try {
       // Call login API
-      const response = await api.auth.login({
+      const response = await login({
         username: credentials.username.trim(),
         password: credentials.password
       });
@@ -92,7 +92,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
       
     } catch (error) {
       console.error('Login error:', error);
-      setLoginError(api.utils.handleError(error));
+      setLoginError(utils.handleError(error));
     } finally {
       setLoginLoading(false);
     }
@@ -103,14 +103,14 @@ const Login = ({ onLogin, loading = false, error = null }) => {
    */
   const handleAccountActivation = async (activationData) => {
     setActivationLoading(true);
-    
+
     try {
-      const response = await api.auth.activateAccount(activationData);
-      
+      const response = await auth.activateAccount(activationData);
+
       if (response.success) {
         // Account activated successfully - close modal and login
         setShowPasswordModal(false);
-        
+
         // Auto-login with new credentials or use the response
         if (response.user) {
           await onLogin(activationData.username, activationData.new_password);
@@ -119,10 +119,10 @@ const Login = ({ onLogin, loading = false, error = null }) => {
         // Handle activation error
         throw new Error(response.message || 'Account activation failed');
       }
-      
+
     } catch (error) {
       console.error('Account activation error:', error);
-      setLoginError(api.utils.handleError(error));
+      setLoginError(error.message || 'Account activation failed');
     } finally {
       setActivationLoading(false);
     }

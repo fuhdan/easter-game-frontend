@@ -31,7 +31,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '../services/api';
+import { login, logout } from '../services';
 
 const AuthContext = createContext();
 
@@ -144,13 +144,13 @@ export function AuthProvider({ children }) {
      * @returns {Promise<Object>} Login result with success status
      * @throws {Error} If login fails
      */
-    async function login(username, password) {
+    async function _login(username, password) {
         try {
             setError(null);
             setLoading(true);
             setSessionExpired(false);  // STEP 8: Clear expiry flag on login attempt
 
-            const response = await api.auth.login({
+            const response = await login({
                 username: username.trim(),
                 password: password
             });
@@ -181,11 +181,11 @@ export function AuthProvider({ children }) {
      *
      * @returns {Promise<void>}
      */
-    async function logout() {
+    async function _logout() {
         try {
             setLoading(true);
 
-            await api.auth.logout();
+            await logout();
 
             // Clear local state
             setUser(null);
@@ -214,8 +214,8 @@ export function AuthProvider({ children }) {
 
     const value = {
         user,
-        login,
-        logout,
+        login: _login,
+        logout: _logout,
         loading,
         error,
         clearError,

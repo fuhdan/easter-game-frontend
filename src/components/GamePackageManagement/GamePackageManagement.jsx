@@ -22,8 +22,15 @@
 
 import React, { useState, useEffect } from 'react';
 import './GamePackageManagement.css';
-import api from '../../services/api';
-import AITrainingManagement from '../AITrainingManagement/AITrainingManagement';
+import {
+  getEvents, getEvent, createEvent, updateEvent, deleteEvent,
+  getCategories, getSystemPrompts, getAdminGuide
+} from '../../services';
+import PackagesList from './PackagesList/PackagesList';
+import EventDetailsPanel from './EventDetails/EventDetailsPanel';
+import CreatePackageModal from './Modals/CreatePackageModal';
+import EditEventModal from './Modals/EditEventModal';
+import DeleteConfirmModal from './Modals/DeleteConfirmModal';
 import { marked } from 'marked';
 
 function GamePackageManagement() {
@@ -42,9 +49,6 @@ function GamePackageManagement() {
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showEditGameModal, setShowEditGameModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [showPromptModal, setShowPromptModal] = useState(false);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
   const [showAdminGuide, setShowAdminGuide] = useState(false);
   const [adminGuideContent, setAdminGuideContent] = useState('');
 
@@ -62,23 +66,6 @@ function GamePackageManagement() {
 
   const [selectedGame, setSelectedGame] = useState(null);
   const [gameFormData, setGameFormData] = useState({});
-
-  const [promptFormData, setPromptFormData] = useState({
-    category: 'core_rules',
-    name: '',
-    content: '',
-    description: '',
-    priority: 100
-  });
-
-  const [categoryFormData, setCategoryFormData] = useState({
-    name: '',
-    description: '',
-    color: '#005da0',
-    icon: '🎮',
-    order_index: 0
-  });
-
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   /**
@@ -96,15 +83,15 @@ function GamePackageManagement() {
       setLoading(true);
 
       // Load events with all games
-      const eventsResponse = await api.aiTraining.getEvents();
+      const eventsResponse = await getEvents();
       setEvents(eventsResponse);
 
       // Load system prompts
-      const promptsResponse = await api.aiTraining.getSystemPrompts();
+      const promptsResponse = await getSystemPrompts();
       setSystemPrompts(promptsResponse.prompts);
 
       // Load game categories
-      const categoriesResponse = await api.aiTraining.getCategories();
+      const categoriesResponse = await getCategories();
       setCategories(categoriesResponse.categories || []);
 
       console.log(`Loaded ${eventsResponse.length} events, ${promptsResponse.prompts.length} prompts, ${categoriesResponse.categories?.length || 0} categories`);
@@ -187,7 +174,7 @@ function GamePackageManagement() {
       }
 
       // Create event
-      await api.aiTraining.createEvent(packageFormData);
+      await createEvent(packageFormData);
 
       alert('✅ Game package created successfully! Now add games and training hints.');
       setShowCreatePackageModal(false);
@@ -200,22 +187,33 @@ function GamePackageManagement() {
 
   /**
    * View event details
+   * Fetches full event data including story_html and image_data
    */
-  const handleViewEvent = (event) => {
-    setSelectedEvent(event);
-    setViewMode('view');
-    setEventDetailTab('story'); // Changed from 'details' to 'story'
-    // Populate form data for viewing/editing
-    setPackageFormData({
-      year: event.year,
-      title: event.title,
-      story_html: event.story_html,
-      description: event.description || '',
-      author: event.author || '',
-      is_active: event.is_active,
-      image_path: event.image_path || '',
-      image_data: event.image_data || ''
-    });
+  const handleViewEvent = async (event) => {
+    try {
+      // Fetch full event details from the API (includes story_html and image_data)
+      const fullEventData = await getEvent(event.id);
+      console.log('handleViewEvent - full event data:', fullEventData);
+
+      setSelectedEvent(fullEventData);
+      setViewMode('view');
+      setEventDetailTab('story');
+
+      // Populate form data for viewing/editing with full data
+      setPackageFormData({
+        year: fullEventData.year,
+        title: fullEventData.title,
+        story_html: fullEventData.story_html || '',
+        description: fullEventData.description || '',
+        author: fullEventData.author || '',
+        is_active: fullEventData.is_active,
+        image_path: fullEventData.image_path || '',
+        image_data: fullEventData.image_data || ''
+      });
+    } catch (error) {
+      console.error('Failed to load event details:', error);
+      alert('Failed to load event details. Please try again.');
+    }
   };
 
   /**
@@ -271,7 +269,7 @@ function GamePackageManagement() {
    */
   const submitEditEvent = async () => {
     try {
-      await api.aiTraining.updateEvent(selectedEvent.id, packageFormData);
+      await updateEvent(selectedEvent.id, packageFormData);
 
       alert('✅ Event updated successfully!');
       setShowEditEventModal(false);
@@ -289,13 +287,13 @@ function GamePackageManagement() {
     if (!selectedEvent) return;
 
     try {
-      await api.aiTraining.updateEvent(selectedEvent.id, packageFormData);
+      await updateEvent(selectedEvent.id, packageFormData);
 
       alert('✅ Event updated successfully!');
       await loadAllData();
 
       // Refresh the selected event data
-      const updatedEvents = await api.aiTraining.getEvents();
+      const updatedEvents = await getEvents();
       const updatedEvent = updatedEvents.find(e => e.id === selectedEvent.id);
       if (updatedEvent) {
         setSelectedEvent(updatedEvent);
@@ -330,7 +328,7 @@ function GamePackageManagement() {
   const handleToggleEventActive = async (event) => {
     try {
       const newStatus = !event.is_active;
-      await api.aiTraining.updateEvent(event.id, { is_active: newStatus });
+      await updateEvent(event.id, { is_active: newStatus });
 
       alert(`✅ Event ${newStatus ? 'activated' : 'archived'} successfully!`);
       await loadAllData();
@@ -341,16 +339,13 @@ function GamePackageManagement() {
   };
 
   /**
-   * Confirm deletion
+   * Confirm deletion (events only - prompts/categories handled by child components)
    */
   const confirmDelete = async () => {
     try {
       if (deleteTarget.type === 'event') {
-        await api.aiTraining.deleteEvent(deleteTarget.data.id);
-        alert('✅ Event and all its games deleted successfully!');
-      } else if (deleteTarget.type === 'prompt') {
-        await api.aiTraining.deleteSystemPrompt(deleteTarget.data.id);
-        alert('✅ System prompt deleted successfully!');
+        await deleteEvent(deleteTarget.data.id);
+        console.log(`✅ Event deleted: ${deleteTarget.data.id}`);
       }
 
       setShowDeleteConfirmModal(false);
@@ -372,93 +367,13 @@ function GamePackageManagement() {
     alert(`Event: ${event.title}\nGames: ${event.game_count}\nYear: ${event.year}`);
   };
 
-  /**
-   * Create/Edit system prompt
-   */
-  const handlePromptModal = (prompt = null) => {
-    if (prompt) {
-      setPromptFormData({
-        id: prompt.id,
-        category: prompt.category,
-        name: prompt.name,
-        content: prompt.content,
-        description: prompt.description || '',
-        priority: prompt.priority
-      });
-    } else {
-      setPromptFormData({
-        category: 'core_rules',
-        name: '',
-        content: '',
-        description: '',
-        priority: 100
-      });
-    }
-    setShowPromptModal(true);
-  };
-
-  /**
-   * Submit system prompt
-   */
-  const submitSystemPrompt = async () => {
-    try {
-      if (!promptFormData.category || !promptFormData.name || !promptFormData.content) {
-        alert('Please fill in Category, Name, and Content');
-        return;
-      }
-
-      if (promptFormData.id) {
-        // Update existing
-        await api.aiTraining.updateSystemPrompt(promptFormData.id, {
-          content: promptFormData.content,
-          description: promptFormData.description,
-          priority: promptFormData.priority
-        });
-        alert('✅ System prompt updated successfully!');
-      } else {
-        // Create new
-        await api.aiTraining.createSystemPrompt(promptFormData);
-        alert('✅ System prompt created successfully!');
-      }
-
-      setShowPromptModal(false);
-      await loadAllData();
-    } catch (error) {
-      console.error('Failed to save system prompt:', error);
-      alert(`❌ Failed to save system prompt: ${error.response?.data?.detail || error.message}`);
-    }
-  };
-
-  /**
-   * Delete system prompt
-   */
-  const handleDeletePrompt = (prompt) => {
-    setDeleteTarget({ type: 'prompt', data: prompt });
-    setShowDeleteConfirmModal(true);
-  };
-
-  /**
-   * Toggle system prompt active status
-   */
-  const handleTogglePromptActive = async (prompt) => {
-    try {
-      const newStatus = !prompt.is_active;
-      await api.aiTraining.updateSystemPrompt(prompt.id, { is_active: newStatus });
-
-      alert(`✅ System prompt ${newStatus ? 'activated' : 'deactivated'} successfully!`);
-      await loadAllData();
-    } catch (error) {
-      console.error('Failed to toggle prompt status:', error);
-      alert(`❌ Failed to update prompt status`);
-    }
-  };
 
   /**
    * Show admin guide
    */
   const handleShowAdminGuide = async () => {
     try {
-      const guide = await api.aiTraining.getAdminGuide();
+      const guide = await getAdminGuide();
       setAdminGuideContent(guide.guide);
       setShowAdminGuide(true);
     } catch (error) {
@@ -467,77 +382,6 @@ function GamePackageManagement() {
     }
   };
 
-  /**
-   * Category Management Handlers
-   */
-  const handleCategoryModal = (category = null) => {
-    if (category) {
-      // Edit mode
-      setEditingCategory(category);
-      setCategoryFormData({
-        name: category.name,
-        description: category.description || '',
-        color: category.color || '#005da0',
-        icon: category.icon || '🎮',
-        order_index: category.order_index || 0
-      });
-    } else {
-      // Create mode
-      setEditingCategory(null);
-      setCategoryFormData({
-        name: '',
-        description: '',
-        color: '#005da0',
-        icon: '🎮',
-        order_index: categories.length
-      });
-    }
-    setShowCategoryModal(true);
-  };
-
-  const handleSaveCategory = async () => {
-    try {
-      if (editingCategory) {
-        // Update
-        await api.aiTraining.updateCategory(editingCategory.id, categoryFormData);
-        alert('✅ Category updated successfully');
-      } else {
-        // Create
-        await api.aiTraining.createCategory(categoryFormData);
-        alert('✅ Category created successfully');
-      }
-      setShowCategoryModal(false);
-      loadAllData();
-    } catch (error) {
-      console.error('Failed to save category:', error);
-      alert(`❌ Failed to save category: ${error.response?.data?.detail || error.message}`);
-    }
-  };
-
-  const handleDeleteCategory = async (category) => {
-    if (!window.confirm(`Delete category "${category.name}"?\n\nThis will fail if any games use this category.`)) {
-      return;
-    }
-
-    try {
-      await api.aiTraining.deleteCategory(category.id);
-      alert('✅ Category deleted successfully');
-      loadAllData();
-    } catch (error) {
-      console.error('Failed to delete category:', error);
-      alert(`❌ Failed to delete category: ${error.response?.data?.detail || error.message}`);
-    }
-  };
-
-  const handleToggleCategoryActive = async (category) => {
-    try {
-      await api.aiTraining.updateCategory(category.id, { is_active: !category.is_active });
-      loadAllData();
-    } catch (error) {
-      console.error('Failed to toggle category:', error);
-      alert('❌ Failed to update category');
-    }
-  };
 
   // Loading state
   if (loading) {
@@ -569,398 +413,35 @@ function GamePackageManagement() {
       <div className="card-body">
         {/* Game Packages Tab */}
         {activeTab === 'packages' && (
-          <div className="packages-section">
-          <div className="packages-header">
-            <button className="btn btn-success" onClick={handleCreatePackage}>
-              ➕ Create New Game Event
-            </button>
-            <button className="btn btn-outline" onClick={loadAllData}>
-              🔄 Reload
-            </button>
-          </div>
-
-          <div className="packages-grid">
-            {events.map(event => (
-              <div
-                key={event.id}
-                className={`package-card ${!event.is_active ? 'archived' : ''} ${selectedEvent?.id === event.id && viewMode ? 'selected' : ''}`}
-              >
-                <div className="card-header">
-                  <div className="card-title">
-                    <span className="year-badge">{event.year}</span>
-                    <h4>{event.title}</h4>
-                  </div>
-                  <div className="card-status">
-                    {event.is_active ? (
-                      <span className="badge badge-success">Active</span>
-                    ) : (
-                      <span className="badge badge-secondary">Archived</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="card-body">
-                  {event.description && (
-                    <p className="description">{event.description}</p>
-                  )}
-                  {event.author && (
-                    <p className="author">Author: {event.author}</p>
-                  )}
-                  <div className="card-stats">
-                    <span>🎯 {event.game_count} Games</span>
-                    <span>📅 Created: {new Date(event.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <button
-                    className="btn btn-info btn-sm"
-                    onClick={() => handleViewEvent(event)}
-                  >
-                    📋 Game Details
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {events.length === 0 && (
-              <div className="empty-state">
-                <p>No game packages found. Create your first package to get started!</p>
-              </div>
-            )}
-          </div>
+          <>
+          <PackagesList
+            events={events}
+            selectedEvent={selectedEvent}
+            viewMode={viewMode}
+            onCreatePackage={handleCreatePackage}
+            onViewEvent={handleViewEvent}
+            onReload={loadAllData}
+          />
 
           {/* Event Details Section - shown when View or Edit is clicked */}
           {selectedEvent && viewMode && (
-            <div className="event-details-section">
-              <div className="event-details-header">
-                <h3>
-                  📋 Game Details: {selectedEvent.title} ({selectedEvent.year})
-                </h3>
-                <button className="btn btn-outline btn-sm" onClick={handleCloseEvent}>
-                  ✕ Close
-                </button>
-              </div>
-
-              {/* Event Detail Tabs */}
-              <div className="event-detail-tabs">
-                <button
-                  className={`event-tab-btn ${eventDetailTab === 'story' ? 'active' : ''}`}
-                  onClick={() => setEventDetailTab('story')}
-                >
-                  📖 Event Story
-                </button>
-                <button
-                  className={`event-tab-btn ${eventDetailTab === 'games' ? 'active' : ''}`}
-                  onClick={() => setEventDetailTab('games')}
-                >
-                  🎮 Games
-                </button>
-                <button
-                  className={`event-tab-btn ${eventDetailTab === 'hints' ? 'active' : ''}`}
-                  onClick={() => setEventDetailTab('hints')}
-                >
-                  💡 Training Hints
-                </button>
-                <button
-                  className={`event-tab-btn ${eventDetailTab === 'categories' ? 'active' : ''}`}
-                  onClick={() => setEventDetailTab('categories')}
-                >
-                  🏷️ Categories
-                </button>
-                <button
-                  className={`event-tab-btn ${eventDetailTab === 'prompts' ? 'active' : ''}`}
-                  onClick={() => setEventDetailTab('prompts')}
-                >
-                  🤖 System Prompts
-                </button>
-              </div>
-
-              {/* Event Detail Content */}
-              <div className="event-detail-content">
-                {/* Event Story Tab */}
-                {eventDetailTab === 'story' && (
-                  <div className="story-content">
-                    <h3>Edit Event Story</h3>
-                    <div className="form-group">
-                      <label>Title *</label>
-                      <input
-                        type="text"
-                        value={packageFormData.title}
-                        onChange={(e) => setPackageFormData({...packageFormData, title: e.target.value})}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Year *</label>
-                      <input
-                        type="number"
-                        value={packageFormData.year}
-                        onChange={(e) => setPackageFormData({...packageFormData, year: parseInt(e.target.value) || new Date().getFullYear()})}
-                        min="2020"
-                        max="2099"
-                      />
-                      <small style={{ color: '#666', fontSize: '0.9em' }}>
-                        The year this event is for (e.g., 2024, 2025)
-                      </small>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        value={packageFormData.description}
-                        onChange={(e) => setPackageFormData({...packageFormData, description: e.target.value})}
-                        rows="3"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Author</label>
-                      <input
-                        type="text"
-                        value={packageFormData.author}
-                        onChange={(e) => setPackageFormData({...packageFormData, author: e.target.value})}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Event Image (optional)</label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          style={{ padding: '5px' }}
-                        />
-                        {packageFormData.image_data && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img
-                              src={`data:image/png;base64,${packageFormData.image_data}`}
-                              alt="Preview"
-                              style={{ maxWidth: '200px', maxHeight: '150px', border: '1px solid #ddd', borderRadius: '4px' }}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-outline"
-                              onClick={handleClearImage}
-                            >
-                              🗑️ Remove Image
-                            </button>
-                          </div>
-                        )}
-                        <small style={{ color: '#666' }}>
-                          Max size: 2MB. Stored in database with event.
-                        </small>
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Story HTML *</label>
-                      <textarea
-                        value={packageFormData.story_html}
-                        onChange={(e) => setPackageFormData({...packageFormData, story_html: e.target.value})}
-                        rows="15"
-                        placeholder="Full HTML story text displayed on main game screen"
-                      />
-                      <small style={{ color: '#666', display: 'block', marginTop: '8px' }}>
-                        💡 <strong>Tip:</strong> Use{' '}
-                        <code style={{ background: '#f0f0f0', padding: '2px 6px', borderRadius: '3px' }}>
-                          {'<img src="{{EVENT_IMAGE}}" alt="Event Image" />'}
-                        </code>
-                        {' '}to insert the uploaded image anywhere in your story.
-                      </small>
-                    </div>
-
-                    <div className="form-group checkbox">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={packageFormData.is_active}
-                          onChange={(e) => setPackageFormData({...packageFormData, is_active: e.target.checked})}
-                        />
-                        Active (visible to users)
-                      </label>
-                    </div>
-
-                    <div className="form-actions">
-                      <button className="btn btn-success" onClick={handleUpdateEvent}>
-                        ✓ Save Changes
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Games Tab */}
-                {eventDetailTab === 'games' && (
-                  <div className="games-content">
-                    <AITrainingManagement initialTab="games" showTabs={false} />
-                  </div>
-                )}
-
-                {/* Training Hints Tab */}
-                {eventDetailTab === 'hints' && (
-                  <div className="hints-content">
-                    <AITrainingManagement initialTab="hints" showTabs={false} />
-                  </div>
-                )}
-
-                {/* Categories Tab */}
-                {eventDetailTab === 'categories' && (
-                  <div className="categories-content">
-                    <div className="categories-header">
-                      <button className="btn btn-success" onClick={() => handleCategoryModal()}>
-                        ➕ Create New Category
-                      </button>
-                    </div>
-
-                    <div className="categories-list">
-                      {categories.map(category => (
-                        <div key={category.id} className={`category-item ${!category.is_active ? 'inactive' : ''}`}>
-                          <div className="category-badge" style={{ backgroundColor: category.color || '#005da0' }}>
-                            {category.icon || '🎮'}
-                          </div>
-                          <div className="category-info-section">
-                            <div className="category-name">{category.name}</div>
-                            {category.description && (
-                              <div className="category-description">{category.description}</div>
-                            )}
-                            <div className="category-meta">
-                              Order: {category.order_index} |
-                              {category.is_active ? ' Active' : ' Inactive'}
-                            </div>
-                          </div>
-                          <div className="category-actions">
-                            <button
-                              className="btn btn-sm btn-info"
-                              onClick={() => handleCategoryModal(category)}
-                            >
-                              ✏️ Edit
-                            </button>
-                            <button
-                              className={`btn btn-sm ${category.is_active ? 'btn-warning' : 'btn-success'}`}
-                              onClick={() => handleToggleCategoryActive(category)}
-                            >
-                              {category.is_active ? '⏸️ Deactivate' : '▶️ Activate'}
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDeleteCategory(category)}
-                            >
-                              🗑️ Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {categories.length === 0 && (
-                      <div className="empty-state">
-                        No categories found. Click "Create New Category" to add one.
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* System Prompts Tab */}
-                {eventDetailTab === 'prompts' && (
-          <div className="prompts-section">
-          <div className="prompts-header">
-            <button className="btn btn-success" onClick={() => handlePromptModal()}>
-              ➕ Create New System Prompt
-            </button>
-          </div>
-
-          <div className="prompts-list">
-            {/* Group by category - ordered */}
-            {(() => {
-              // Define the desired order
-              const categoryOrder = ['core_rules', 'hint_strategy', 'game_story', 'company_context', 'response_templates'];
-
-              // Group prompts by category
-              const grouped = systemPrompts.reduce((acc, prompt) => {
-                if (!acc[prompt.category]) acc[prompt.category] = [];
-                acc[prompt.category].push(prompt);
-                return acc;
-              }, {});
-
-              // Sort categories according to the defined order
-              const sortedCategories = categoryOrder
-                .filter(cat => grouped[cat]) // Only include categories that exist
-                .map(cat => [cat, grouped[cat]]);
-
-              return sortedCategories;
-            })().map(([category, prompts]) => (
-              <div key={category} className="prompt-category-group">
-                <h4 className="category-header">{category}</h4>
-                {prompts.map(prompt => (
-                  <div key={prompt.id} className={`prompt-card ${!prompt.is_active ? 'inactive' : ''}`}>
-                    <div className="prompt-header">
-                      <div className="prompt-title">
-                        <strong>{prompt.name}</strong>
-                        <span className="priority-badge">Priority: {prompt.priority}</span>
-                      </div>
-                      <div className="prompt-status">
-                        {prompt.is_active ? (
-                          <span className="badge badge-success">Active</span>
-                        ) : (
-                          <span className="badge badge-secondary">Inactive</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {prompt.description && (
-                      <p className="prompt-description">{prompt.description}</p>
-                    )}
-
-                    <div className="prompt-content">
-                      {prompt.content.substring(0, 200)}
-                      {prompt.content.length > 200 && '...'}
-                    </div>
-
-                    <div className="prompt-meta">
-                      <span>Version: {prompt.version}</span>
-                      {prompt.times_used > 0 && (
-                        <span>Used: {prompt.times_used} times</span>
-                      )}
-                    </div>
-
-                    <div className="prompt-actions">
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handlePromptModal(prompt)}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className={`btn btn-sm ${prompt.is_active ? 'btn-warning' : 'btn-success'}`}
-                        onClick={() => handleTogglePromptActive(prompt)}
-                      >
-                        {prompt.is_active ? '⏸️ Deactivate' : '▶️ Activate'}
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeletePrompt(prompt)}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-
-            {systemPrompts.length === 0 && (
-              <div className="empty-state">
-                <p>No system prompts found. Create prompts to control AI behavior!</p>
-              </div>
-            )}
-          </div>
-          </div>
-                )}
-              </div>
-            </div>
+            <EventDetailsPanel
+              selectedEvent={selectedEvent}
+              eventDetailTab={eventDetailTab}
+              packageFormData={packageFormData}
+              categories={categories}
+              systemPrompts={systemPrompts}
+              onTabChange={setEventDetailTab}
+              onClose={handleCloseEvent}
+              onFormChange={setPackageFormData}
+              onImageUpload={handleImageUpload}
+              onClearImage={handleClearImage}
+              onSaveEvent={handleUpdateEvent}
+              onCategoriesChanged={loadAllData}
+              onPromptsChanged={loadAllData}
+            />
           )}
-          </div>
+          </>
         )}
 
         {/* Admin Guide Tab */}
@@ -1143,391 +624,37 @@ function GamePackageManagement() {
 
       {/* Create Package Modal */}
       {showCreatePackageModal && (
-        <div className="modal-overlay" onClick={() => setShowCreatePackageModal(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <h3>➕ Create New Game Package</h3>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Year *</label>
-                <input
-                  type="number"
-                  value={packageFormData.year}
-                  onChange={(e) => setPackageFormData({...packageFormData, year: parseInt(e.target.value)})}
-                  placeholder="2025"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Title *</label>
-                <input
-                  type="text"
-                  value={packageFormData.title}
-                  onChange={(e) => setPackageFormData({...packageFormData, title: e.target.value})}
-                  placeholder="e.g., Faust - The Quest for Knowledge"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={packageFormData.description}
-                  onChange={(e) => setPackageFormData({...packageFormData, description: e.target.value})}
-                  placeholder="Short description for admin overview"
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Author</label>
-                <input
-                  type="text"
-                  value={packageFormData.author}
-                  onChange={(e) => setPackageFormData({...packageFormData, author: e.target.value})}
-                  placeholder="e.g., Goethe"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Event Image (optional)</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ padding: '5px' }}
-                  />
-                  {packageFormData.image_data && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img
-                        src={`data:image/png;base64,${packageFormData.image_data}`}
-                        alt="Preview"
-                        style={{ maxWidth: '200px', maxHeight: '150px', border: '1px solid #ddd', borderRadius: '4px' }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={handleClearImage}
-                      >
-                        🗑️ Remove Image
-                      </button>
-                    </div>
-                  )}
-                  <small style={{ color: '#666' }}>
-                    Max size: 2MB. Stored in database with event.
-                  </small>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Story HTML *</label>
-                <textarea
-                  value={packageFormData.story_html}
-                  onChange={(e) => setPackageFormData({...packageFormData, story_html: e.target.value})}
-                  placeholder="Full HTML story text displayed on main game screen"
-                  rows="10"
-                />
-              </div>
-
-              <div className="form-group checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={packageFormData.is_active}
-                    onChange={(e) => setPackageFormData({...packageFormData, is_active: e.target.checked})}
-                  />
-                  Active (visible to users)
-                </label>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-success" onClick={submitCreatePackage}>
-                ✓ Create Package
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowCreatePackageModal(false)}>
-                ✕ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <CreatePackageModal
+          formData={packageFormData}
+          onFormChange={setPackageFormData}
+          onImageUpload={handleImageUpload}
+          onClearImage={handleClearImage}
+          onSave={submitCreatePackage}
+          onClose={() => setShowCreatePackageModal(false)}
+        />
       )}
 
       {/* Edit Event Modal */}
       {showEditEventModal && selectedEvent && (
-        <div className="modal-overlay" onClick={() => setShowEditEventModal(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <h3>✏️ Edit Event: {selectedEvent.title}</h3>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Title *</label>
-                <input
-                  type="text"
-                  value={packageFormData.title}
-                  onChange={(e) => setPackageFormData({...packageFormData, title: e.target.value})}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={packageFormData.description}
-                  onChange={(e) => setPackageFormData({...packageFormData, description: e.target.value})}
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Author</label>
-                <input
-                  type="text"
-                  value={packageFormData.author}
-                  onChange={(e) => setPackageFormData({...packageFormData, author: e.target.value})}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Event Image (optional)</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ padding: '5px' }}
-                  />
-                  {packageFormData.image_data && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img
-                        src={`data:image/png;base64,${packageFormData.image_data}`}
-                        alt="Preview"
-                        style={{ maxWidth: '200px', maxHeight: '150px', border: '1px solid #ddd', borderRadius: '4px' }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={handleClearImage}
-                      >
-                        🗑️ Remove Image
-                      </button>
-                    </div>
-                  )}
-                  <small style={{ color: '#666' }}>
-                    Max size: 2MB. Stored in database with event.
-                  </small>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Story HTML *</label>
-                <textarea
-                  value={packageFormData.story_html}
-                  onChange={(e) => setPackageFormData({...packageFormData, story_html: e.target.value})}
-                  rows="10"
-                />
-              </div>
-
-              <div className="form-group checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={packageFormData.is_active}
-                    onChange={(e) => setPackageFormData({...packageFormData, is_active: e.target.checked})}
-                  />
-                  Active
-                </label>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-success" onClick={submitEditEvent}>
-                ✓ Save Changes
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowEditEventModal(false)}>
-                ✕ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditEventModal
+          event={selectedEvent}
+          formData={packageFormData}
+          onFormChange={setPackageFormData}
+          onImageUpload={handleImageUpload}
+          onClearImage={handleClearImage}
+          onSave={submitEditEvent}
+          onClose={() => setShowEditEventModal(false)}
+        />
       )}
 
-      {/* System Prompt Modal */}
-      {showPromptModal && (
-        <div className="modal-overlay" onClick={() => setShowPromptModal(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <h3>{promptFormData.id ? '✏️ Edit' : '➕ Create'} System Prompt</h3>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Category *</label>
-                <select
-                  value={promptFormData.category}
-                  onChange={(e) => setPromptFormData({...promptFormData, category: e.target.value})}
-                  disabled={!!promptFormData.id}
-                >
-                  <option value="core_rules">Core Rules</option>
-                  <option value="company_context">Company Context</option>
-                  <option value="hint_strategy">Hint Strategy</option>
-                  <option value="response_templates">Response Templates</option>
-                  <option value="game_story">Game Story</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Name *</label>
-                <input
-                  type="text"
-                  value={promptFormData.name}
-                  onChange={(e) => setPromptFormData({...promptFormData, name: e.target.value})}
-                  placeholder="e.g., progressive_hints"
-                  disabled={!!promptFormData.id}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={promptFormData.description}
-                  onChange={(e) => setPromptFormData({...promptFormData, description: e.target.value})}
-                  placeholder="What does this prompt do?"
-                  rows="2"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Content *</label>
-                <textarea
-                  value={promptFormData.content}
-                  onChange={(e) => setPromptFormData({...promptFormData, content: e.target.value})}
-                  placeholder="The actual prompt text for the AI..."
-                  rows="8"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Priority</label>
-                <input
-                  type="number"
-                  value={promptFormData.priority}
-                  onChange={(e) => setPromptFormData({...promptFormData, priority: parseInt(e.target.value)})}
-                  placeholder="Lower = higher priority (default: 100)"
-                />
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-success" onClick={submitSystemPrompt}>
-                ✓ {promptFormData.id ? 'Save Changes' : 'Create Prompt'}
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowPromptModal(false)}>
-                ✕ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Category Modal */}
-      {showCategoryModal && (
-        <div className="modal-overlay" onClick={() => setShowCategoryModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{editingCategory ? '✏️ Edit' : '➕ Create'} Game Category</h3>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Name *</label>
-                <input
-                  type="text"
-                  value={categoryFormData.name}
-                  onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
-                  placeholder="e.g., Puzzle, Network, SQL"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={categoryFormData.description}
-                  onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
-                  placeholder="Brief description of this category..."
-                  rows="2"
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Icon (Emoji)</label>
-                  <input
-                    type="text"
-                    value={categoryFormData.icon}
-                    onChange={(e) => setCategoryFormData({...categoryFormData, icon: e.target.value})}
-                    placeholder="🎮"
-                    maxLength="2"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Color (Hex)</label>
-                  <input
-                    type="color"
-                    value={categoryFormData.color}
-                    onChange={(e) => setCategoryFormData({...categoryFormData, color: e.target.value})}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Order Index</label>
-                  <input
-                    type="number"
-                    value={categoryFormData.order_index}
-                    onChange={(e) => setCategoryFormData({...categoryFormData, order_index: parseInt(e.target.value)})}
-                    min="0"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-success" onClick={handleSaveCategory}>
-                ✓ {editingCategory ? 'Save Changes' : 'Create Category'}
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowCategoryModal(false)}>
-                ✕ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmModal && deleteTarget && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirmModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>⚠️ Confirm Deletion</h3>
-            <div className="modal-body">
-              {deleteTarget.type === 'event' && (
-                <>
-                  <p><strong>Event:</strong> {deleteTarget.data.title}</p>
-                  <p><strong>Year:</strong> {deleteTarget.data.year}</p>
-                  <p><strong>Games:</strong> {deleteTarget.data.game_count}</p>
-                  <p className="warning-text">
-                    ⚠️ This will permanently delete the event and ALL associated games, training hints, and progress records!
-                  </p>
-                </>
-              )}
-              {deleteTarget.type === 'prompt' && (
-                <>
-                  <p><strong>Prompt:</strong> {deleteTarget.data.name}</p>
-                  <p><strong>Category:</strong> {deleteTarget.data.category}</p>
-                  <p className="warning-text">
-                    ⚠️ This will permanently delete the system prompt!
-                  </p>
-                </>
-              )}
-              <p className="warning-text">This action cannot be undone!</p>
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-danger" onClick={confirmDelete}>
-                🗑️ Yes, Delete Permanently
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowDeleteConfirmModal(false)}>
-                ✕ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+      {showDeleteConfirmModal && (
+        <DeleteConfirmModal
+          deleteTarget={deleteTarget}
+          onConfirm={confirmDelete}
+          onClose={() => setShowDeleteConfirmModal(false)}
+        />
       )}
 
       {/* Admin Guide Modal */}

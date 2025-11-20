@@ -24,7 +24,7 @@ import PlayerManagement from './PlayerManagement';
 import TeamConfiguration from './TeamConfiguration';
 import TeamDisplay from './TeamDisplay';
 import TeamLoader from '../Loader/TeamLoader';
-import api from '../../services/api';
+import { getAllTeams } from '../../services';
 
 const TeamCreation = () => {
   const [players, setPlayers] = useState([]);
@@ -62,7 +62,7 @@ const TeamCreation = () => {
         console.log('Loading existing teams and players...');
         
         // Load existing teams
-        const teamsResponse = await api.teams.getAll();
+        const teamsResponse = await getAllTeams();
         if (teamsResponse.success && teamsResponse.teams) {
           setTeams(teamsResponse.teams);
           console.log(`Loaded ${teamsResponse.teams.length} existing teams`);

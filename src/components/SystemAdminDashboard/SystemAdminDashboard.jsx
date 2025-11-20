@@ -21,62 +21,56 @@
 
 import React, { useState, useEffect } from 'react';
 import './SystemAdminDashboard.css';
-import api from '../../services/api';
+import { getConfig, updateConfig, reloadConfig } from '../../services';
 import GamePackageManagement from '../GamePackageManagement/GamePackageManagement';
+import ConfigCategoryFilter from './ConfigCategoryFilter';
+import ConfigItem from './ConfigItem';
+import ConfirmModal from './ConfirmModal';
 
 /**
- * Convert config key to user-friendly label
- * @param {string} key - Configuration key (e.g., "rate_limits.login.max_attempts")
- * @returns {string} - Friendly label (e.g., "Max Login Attempts")
+ * Validate configuration value
+ *
+ * @param {string} value - Value to validate
+ * @param {string} valueType - Value type (int, float, bool, string)
+ * @param {Object} config - Configuration object with constraints
+ * @returns {string|null} Error message or null if valid
  */
-const getConfigLabel = (key) => {
-  // Custom labels for specific keys
-  const customLabels = {
-    'auth.access_token_minutes': 'Access Token Lifetime',
-    'auth.refresh_token_days': 'Refresh Token Lifetime',
-    'auth.session_timeout_seconds': 'Session Timeout',
-    'auth.login_max_attempts': 'Max Login Attempts',
-    'auth.login_window_seconds': 'Login Rate Limit Window',
-    'auth.login_ban_duration_seconds': 'Login Ban Duration',
-    'rate_limits.api.max_requests': 'Max API Requests',
-    'rate_limits.api.window_seconds': 'API Rate Limit Window',
-    'rate_limits.ai.max_requests': 'Max AI Requests',
-    'rate_limits.ai.window_minutes': 'AI Rate Limit Window',
-    'rate_limits.chat.max_messages': 'Max Chat Messages',
-    'rate_limits.chat.window_minutes': 'Chat Rate Limit Window',
-    'rate_limits.admin_chat.max_messages': 'Max Admin Chat Messages',
-    'rate_limits.admin_chat.window_minutes': 'Admin Chat Rate Limit Window',
-    'rate_limits.escalations.max_requests': 'Max Escalation Requests',
-    'rate_limits.escalations.window_minutes': 'Escalation Rate Limit Window',
-    'security.prompt_injection_threshold': 'Prompt Injection Threshold',
-    'security.safe_context_reduction': 'Safe Context Score Reduction',
-    'security.max_message_length': 'Max Message Length',
-    'security.password_reset_ttl': 'Password Reset Token TTL',
-    'ai.ollama_timeout': 'Ollama API Timeout',
-    'ai.max_tokens': 'Max AI Response Tokens',
-    'ai.temperature': 'AI Temperature',
-    'ai.top_p': 'AI Top P (nucleus sampling)',
-    'ai.health_check_timeout': 'AI Health Check Timeout',
-    'websocket.message_timeout': 'WebSocket Message Timeout',
-    'websocket.max_reconnect_attempts': 'Max WebSocket Reconnect Attempts',
-    'websocket.reconnect_delay_ms': 'WebSocket Reconnect Delay',
-    'cache.team_context_ttl': 'Team Context Cache TTL',
-    'game.stuck_threshold_medium_minutes': 'Medium Stuck Threshold',
-    'game.stuck_threshold_high_minutes': 'High Stuck Threshold',
-    'notifications.deduplication_window_minutes': 'Notification Dedup Window',
-  };
+const validateValue = (value, valueType, config) => {
+  // Type validation
+  if (valueType === 'int') {
+    const intValue = parseInt(value);
+    if (isNaN(intValue)) {
+      return 'Value must be an integer';
+    }
 
-  // Return custom label if exists
-  if (customLabels[key]) {
-    return customLabels[key];
+    // Min/max validation
+    if (config.min_value !== null && intValue < config.min_value) {
+      return `Value must be >= ${config.min_value}`;
+    }
+    if (config.max_value !== null && intValue > config.max_value) {
+      return `Value must be <= ${config.max_value}`;
+    }
+  } else if (valueType === 'float') {
+    const floatValue = parseFloat(value);
+    if (isNaN(floatValue)) {
+      return 'Value must be a number';
+    }
+
+    // Min/max validation
+    if (config.min_value !== null && floatValue < config.min_value) {
+      return `Value must be >= ${config.min_value}`;
+    }
+    if (config.max_value !== null && floatValue > config.max_value) {
+      return `Value must be <= ${config.max_value}`;
+    }
+  } else if (valueType === 'bool') {
+    const lowerValue = value.toLowerCase();
+    if (!['true', 'false', '1', '0'].includes(lowerValue)) {
+      return 'Value must be true/false or 1/0';
+    }
   }
 
-  // Fallback: Convert last part of key to title case
-  const lastPart = key.split('.').pop();
-  return lastPart
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  return null; // No error
 };
 
 function SystemAdminDashboard() {
@@ -95,19 +89,21 @@ function SystemAdminDashboard() {
    * Load configuration on component mount
    */
   useEffect(() => {
-    loadConfiguration();
+    _loadConfiguration();
   }, []);
 
   /**
    * Fetch configuration from backend API
+   *
+   * @private
    */
-  const loadConfiguration = async () => {
+  const _loadConfiguration = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // GET /api/system/config via api.system.getConfig()
-      const response = await api.system.getConfig();
+      // GET /api/system/config via getConfig()
+      const response = await getConfig();
 
       setConfigs(response.configs);
       setCategories(['all', ...response.categories]);
@@ -123,8 +119,10 @@ function SystemAdminDashboard() {
 
   /**
    * Start editing a configuration value
+   *
+   * @param {Object} config - Configuration to edit
    */
-  const handleEditStart = (config) => {
+  const _handleEditStart = (config) => {
     setEditingKey(config.key);
     setEditValue(config.value);
   };
@@ -132,15 +130,17 @@ function SystemAdminDashboard() {
   /**
    * Cancel editing
    */
-  const handleEditCancel = () => {
+  const _handleEditCancel = () => {
     setEditingKey(null);
     setEditValue('');
   };
 
   /**
    * Save edited value (opens confirmation modal)
+   *
+   * @param {Object} config - Configuration being edited
    */
-  const handleEditSave = (config) => {
+  const _handleEditSave = (config) => {
     // Validate value before showing modal
     const validationError = validateValue(editValue, config.value_type, config);
     if (validationError) {
@@ -154,50 +154,11 @@ function SystemAdminDashboard() {
   };
 
   /**
-   * Validate configuration value
-   */
-  const validateValue = (value, valueType, config) => {
-    // Type validation
-    if (valueType === 'int') {
-      const intValue = parseInt(value);
-      if (isNaN(intValue)) {
-        return 'Value must be an integer';
-      }
-
-      // Min/max validation
-      if (config.min_value !== null && intValue < config.min_value) {
-        return `Value must be >= ${config.min_value}`;
-      }
-      if (config.max_value !== null && intValue > config.max_value) {
-        return `Value must be <= ${config.max_value}`;
-      }
-    } else if (valueType === 'float') {
-      const floatValue = parseFloat(value);
-      if (isNaN(floatValue)) {
-        return 'Value must be a number';
-      }
-
-      // Min/max validation
-      if (config.min_value !== null && floatValue < config.min_value) {
-        return `Value must be >= ${config.min_value}`;
-      }
-      if (config.max_value !== null && floatValue > config.max_value) {
-        return `Value must be <= ${config.max_value}`;
-      }
-    } else if (valueType === 'bool') {
-      const lowerValue = value.toLowerCase();
-      if (!['true', 'false', '1', '0'].includes(lowerValue)) {
-        return 'Value must be true/false or 1/0';
-      }
-    }
-
-    return null; // No error
-  };
-
-  /**
    * Confirm and apply configuration change
+   *
+   * @private
    */
-  const confirmChange = async () => {
+  const _confirmChange = async () => {
     try {
       const { config, newValue } = pendingChange;
 
@@ -211,11 +172,11 @@ function SystemAdminDashboard() {
         typedValue = newValue === 'true' || newValue === '1';
       }
 
-      // PATCH /api/system/config/{key} via api.system.updateConfig()
-      await api.system.updateConfig(config.key, typedValue);
+      // PATCH /api/system/config/{key} via updateConfig()
+      await updateConfig(config.key, typedValue);
 
       // Reload configuration to show updated value
-      await loadConfiguration();
+      await _loadConfiguration();
 
       // Reset editing state
       setEditingKey(null);
@@ -233,16 +194,18 @@ function SystemAdminDashboard() {
 
   /**
    * Reload configuration cache (force refresh)
+   *
+   * @private
    */
-  const handleReloadCache = async () => {
+  const _handleReloadCache = async () => {
     if (!window.confirm('🔄 Reload configuration cache? This will clear all cached values.')) {
       return;
     }
 
     try {
-      // POST /api/system/config/reload via api.system.reloadConfig()
-      await api.system.reloadConfig();
-      await loadConfiguration();
+      // POST /api/system/config/reload via reloadConfig()
+      await reloadConfig();
+      await _loadConfiguration();
       alert('✅ Configuration cache reloaded successfully');
     } catch (error) {
       console.error('Failed to reload cache:', error);
@@ -288,10 +251,10 @@ function SystemAdminDashboard() {
         <div className="card-header">
           ⚙️ System Configuration
           <div className="header-actions">
-            <button className="btn-header-action" onClick={loadConfiguration}>
+            <button className="btn-header-action" onClick={_loadConfiguration}>
               🔄 Reload
             </button>
-            <button className="btn-header-action" onClick={handleReloadCache}>
+            <button className="btn-header-action" onClick={_handleReloadCache}>
               💾 Clear Cache
             </button>
           </div>
@@ -299,17 +262,11 @@ function SystemAdminDashboard() {
 
         <div className="card-body">
           {/* Category Filter */}
-          <div className="category-filter">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(cat)}
-              >
-                {cat === 'all' ? 'All Categories' : cat}
-              </button>
-            ))}
-          </div>
+          <ConfigCategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
 
           {/* Configuration Sections by Category */}
           {Object.entries(groupedConfigs).map(([category, categoryConfigs]) => (
@@ -317,75 +274,20 @@ function SystemAdminDashboard() {
               <div className="section-header">
                 <h3>{category}</h3>
               </div>
-          <div className="config-grid">
-            {categoryConfigs.map(config => (
-              <div key={config.key} className="config-item">
-                <div className="config-label">
-                  <div className="config-title">
-                    {getConfigLabel(config.key)}
-                    <span className="config-type">{config.value_type}</span>
-                  </div>
-                </div>
-                <div className="config-key">
-                  {config.key}
-                </div>
-                <div className="config-description">{config.description}</div>
-
-                {/* Editing Mode */}
-                {editingKey === config.key ? (
-                  <div className="config-edit">
-                    {config.value_type === 'bool' ? (
-                      <select
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="config-input"
-                      >
-                        <option value="true">true</option>
-                        <option value="false">false</option>
-                      </select>
-                    ) : (
-                      <input
-                        type={config.value_type === 'int' || config.value_type === 'float' ? 'number' : 'text'}
-                        step={config.value_type === 'float' ? '0.1' : '1'}
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="config-input"
-                      />
-                    )}
-                    <button className="btn btn-success btn-sm" onClick={() => handleEditSave(config)}>
-                      ✓ Save
-                    </button>
-                    <button className="btn btn-outline btn-sm" onClick={handleEditCancel}>
-                      ✕ Cancel
-                    </button>
-                  </div>
-                ) : (
-                  /* Display Mode */
-                  <div className="config-display">
-                    <span className="config-value">{config.value}</span>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleEditStart(config)}>
-                      ✏️ Edit
-                    </button>
-                  </div>
-                )}
-
-                {/* Metadata */}
-                {config.updated_by && (
-                  <div className="config-meta">
-                    Last updated by {config.updated_by} on {new Date(config.updated_at).toLocaleString()}
-                  </div>
-                )}
-
-                {/* Constraints */}
-                {(config.min_value !== null || config.max_value !== null) && (
-                  <div className="config-constraints">
-                    {config.min_value !== null && <span>Min: {config.min_value}</span>}
-                    {config.max_value !== null && <span>Max: {config.max_value}</span>}
-                  </div>
-                )}
+              <div className="config-grid">
+                {categoryConfigs.map(config => (
+                  <ConfigItem
+                    key={config.key}
+                    config={config}
+                    isEditing={editingKey === config.key}
+                    editValue={editValue}
+                    onEditStart={_handleEditStart}
+                    onEditCancel={_handleEditCancel}
+                    onEditSave={_handleEditSave}
+                    onEditValueChange={setEditValue}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
             </div>
           ))}
         </div>
@@ -393,27 +295,11 @@ function SystemAdminDashboard() {
 
       {/* Confirmation Modal */}
       {showConfirmModal && pendingChange && (
-        <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>⚠️ Confirm Configuration Change</h3>
-            <div className="modal-body">
-              <p><strong>Key:</strong> {pendingChange.config.key}</p>
-              <p><strong>Current Value:</strong> {pendingChange.config.value}</p>
-              <p><strong>New Value:</strong> {pendingChange.newValue}</p>
-              <p className="warning-text">
-                ⚠️ This change will take effect immediately for all users. Are you sure?
-              </p>
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-success" onClick={confirmChange}>
-                ✓ Confirm Change
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowConfirmModal(false)}>
-                ✕ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          pendingChange={pendingChange}
+          onConfirm={_confirmChange}
+          onClose={() => setShowConfirmModal(false)}
+        />
       )}
     </div>
   );

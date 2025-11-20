@@ -14,7 +14,7 @@
  */
 
 import React, { useState } from 'react';
-import api from '../../services/api';
+import { updateMyTeamName } from '../../services';
 
 const TeamNameCard = ({ user }) => {
   const [teamName, setTeamName] = useState(user?.team_name || '');
@@ -57,7 +57,7 @@ const TeamNameCard = ({ user }) => {
     try {
       setLoading(true);
 
-      const response = await api.teams.updateMyTeamName(teamName.trim());
+      const response = await updateMyTeamName(teamName.trim());
 
       if (response.success) {
         setSuccess(true);

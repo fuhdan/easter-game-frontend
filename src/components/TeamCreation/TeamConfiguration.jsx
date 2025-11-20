@@ -22,7 +22,7 @@
  */
 
 import React from 'react';
-import api from '../../services/api';
+import { createTeams, resetTeams, utils } from '../../services';
 
 const TeamConfiguration = ({ 
   config, 
@@ -84,7 +84,7 @@ const TeamConfiguration = ({
       console.log('Sending to backend:', { players, config });
       
       // Call REAL API service
-      const result = await api.teams.create(players, config);
+      const result = await createTeams(players, config);
       
       console.log('Backend response:', result);
       
@@ -99,7 +99,7 @@ const TeamConfiguration = ({
     } catch (error) {
       console.error('Team creation failed:', error);
       // Use centralized error handling
-      const errorMessage = api.utils.handleError(error, showNotification);
+      const errorMessage = utils.handleError(error, showNotification);
       showNotification(errorMessage || 'Failed to create teams', 'error');
     } finally {
       setLoading(false);
@@ -118,8 +118,8 @@ const TeamConfiguration = ({
     setLoading(true);
     
     try {
-      console.log('Calling api.teams.reset()');
-      const result = await api.teams.reset();
+      console.log('Calling resetTeams()');
+      const result = await resetTeams();
       
       if (result.success) {
         setTeams([]);
@@ -129,7 +129,7 @@ const TeamConfiguration = ({
       
     } catch (error) {
       console.error('Reset failed:', error);
-      api.utils.handleError(error, showNotification);
+      utils.handleError(error, showNotification);
     } finally {
       setLoading(false);
     }
@@ -148,14 +148,14 @@ const TeamConfiguration = ({
     
     try {
       // Reset teams on backend using REAL API
-      await api.teams.reset();
+      await resetTeams();
       
       // Clear frontend state
       setTeams([]);
       setPlayers([]);
       
     } catch (error) {
-      api.utils.handleError(error, showNotification);
+      utils.handleError(error, showNotification);
     } finally {
       setLoading(false);
     }
