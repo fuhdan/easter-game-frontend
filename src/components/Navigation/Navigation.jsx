@@ -1,7 +1,19 @@
 /**
  * Component: Navigation
  * Purpose: Tab-based navigation for dashboard sections
- * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ * Part of: Easter Quest Frontend
+ *
+ * Features:
+ * - Role-based tab visibility
+ * - System Admin Dashboard (super_admin only)
+ * - Game Admin Dashboard (admin + super_admin)
+ * - Notifications (admin + super_admin)
+ * - Team Creation (admin + super_admin)
+ * - Game Panel (all users)
+ * - Profile (all users)
+ * - Active tab highlighting
+ *
+ * @since 2025-08-27
  */
 
 import React from 'react';

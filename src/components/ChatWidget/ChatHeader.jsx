@@ -1,12 +1,32 @@
 /**
  * Component: ChatHeader
- * Purpose: Chat widget header with mode selector
+ * Purpose: Chat widget header with mode selector and connection status
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Features:
+ * - Chat mode switcher (AI / Admin / Team)
+ * - Connection status indicator
+ * - Unread message badges per mode
+ * - Close button for chat widget
+ * - Role-based mode visibility (admin mode only for admins)
+ *
+ * @since 2025-11-09
  */
 
 import React from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import './ChatHeader.css';
 
+/**
+ * ChatHeader component - Header with mode selector and connection status
+ *
+ * @param {Object} props - Component props
+ * @param {Function} props.onClose - Callback function to close chat widget
+ * @returns {JSX.Element} Chat header with mode buttons and status
+ *
+ * @example
+ * <ChatHeader onClose={() => setChatOpen(false)} />
+ */
 const ChatHeader = ({ onClose }) => {
   const { chatMode, switchMode, connectionStatus, unreadCounts, user } = useChat();
 
@@ -18,6 +38,11 @@ const ChatHeader = ({ onClose }) => {
     ? unreadCounts.broadcast + Object.values(unreadCounts.private).reduce((sum, count) => sum + count, 0)
     : 0;
 
+  /**
+   * Get color for connection status indicator
+   *
+   * @returns {string} CSS variable for status color
+   */
   const getStatusColor = () => {
     switch (connectionStatus) {
       case 'connected': return 'var(--success)';
@@ -27,6 +52,11 @@ const ChatHeader = ({ onClose }) => {
     }
   };
 
+  /**
+   * Get text label for connection status
+   *
+   * @returns {string} Status text
+   */
   const getStatusText = () => {
     switch (connectionStatus) {
       case 'connected': return 'Connected';

@@ -1,10 +1,20 @@
 /**
  * Component: Header
- * Purpose: Application header with logo, title, user info and logout
- * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ * Purpose: Application header with branding and user controls
+ * Part of: Easter Quest Frontend
+ *
+ * Features:
+ * - Ypsomed logo display
+ * - Easter Quest branding
+ * - User info display (username, team, role)
+ * - Logout button
+ * - Responsive layout
+ *
+ * @since 2025-08-27
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import './Header.css';
 
 /**
@@ -46,6 +56,18 @@ const Header = ({ user, onLogout }) => {
             </div> 
         </div>
     );
+};
+
+/**
+ * PropTypes validation for Header component
+ */
+Header.propTypes = {
+    user: PropTypes.shape({
+        username: PropTypes.string.isRequired,
+        team_name: PropTypes.string,
+        role: PropTypes.string.isRequired
+    }).isRequired,
+    onLogout: PropTypes.func.isRequired
 };
 
 export default Header;

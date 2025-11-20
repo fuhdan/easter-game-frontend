@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import { createHint, updateHint, deleteHint, bulkDeleteHints } from '../../../services';
 import HintModal, { HINT_TYPES, HINT_LEVELS } from './HintModal';
+import HintsList from './HintsList';
 import DeleteConfirmModal from '../shared/DeleteConfirmModal';
 
 function HintManagement({ games, onHintsChanged }) {
@@ -243,48 +244,11 @@ function HintManagement({ games, onHintsChanged }) {
         </div>
 
         {/* Hints List */}
-        <div className="hints-list">
-          {hints.length === 0 ? (
-            <div className="empty-state">
-              <p>No training hints for this game yet.</p>
-              <p>Click "Add Hint" to create one.</p>
-            </div>
-          ) : (
-            hints.map(hint => (
-              <div key={hint.id} className="hint-item">
-                <div className="hint-header">
-                  <span className={`hint-type-badge type-${hint.hint_type}`}>
-                    {HINT_TYPES[hint.hint_type] || hint.hint_type}
-                  </span>
-                  <span className={`hint-level-badge level-${hint.hint_level}`}>
-                    Level {hint.hint_level}
-                  </span>
-                </div>
-                <div className="hint-content">
-                  {hint.hint_content}
-                </div>
-                <div className="hint-meta">
-                  {hint.effectiveness_score !== null && (
-                    <span className="effectiveness">
-                      Effectiveness: {hint.effectiveness_score}%
-                    </span>
-                  )}
-                  <span className="status">
-                    {hint.review_status} • {hint.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <div className="hint-actions">
-                  <button className="btn btn-sm btn-primary" onClick={() => _handleEditHint(hint)}>
-                    ✏️ Edit
-                  </button>
-                  <button className="btn btn-sm btn-outline danger" onClick={() => _handleDeleteHint(hint)}>
-                    🗑️ Delete
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        <HintsList
+          hints={hints}
+          onEdit={_handleEditHint}
+          onDelete={_handleDeleteHint}
+        />
       </div>
 
       {/* Create/Edit Hint Modal */}

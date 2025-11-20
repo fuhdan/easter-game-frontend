@@ -1,12 +1,38 @@
 /**
  * Component: CurrentGame
- * Purpose: Display games and solution input
- * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ * Purpose: Game selection and solution submission interface
+ * Part of: Easter Quest Frontend
+ *
+ * Features:
+ * - Display all available games with category badges
+ * - Game selection from dropdown
+ * - Solution input and validation
+ * - Submission feedback (correct/incorrect)
+ * - Progress tracking per game
+ * - Category icons and colors
+ *
+ * @since 2025-08-27
  */
 
 import React, { useState, useEffect } from 'react';
 import { getCategories, getAllGames, submitSolution } from '../../services';
 
+/**
+ * CurrentGame component - Game selection and solution submission
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.games - Available games for current event
+ * @param {Object} props.activeEvent - Current active event object
+ * @param {Function} props.onSubmitSolution - Callback after successful submission
+ * @returns {JSX.Element} Game selection interface or solution form
+ *
+ * @example
+ * <CurrentGame
+ *   games={eventGames}
+ *   activeEvent={currentEvent}
+ *   onSubmitSolution={reloadData}
+ * />
+ */
 const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   const [selectedGame, setSelectedGame] = useState(null);
   const [solution, setSolution] = useState('');
@@ -21,7 +47,13 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   }, []);
 
   /**
-   * Load category data to display icons and colors.
+   * Load category data to display icons and colors
+   *
+   * Fetches all game categories from the backend to display
+   * category icons and colors for each game.
+   *
+   * @async
+   * @returns {Promise<void>}
    */
   async function loadCategories() {
     try {
@@ -33,7 +65,13 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   }
 
   /**
-   * Load game progress to determine which games are completed.
+   * Load game progress to determine which games are completed
+   *
+   * Fetches user's progress for all games to mark completed games
+   * and prevent re-submission.
+   *
+   * @async
+   * @returns {Promise<void>}
    */
   async function loadGameProgress() {
     try {
@@ -53,8 +91,23 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   }
 
   /**
-   * Get category details for a game.
-   * Now using category fields directly from the game object.
+   * Get category details for a game
+   *
+   * Extracts category information (name, icon, color) from the game object.
+   * Falls back to category lookup if direct fields are not available.
+   *
+   * @param {Object} game - Game object
+   * @param {string} [game.category_name] - Category name from game
+   * @param {string} [game.category_icon] - Category icon emoji
+   * @param {string} [game.category_color] - Category color hex
+   * @returns {Object|null} Category object with name, icon, and color
+   * @returns {string} return.name - Category name
+   * @returns {string} return.icon - Category icon emoji
+   * @returns {string} return.color - Category color (hex)
+   *
+   * @example
+   * const category = getCategoryForGame(game);
+   * // Returns: { name: 'Puzzle', icon: '🧩', color: '#FF5733' }
    */
   function getCategoryForGame(game) {
     // If game has category info, use it directly
@@ -69,6 +122,15 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
     return categories.find(cat => cat.name === game.category_name) || null;
   }
 
+  /**
+   * Handle solution form submission
+   *
+   * Submits user's answer to the backend, displays result message,
+   * and reloads progress on success.
+   *
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>}
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!solution.trim() || !selectedGame) return;

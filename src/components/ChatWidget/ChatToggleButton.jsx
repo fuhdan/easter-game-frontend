@@ -1,7 +1,30 @@
+/**
+ * Component: ChatToggleButton
+ * Purpose: Floating chat button with connection status indicator
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Features:
+ * - Toggle chat widget open/close
+ * - Connection status indicator (connected/connecting/disconnected)
+ * - Unread message badge
+ * - Color-coded status display
+ * - Floating action button design
+ *
+ * @since 2025-11-09
+ */
+
 import React from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import './ChatToggleButton.css';
 
+/**
+ * ChatToggleButton - Floating button to toggle chat widget
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether chat is currently open
+ * @param {Function} props.onClick - Click handler to toggle chat
+ * @returns {JSX.Element}
+ */
 const ChatToggleButton = ({ isOpen, onClick }) => {
   const { connectionStatus, getTotalUnreadCount } = useChat();
   const unreadCount = isOpen ? 0 : getTotalUnreadCount();

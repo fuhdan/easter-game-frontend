@@ -32,21 +32,31 @@
 import React, { useState } from 'react';
 import { exportTeams, utils } from '../../services';
 
+/**
+ * TeamDisplay component - Display generated teams with captain highlighting
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.teams - Generated teams from backend
+ * @param {Array} props.teams[].members - Team members
+ * @param {number} props.teams[].leader_id - Team captain ID
+ * @param {string} props.teams[].name - Team name
+ * @param {Array} props.players - Available players
+ * @param {Function} props.showNotification - Show notification
+ * @param {boolean} [props.useMock=false] - Use mock data
+ * @returns {JSX.Element} Team display interface
+ *
+ * @example
+ * <TeamDisplay
+ *   teams={generatedTeams}
+ *   players={players}
+ *   showNotification={showNotification}
+ * />
+ */
 const TeamDisplay = ({ teams, players, showNotification, useMock = false }) => {
   const [exportLoading, setExportLoading] = useState(false);
 
   // SECURITY: Filter out system teams (is_system_team=true) from display
   const displayTeams = teams ? teams.filter(team => !team.is_system_team) : [];
-
-  // ---- DEBUG LOG START ----
-  console.log("DEBUG: Received teams from backend:", teams);
-  console.log("DEBUG: Display teams (filtered):", displayTeams);
-  if (displayTeams && displayTeams.length > 0) {
-    displayTeams.forEach(team => {
-      console.log(`Team: ${team.name} (ID: ${team.id}, Leader ID: ${team.leader_id})`);
-    });
-  }
-  // ---- DEBUG LOG END ----
 
   /**
    * Calculate team statistics from real backend data

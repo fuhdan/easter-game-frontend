@@ -1082,3 +1082,47 @@
     width: 100%;
   }
 }
+
+/* Image Upload Preview Styles */
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-upload-input {
+  padding: 5px;
+}
+
+.image-preview-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.image-upload-preview {
+  max-width: 200px;
+  max-height: 150px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.image-upload-hint {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.placeholder-hint {
+  color: #666;
+  font-size: 0.875rem;
+  display: block;
+  margin-top: 8px;
+}
+
+.placeholder-code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+}

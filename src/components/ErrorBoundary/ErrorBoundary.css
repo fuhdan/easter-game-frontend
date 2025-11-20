@@ -1,0 +1,233 @@
+/**
+ * File: components/ErrorBoundary/ErrorBoundary.css
+ * Purpose: Error boundary fallback UI styling
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * Design: Follows design-preview.html color scheme
+ * Colors: Ypsomed brand blue (#005da0) with red accent (#c41e3a)
+ */
+
+/* Main error boundary container - full screen overlay */
+.error-boundary {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+}
+
+/* Error card container */
+.error-boundary-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
+  max-width: 600px;
+  width: 100%;
+  padding: 40px;
+  text-align: center;
+}
+
+/* Error icon */
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Error heading */
+.error-boundary-card h1 {
+  color: var(--primary-blue, #005da0);
+  font-size: 2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* Error message text */
+.error-message {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+/* Action buttons container */
+.error-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.error-actions .btn {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 180px;
+}
+
+.error-actions .btn-primary {
+  background: var(--primary-blue, #005da0);
+  color: white;
+}
+
+.error-actions .btn-primary:hover {
+  background: var(--dark-blue, #004271);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 93, 160, 0.3);
+}
+
+.error-actions .btn-outline {
+  background: white;
+  color: var(--primary-blue, #005da0);
+  border: 2px solid var(--primary-blue, #005da0);
+}
+
+.error-actions .btn-outline:hover {
+  background: var(--primary-blue, #005da0);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 93, 160, 0.2);
+}
+
+/* Developer information details section */
+.error-details {
+  margin-top: 30px;
+  text-align: left;
+  border-top: 2px solid #e9ecef;
+  padding-top: 20px;
+}
+
+.error-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent-red, #c41e3a);
+  padding: 10px;
+  border-radius: 6px;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.error-details summary:hover {
+  background-color: #f8f9fa;
+}
+
+.error-details[open] summary {
+  margin-bottom: 15px;
+  background-color: #f8f9fa;
+}
+
+/* Error details content */
+.error-details-content {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.error-section {
+  margin-bottom: 20px;
+}
+
+.error-section:last-child {
+  margin-bottom: 0;
+}
+
+.error-section h3 {
+  color: var(--primary-blue, #005da0);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.error-text,
+.error-stack {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 15px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875rem;
+  color: var(--accent-red, #c41e3a);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.error-stack {
+  color: #666;
+  font-size: 0.8125rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .error-boundary-card {
+    padding: 30px 20px;
+  }
+
+  .error-boundary-card h1 {
+    font-size: 1.5rem;
+  }
+
+  .error-icon {
+    font-size: 3rem;
+  }
+
+  .error-actions {
+    flex-direction: column;
+  }
+
+  .error-actions .btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .error-details-content {
+    max-height: 300px;
+  }
+}
+
+/* Scrollbar styling for error details */
+.error-details-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.error-details-content::-webkit-scrollbar-track {
+  background: #e9ecef;
+  border-radius: 4px;
+}
+
+.error-details-content::-webkit-scrollbar-thumb {
+  background: var(--primary-blue, #005da0);
+  border-radius: 4px;
+}
+
+.error-details-content::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-blue, #004271);
+}

@@ -66,7 +66,6 @@ const GameRatingCard = () => {
         });
 
         // Mock API call - TODO: Replace with actual API endpoint
-        console.log('Rating submitted:', newRating);
 
         // Reset form after successful submission
         setSelectedGame('');

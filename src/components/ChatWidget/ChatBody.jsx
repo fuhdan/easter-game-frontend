@@ -1,6 +1,20 @@
 /**
  * Component: ChatBody
- * Purpose: Chat message display area
+ * Purpose: Chat message display area with multi-mode support
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Features:
+ * - AI/Admin message display with timestamps
+ * - Team chat views (broadcast and private)
+ * - Team member list sidebar
+ * - Admin contacts list (for players)
+ * - Admin team list (for admins)
+ * - Auto-scroll to latest messages
+ * - AI context display (current game, team progress)
+ * - Typing indicators
+ * - Connection status messages
+ *
+ * @since 2025-11-09
  */
 
 import React, { useRef, useEffect, useState } from 'react';
@@ -13,17 +27,37 @@ import TeamBroadcast from './TeamBroadcast';
 import AdminBroadcast from './AdminBroadcast';
 import './ChatBody.css';
 
+/**
+ * ChatBody component - Message display area with multi-mode support
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.user - Current user object
+ * @param {number} props.user.id - User ID
+ * @param {string} props.user.role - User role
+ * @returns {JSX.Element} Chat message display area
+ *
+ * @example
+ * <ChatBody user={currentUser} />
+ */
 const ChatBody = ({ user }) => {
   const { messages, chatMode, aiContext, isTyping, connectionStatus, selectedTeamMember, selectTeamMember, selectedTeam, viewingAdminBroadcast } = useChat();
   const messageListRef = useRef(null);
   const shouldAutoScroll = useRef(true);
 
+  /**
+   * Check if user has scrolled away from bottom
+   */
   const checkScrollPosition = () => {
     if (!messageListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messageListRef.current;
     shouldAutoScroll.current = scrollHeight - scrollTop - clientHeight < 100;
   };
 
+  /**
+   * Scroll message list to bottom
+   *
+   * @param {boolean} [smooth=true] - Use smooth scrolling
+   */
   const scrollToBottom = (smooth = true) => {
     if (!messageListRef.current) return;
     messageListRef.current.scrollTo({
@@ -40,6 +74,12 @@ const ChatBody = ({ user }) => {
     scrollToBottom(false);
   }, [chatMode]);
 
+  /**
+   * Format timestamp to readable time
+   *
+   * @param {string} timestamp - ISO timestamp
+   * @returns {string} Formatted time (HH:MM AM/PM)
+   */
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -47,6 +87,17 @@ const ChatBody = ({ user }) => {
     });
   };
 
+  /**
+   * Render individual message with appropriate styling
+   *
+   * @param {Object} message - Message object
+   * @param {string} message.id - Message ID
+   * @param {string} message.type - Message type (user/ai/admin/system)
+   * @param {string} message.content - Message content
+   * @param {string} message.timestamp - Message timestamp
+   * @param {Object} [message.metadata] - Optional metadata
+   * @returns {JSX.Element} Rendered message
+   */
   const renderMessage = (message) => {
     const { id, type, sender_type, sender_name, content, timestamp, metadata } = message;
 

@@ -1,12 +1,33 @@
 /**
  * Component: ChatFooter
- * Purpose: Chat input area with send button
+ * Purpose: Chat input area with multi-mode message sending
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Features:
+ * - Auto-growing textarea input
+ * - Character counter (2000 char limit)
+ * - Send button with loading state
+ * - Rate limit countdown display
+ * - Multi-line support (Shift+Enter for newline, Enter to send)
+ * - Context-aware sending (AI/Admin/Team/Private)
+ * - Connection status validation
+ * - Error handling and user feedback
+ *
+ * @since 2025-11-09
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import './ChatFooter.css';
 
+/**
+ * ChatFooter component - Input area with send functionality
+ *
+ * @returns {JSX.Element} Chat input footer with textarea and send button
+ *
+ * @example
+ * <ChatFooter />
+ */
 const ChatFooter = () => {
   const {
     sendMessage,
@@ -69,6 +90,11 @@ const ChatFooter = () => {
     }
   }, [inputValue]);
 
+  /**
+   * Handle textarea input change with character limit
+   *
+   * @param {Event} e - Input change event
+   */
   const handleInputChange = (e) => {
     const value = e.target.value;
     if (value.length <= MAX_LENGTH) {
@@ -76,6 +102,12 @@ const ChatFooter = () => {
     }
   };
 
+  /**
+   * Handle sending message (context-aware)
+   * Supports AI/Admin/Team modes with different send methods
+   *
+   * @returns {Promise<void>}
+   */
   const handleSend = async () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;

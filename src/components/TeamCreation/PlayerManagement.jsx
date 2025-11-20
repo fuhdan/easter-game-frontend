@@ -1,6 +1,44 @@
+/**
+ * Component: PlayerManagement
+ * Purpose: Player import and management for team creation
+ * Part of: Easter Quest Frontend - Team Creation Module
+ *
+ * Features:
+ * - Load players from database
+ * - CSV file import (drag & drop or file picker)
+ * - Search and filter players
+ * - Inline player editing
+ * - Add/delete players
+ * - Department assignment
+ *
+ * @since 2025-08-31
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import { getAllPlayers } from '../../services';
 
+/**
+ * PlayerManagement component - Player list management
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.players - Current player list
+ * @param {Function} props.setPlayers - Update player list
+ * @param {Function} props.showNotification - Show notification toast
+ * @param {boolean} props.loading - Loading state
+ * @param {Function} props.setLoading - Update loading state
+ * @param {Function} props.setProgress - Update progress percentage
+ * @returns {JSX.Element} Player management interface
+ *
+ * @example
+ * <PlayerManagement
+ *   players={players}
+ *   setPlayers={setPlayers}
+ *   showNotification={showToast}
+ *   loading={isLoading}
+ *   setLoading={setIsLoading}
+ *   setProgress={setProgressPercent}
+ * />
+ */
 const PlayerManagement = ({ players, setPlayers, showNotification, loading, setLoading, setProgress }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -16,8 +54,6 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
       try {
         setLoading(true);
         const response = await getAllPlayers();
-
-        console.log('Fetched players response:', response);
 
         if (response && response.success && Array.isArray(response.users)) {
           // Keep only the properties we need for team creation
@@ -41,9 +77,12 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount
 
-  // -------------------------------
-  // CSV parsing
-  // -------------------------------
+  /**
+   * Parse and import players from CSV file
+   *
+   * @param {File} file - CSV file object
+   * @returns {Promise<void>}
+   */
   const handleFileUpload = async (file) => {
     try {
       const text = await file.text();

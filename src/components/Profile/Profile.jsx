@@ -15,32 +15,81 @@
  * - Responsive design with mobile support
  */
 
-import React, { useState } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import PasswordChangeCard from './PasswordChangeCard';
 import TeamManagementCard from './TeamManagementCard';
 import GameRatingCard from './GameRatingCard';
 import TeamNameCard from './TeamNameCard';
 import './Profile.css';
 
+/**
+ * Profile component - User profile management with role-based functionality
+ *
+ * Displays different interface elements based on user role:
+ * - All users: Password change functionality
+ * - Team Captains: Team name editing, team management, game rating
+ * - Admins: Team management
+ * - Super Admins: System administration access
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.user - Current authenticated user object
+ * @param {number} props.user.id - User ID
+ * @param {string} props.user.username - Username
+ * @param {string} props.user.email - Email address
+ * @param {string} props.user.display_name - Display name
+ * @param {string} props.user.role - User role (player/team_captain/admin/super_admin)
+ * @param {number} [props.user.team_id] - Team ID (if user is in a team)
+ * @param {string} [props.user.team_name] - Team name (if user is in a team)
+ * @returns {JSX.Element} Profile interface with role-appropriate features
+ *
+ * @example
+ * <Profile user={currentUser} />
+ */
 const Profile = ({ user }) => {
-    const [activeUser] = useState(user || {
-        id: 1,
-        username: 'admin',
-        email: 'admin@ypsomed.com',
-        display_name: 'Admin User',
-        role: 'team_captain', // Changed to team_captain to test team management
-        team_id: 1,
-        team_name: 'Team Alpha'
-    });
+    // SECURITY: Validate user prop and required fields
+    if (!user) {
+        console.error('Profile component: user prop is required');
+        return (
+            <div className="profile-card">
+                <div className="card-header">⚠️ Error</div>
+                <div className="card-body">
+                    <p>User data not available. Please try logging in again.</p>
+                </div>
+            </div>
+        );
+    }
 
-    const currentUser = user ? user : activeUser;
+    // Validate required user fields
+    if (!user.id || !user.username || !user.role) {
+        console.error('Profile component: user object missing required fields', {
+            hasId: !!user.id,
+            hasUsername: !!user.username,
+            hasRole: !!user.role
+        });
+        return (
+            <div className="profile-card">
+                <div className="card-header">⚠️ Error</div>
+                <div className="card-body">
+                    <p>Invalid user data. Please try logging in again.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const currentUser = user;
 
     // Check if user has team management access
     const hasTeamManagement = currentUser.role === 'team_captain' || 
                              currentUser.role === 'super_admin' || 
                              currentUser.role === 'admin';
 
-    // Placeholder components for future implementation
+    /**
+     * SuperAdminCard - Placeholder for super admin features
+     *
+     * @returns {JSX.Element} Super admin card placeholder
+     * @note Future implementation will include system administration features
+     */
     const SuperAdminCard = () => (
         <div className="profile-card">
             <div className="card-header">
@@ -93,6 +142,23 @@ const Profile = ({ user }) => {
             </div>
         </div>
     );
+};
+
+/**
+ * PropTypes validation for Profile component
+ * Validates user prop structure and required fields
+ */
+Profile.propTypes = {
+    user: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        username: PropTypes.string.isRequired,
+        email: PropTypes.string.isRequired,
+        display_name: PropTypes.string,
+        role: PropTypes.oneOf(['player', 'team_captain', 'admin', 'super_admin']).isRequired,
+        team_id: PropTypes.number,
+        team_name: PropTypes.string,
+        is_team_leader: PropTypes.bool
+    }).isRequired
 };
 
 export default Profile;

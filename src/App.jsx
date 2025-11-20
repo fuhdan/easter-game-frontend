@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import Login from './components/Login/Login';
 import Header from './components/Header/Header';
 import Navigation from './components/Navigation/Navigation';
@@ -159,33 +160,31 @@ const App = () => {
     // Unauthenticated state
     if (!user) {
         return (
-            <Login 
-                onLogin={login}
-                error={error}
-            />
+            <ErrorBoundary>
+                <Login
+                    onLogin={login}
+                    error={error}
+                />
+            </ErrorBoundary>
         );
     }
 
-    console.log('DEBUGGING:', {
-        activeTab,
-        userRole: user.role,
-        shouldShowDashboard: activeTab === 'dashboard' && (user.role === 'super_admin' || user.role === 'admin')
-    });
     // Authenticated state - component router
     return (
-        <ChatProvider user={user}>
-            <div className="app" style={{maxWidth: '1200px'}}>
+        <ErrorBoundary>
+            <ChatProvider user={user}>
+                <div className="app">
 
-                <Header
-                    user={user}
-                    onLogout={logout}
-                />
+                    <Header
+                        user={user}
+                        onLogout={logout}
+                    />
 
-                <Navigation
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    user={user}
-                />
+                    <Navigation
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        user={user}
+                    />
 
                 {/* System Admin Dashboard - Only super_admin can see this */}
                 {activeTab === 'system_admin' && user.role === 'super_admin' && (
@@ -216,11 +215,12 @@ const App = () => {
                 {activeTab === 'profile' && (
                     <Profile user={user} />
                 )}
-            </div>
+                </div>
 
-            {/* Chat Widget - Available to all authenticated users */}
-            <ChatWidget />
-        </ChatProvider>
+                {/* Chat Widget - Available to all authenticated users */}
+                <ChatWidget />
+            </ChatProvider>
+        </ErrorBoundary>
     );
 };
 

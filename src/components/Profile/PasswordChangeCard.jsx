@@ -11,6 +11,14 @@
 
 import React, { useState } from 'react';
 
+/**
+ * PasswordChangeCard component - Password change form
+ *
+ * @returns {JSX.Element} Password change form card
+ *
+ * @example
+ * <PasswordChangeCard />
+ */
 const PasswordChangeCard = () => {
   // Move ALL password state back into this component
   const [passwordForm, setPasswordForm] = useState({
@@ -23,7 +31,12 @@ const PasswordChangeCard = () => {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   /**
-   * Validate password change form
+   * Validate password change form fields
+   *
+   * @returns {Object} Validation errors object (empty if valid)
+   * @returns {string} [errors.current] - Current password error
+   * @returns {string} [errors.new] - New password error
+   * @returns {string} [errors.confirm] - Confirmation error
    */
   const validatePasswordForm = () => {
     const errors = {};
@@ -50,7 +63,10 @@ const PasswordChangeCard = () => {
   };
 
   /**
-   * Handle form submission
+   * Handle password change form submission
+   *
+   * @param {Event} e - Form submit event
+   * @returns {Promise<void>}
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,9 +87,8 @@ const PasswordChangeCard = () => {
       
       const MOCK_CURRENT_PASSWORD = "demo";
       const isCurrentPasswordCorrect = passwordForm.current === MOCK_CURRENT_PASSWORD;
-      
+
       if (isCurrentPasswordCorrect) {
-        console.log('Mock: Password changed successfully');
         setPasswordSuccess(true);
         setPasswordForm({ current: '', new: '', confirm: '' });
         setTimeout(() => setPasswordSuccess(false), 3000);

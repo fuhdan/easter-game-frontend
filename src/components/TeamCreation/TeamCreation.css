@@ -14,35 +14,29 @@
  */
 
 /* =============================================================================
-   CLEAN DESIGN SYSTEM
+   COMPONENT-SPECIFIC VARIABLES
    ============================================================================= */
 
 .team-creation {
-  --primary-blue: #005da0;
-  --dark-blue: #004271;
-  --accent-red: #c41e3a;
-  --white: #ffffff;
-  --light-gray: #f8f9fa;
-  --medium-gray: #e9ecef;
-  --border-color: #dee2e6;
+  /* NOTE: Brand colors (--primary-blue, --dark-blue, --accent-red, etc.)
+     are defined globally in index.css and inherited automatically */
+
+  /* Component-specific text colors */
   --text-primary: #2c3e50;
   --text-secondary: #6c757d;
   --text-muted: #95a5a6;
-  --success: #28a745;
-  --warning: #ffc107;
-  --danger: #dc3545;
   --info: #17a2b8;
-  
-  /* Clean shadows */
+
+  /* Component-specific shadows */
   --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-panel: 0 4px 20px rgba(0, 0, 0, 0.15);
-  
-  /* Border radius */
+
+  /* Component-specific border radius (using different naming to avoid conflicts) */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  
+
   /* Transitions */
   --transition: all 0.3s ease;
 }
@@ -264,12 +258,10 @@
 }
 
 /* =============================================================================
-   FORM CONTROLS
+   FORM CONTROLS - Component-specific only (global .form-control in index.css)
    ============================================================================= */
 
-.form-group {
-  margin-bottom: 1.5rem;
-}
+/* NOTE: .form-group and .form-control are defined globally in index.css */
 
 .form-label {
   display: block;
@@ -279,23 +271,6 @@
   font-size: 0.9rem;
 }
 
-.form-control {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  background: var(--white);
-  color: var(--text-primary);
-  transition: var(--transition);
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 2px rgba(0, 93, 160, 0.1);
-}
-
 .form-text {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -303,39 +278,23 @@
 }
 
 /* =============================================================================
-   BUTTONS
+   BUTTONS - Component-specific only (global .btn utilities in index.css)
    ============================================================================= */
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: none;
-  white-space: nowrap;
+/* NOTE: .btn, .btn-primary, and other button utilities are defined globally
+   in index.css. Only component-specific button styles below. */
+
+.btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
 }
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.btn-block {
+  width: 100%;
+  margin-bottom: 0.75rem;
 }
 
-.btn-primary {
-  background: var(--primary-blue);
-  color: var(--white);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--dark-blue);
-}
-
+/* Component-specific button variants */
 .btn-success {
   background: var(--success);
   color: var(--white);
@@ -361,16 +320,6 @@
 
 .btn-danger:hover:not(:disabled) {
   background: #c82333;
-}
-
-.btn-sm {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8rem;
-}
-
-.btn-block {
-  width: 100%;
-  margin-bottom: 0.75rem;
 }
 
 /* =============================================================================

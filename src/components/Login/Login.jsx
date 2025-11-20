@@ -10,6 +10,7 @@
  */
 
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import PasswordChangeModal from '../PasswordChangeModal/PasswordChangeModal.jsx';
 import { login, auth, utils } from '../../services';
 import Loader from '../Loader/Loader.jsx';
@@ -238,6 +239,15 @@ const Login = ({ onLogin, loading = false, error = null }) => {
       )}
     </div>
   );
+};
+
+/**
+ * PropTypes validation for Login component
+ */
+Login.propTypes = {
+  onLogin: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+  error: PropTypes.string
 };
 
 export default Login;

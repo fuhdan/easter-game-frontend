@@ -59,9 +59,6 @@ export const getMyTeamPlayers = () => request('GET', '/api/teams/my');
  */
 export const create = (players, config) => {
   log.info(`Creating teams for ${players.length} players`);
-  console.log('FRONTEND: Players being sent:', players.slice(0, 2));
-  console.log('FRONTEND: Config being sent:', config);
-  console.log('FRONTEND: Request payload:', JSON.stringify({ players, config }, null, 2));
   return request('POST', '/api/teams/create', { players, config });
 };
 

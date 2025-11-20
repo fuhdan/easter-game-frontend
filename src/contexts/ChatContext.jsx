@@ -1,3 +1,30 @@
+/**
+ * Context: ChatContext
+ * Purpose: React Context for chat system state management
+ * Part of: Easter Quest Frontend - Chat System
+ *
+ * Features:
+ * - Multi-mode chat support (AI assistant, admin support, team chat)
+ * - WebSocket connection management
+ * - Message history and state
+ * - Private conversations and team broadcasts
+ * - Unread message tracking
+ * - Rate limit status tracking
+ * - AI context management
+ * - Real-time message handling
+ *
+ * Chat Modes:
+ * - 'ai': AI assistant chat (default)
+ * - 'admin': Human admin support chat
+ * - 'team': Team communication (broadcast and private messages)
+ *
+ * Usage:
+ * - Wrap App with ChatProvider
+ * - Use useChat() hook in components
+ *
+ * @since 2025-11-09
+ */
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import useWebSocket from '../hooks/useWebSocket';
 import { handleWebSocketMessage } from '../services/websocket/messageHandler';
@@ -14,12 +41,39 @@ const generateMessageId = () => {
   return `msg-${Date.now()}-${messageCounter}`;
 };
 
+/**
+ * Hook to access chat context
+ *
+ * @returns {Object} Chat context value with all chat state and methods
+ * @throws {Error} If used outside ChatProvider
+ *
+ * @example
+ * const {
+ *   connectionStatus,
+ *   messages,
+ *   sendMessage,
+ *   chatMode,
+ *   switchMode
+ * } = useChat();
+ */
 export function useChat() {
   const context = useContext(ChatContext);
   if (!context) throw new Error('useChat must be used within a ChatProvider');
   return context;
 }
 
+/**
+ * Chat context provider component
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components
+ * @param {Object} props.user - Current authenticated user object
+ * @param {number} props.user.id - User ID
+ * @param {string} props.user.username - Username
+ * @param {string} props.user.role - User role (player/admin/super_admin)
+ * @param {number} props.user.team_id - Team ID
+ * @returns {React.Component} ChatContext.Provider
+ */
 export function ChatProvider({ children, user }) {
   // User prop passed from App.jsx instead of using AuthContext
   const { connectionStatus, lastError: wsError, sendMessage: wsSend, onMessage, reconnect: wsReconnect, disconnect } = useWebSocket(null, {

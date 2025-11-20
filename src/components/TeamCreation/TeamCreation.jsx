@@ -57,15 +57,12 @@ const TeamCreation = () => {
   useEffect(() => {
     const loadExistingData = async () => {
       setInitialLoading(true);
-      
+
       try {
-        console.log('Loading existing teams and players...');
-        
         // Load existing teams
         const teamsResponse = await getAllTeams();
         if (teamsResponse.success && teamsResponse.teams) {
           setTeams(teamsResponse.teams);
-          console.log(`Loaded ${teamsResponse.teams.length} existing teams`);
           
           // Extract players from team members (since /api/users doesn't exist)
           const playerMap = new Map(); // Avoid duplicates
@@ -84,12 +81,10 @@ const TeamCreation = () => {
               });
             }
           });
-          
+
           const playersData = Array.from(playerMap.values());
           setPlayers(playersData);
-          console.log(`Extracted ${playersData.length} players from team data`);
         } else {
-          console.log('No existing teams found');
           setTeams([]);
           setPlayers([]);
         }
@@ -109,7 +104,6 @@ const TeamCreation = () => {
   }, []); // Run once on mount
 
   const showNotification = (message, type = 'info') => {
-    console.log(`${type.toUpperCase()}: ${message}`);
     if (type === 'error') alert(`Error: ${message}`);
   };
 

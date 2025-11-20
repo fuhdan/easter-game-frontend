@@ -57,19 +57,19 @@ function EditEventModal({
 
           <div className="form-group">
             <label>Event Image (optional)</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="image-upload-container">
               <input
                 type="file"
                 accept="image/*"
                 onChange={onImageUpload}
-                style={{ padding: '5px' }}
+                className="image-upload-input"
               />
               {formData.image_data && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="image-preview-wrapper">
                   <img
                     src={`data:image/png;base64,${formData.image_data}`}
                     alt="Preview"
-                    style={{ maxWidth: '200px', maxHeight: '150px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    className="image-upload-preview"
                   />
                   <button
                     type="button"
@@ -80,7 +80,7 @@ function EditEventModal({
                   </button>
                 </div>
               )}
-              <small style={{ color: '#666' }}>
+              <small className="image-upload-hint">
                 Max size: 2MB. Stored in database with event.
               </small>
             </div>

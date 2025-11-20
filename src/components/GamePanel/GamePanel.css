@@ -26,6 +26,30 @@
   align-self: start;
 }
 
+/* Error message styling */
+.error-text {
+  color: red;
+}
+
+/* Event story card */
+.event-story-card {
+  margin-bottom: 20px;
+}
+
+/* Clickable card header with flex layout */
+.card-header.clickable {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Author text styling */
+.author-text {
+  margin-left: 10px;
+  opacity: 0.7;
+}
+
 @media (max-width: 768px) {
   .game-panel-layout {
     grid-template-columns: 1fr;

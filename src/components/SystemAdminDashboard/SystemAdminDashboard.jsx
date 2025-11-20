@@ -22,56 +22,11 @@
 import React, { useState, useEffect } from 'react';
 import './SystemAdminDashboard.css';
 import { getConfig, updateConfig, reloadConfig } from '../../services';
+import { validateValue, convertToType } from '../../utils/validators/configValidator';
 import GamePackageManagement from '../GamePackageManagement/GamePackageManagement';
 import ConfigCategoryFilter from './ConfigCategoryFilter';
 import ConfigItem from './ConfigItem';
 import ConfirmModal from './ConfirmModal';
-
-/**
- * Validate configuration value
- *
- * @param {string} value - Value to validate
- * @param {string} valueType - Value type (int, float, bool, string)
- * @param {Object} config - Configuration object with constraints
- * @returns {string|null} Error message or null if valid
- */
-const validateValue = (value, valueType, config) => {
-  // Type validation
-  if (valueType === 'int') {
-    const intValue = parseInt(value);
-    if (isNaN(intValue)) {
-      return 'Value must be an integer';
-    }
-
-    // Min/max validation
-    if (config.min_value !== null && intValue < config.min_value) {
-      return `Value must be >= ${config.min_value}`;
-    }
-    if (config.max_value !== null && intValue > config.max_value) {
-      return `Value must be <= ${config.max_value}`;
-    }
-  } else if (valueType === 'float') {
-    const floatValue = parseFloat(value);
-    if (isNaN(floatValue)) {
-      return 'Value must be a number';
-    }
-
-    // Min/max validation
-    if (config.min_value !== null && floatValue < config.min_value) {
-      return `Value must be >= ${config.min_value}`;
-    }
-    if (config.max_value !== null && floatValue > config.max_value) {
-      return `Value must be <= ${config.max_value}`;
-    }
-  } else if (valueType === 'bool') {
-    const lowerValue = value.toLowerCase();
-    if (!['true', 'false', '1', '0'].includes(lowerValue)) {
-      return 'Value must be true/false or 1/0';
-    }
-  }
-
-  return null; // No error
-};
 
 function SystemAdminDashboard() {
   // State management
@@ -107,8 +62,6 @@ function SystemAdminDashboard() {
 
       setConfigs(response.configs);
       setCategories(['all', ...response.categories]);
-
-      console.log(`Loaded ${response.total} configuration entries`);
     } catch (error) {
       console.error('Failed to load configuration:', error);
       setError('Failed to load configuration. Please check your permissions.');
@@ -162,15 +115,8 @@ function SystemAdminDashboard() {
     try {
       const { config, newValue } = pendingChange;
 
-      // Convert value to appropriate type
-      let typedValue = newValue;
-      if (config.value_type === 'int') {
-        typedValue = parseInt(newValue);
-      } else if (config.value_type === 'float') {
-        typedValue = parseFloat(newValue);
-      } else if (config.value_type === 'bool') {
-        typedValue = newValue === 'true' || newValue === '1';
-      }
+      // Convert value to appropriate type using utility function
+      const typedValue = convertToType(newValue, config.value_type);
 
       // PATCH /api/system/config/{key} via updateConfig()
       await updateConfig(config.key, typedValue);
@@ -183,9 +129,6 @@ function SystemAdminDashboard() {
       setEditValue('');
       setShowConfirmModal(false);
       setPendingChange(null);
-
-      // Show success message
-      console.log(`✅ Configuration updated: ${config.key} = ${typedValue}`);
     } catch (error) {
       console.error('Failed to update configuration:', error);
       alert(`❌ Failed to update configuration: ${error.response?.data?.detail || error.message}`);

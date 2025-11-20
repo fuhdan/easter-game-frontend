@@ -16,6 +16,17 @@
 import React, { useState } from 'react';
 import { updateMyTeamName } from '../../services';
 
+/**
+ * TeamNameCard component - Allow team leaders to change their team name
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.user - Current user object
+ * @param {string} props.user.team_name - Current team name
+ * @returns {JSX.Element} Team name change form
+ *
+ * @example
+ * <TeamNameCard user={currentUser} />
+ */
 const TeamNameCard = ({ user }) => {
   const [teamName, setTeamName] = useState(user?.team_name || '');
   const [errors, setErrors] = useState({});
@@ -23,7 +34,11 @@ const TeamNameCard = ({ user }) => {
   const [success, setSuccess] = useState(false);
 
   /**
-   * Validate team name
+   * Validate team name according to business rules
+   *
+   * @param {string} name - Team name to validate
+   * @returns {Object} Validation errors object (empty if valid)
+   * @returns {string} errors.name - Error message if validation fails
    */
   const validateTeamName = (name) => {
     const errors = {};
@@ -40,7 +55,10 @@ const TeamNameCard = ({ user }) => {
   };
 
   /**
-   * Handle form submission
+   * Handle form submission for team name change
+   *
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>}
    */
   const handleSubmit = async (e) => {
     e.preventDefault();

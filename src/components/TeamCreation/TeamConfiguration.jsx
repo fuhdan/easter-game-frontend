@@ -24,17 +24,49 @@
 import React from 'react';
 import { createTeams, resetTeams, utils } from '../../services';
 
-const TeamConfiguration = ({ 
-  config, 
-  setConfig, 
-  players, 
-  teams, 
+/**
+ * TeamConfiguration component - Team generation configuration
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.config - Current configuration
+ * @param {number} props.config.minTeamSize - Minimum team size
+ * @param {number} props.config.maxTeamSize - Maximum team size
+ * @param {Function} props.setConfig - Update configuration
+ * @param {Array} props.players - Available players
+ * @param {Array} props.teams - Generated teams
+ * @param {Function} props.setTeams - Update teams
+ * @param {Function} props.setPlayers - Update players
+ * @param {Array} props.departments - Department list
+ * @param {Function} props.showNotification - Show notification
+ * @param {boolean} props.loading - Loading state
+ * @param {Function} props.setLoading - Update loading state
+ * @returns {JSX.Element} Team configuration interface
+ *
+ * @example
+ * <TeamConfiguration
+ *   config={config}
+ *   setConfig={setConfig}
+ *   players={players}
+ *   teams={teams}
+ *   setTeams={setTeams}
+ *   setPlayers={setPlayers}
+ *   departments={departments}
+ *   showNotification={showNotification}
+ *   loading={loading}
+ *   setLoading={setLoading}
+ * />
+ */
+const TeamConfiguration = ({
+  config,
+  setConfig,
+  players,
+  teams,
   setTeams,
   setPlayers,
-  departments, 
-  showNotification, 
-  loading, 
-  setLoading 
+  departments,
+  showNotification,
+  loading,
+  setLoading
 }) => {
 
   /**
@@ -80,13 +112,9 @@ const TeamConfiguration = ({
     try {
       // Frontend validation
       validateConfiguration();
-      
-      console.log('Sending to backend:', { players, config });
-      
+
       // Call REAL API service
       const result = await createTeams(players, config);
-      
-      console.log('Backend response:', result);
       
       if (result.success && result.teams) {
         // Update frontend state with backend results
@@ -116,9 +144,8 @@ const TeamConfiguration = ({
     }
 
     setLoading(true);
-    
+
     try {
-      console.log('Calling resetTeams()');
       const result = await resetTeams();
       
       if (result.success) {
@@ -164,8 +191,13 @@ const TeamConfiguration = ({
   /**
    * Calculate estimated number of teams based on current settings
    * Provides user feedback on configuration impact
+   *
+   * TODO(2025-11-20): Currently disabled - UI doesn't display estimated team count
+   * Re-enable when adding team count preview to configuration panel
+   * Usage: Display "Estimated teams: {getEstimatedTeams()}" below team size inputs
+   *
+   * @returns {number} Estimated number of teams based on current configuration
    */
-  // Commented out - not currently used in UI
   // const getEstimatedTeams = () => {
   //   if (players.length === 0) return 0;
   //

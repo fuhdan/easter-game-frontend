@@ -5,23 +5,15 @@
  *
  * Design principles:
  * - Matches existing card styling (StatsGrid, TeamProgressTable)
- * - Uses Ypsomed color palette (#005da0, #c41e3a)
+ * - Uses Ypsomed color palette from global variables (index.css)
  * - Responsive design
  * - Consistent with design-preview.html
  *
+ * NOTE: CSS variables (--primary-blue, --dark-blue, etc.) are defined
+ * globally in index.css and automatically inherited by all components.
+ *
  * @since 2025-11-06
  */
-
-:root {
-  --primary-blue: #005da0;
-  --dark-blue: #004271;
-  --accent-red: #c41e3a;
-  --light-gray: #f8f9fa;
-  --medium-gray: #e9ecef;
-  --success: #28a745;
-  --warning: #ffc107;
-  --danger: #dc3545;
-}
 
 /* Rate Limit Card Container - Match Profile card style */
 .rate-limit-card {
