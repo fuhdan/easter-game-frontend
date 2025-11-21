@@ -89,11 +89,9 @@ function GamePackageManagement() {
     setEventDetailTab,
     setPackageFormData: setEventFormData,
     handleViewEvent,
-    handleEditEventInline,
     handleCloseEvent,
     handleUpdateEvent,
     handleDeleteEvent,
-    handleToggleEventActive,
     confirmDelete,
     resetDeleteTarget
   } = useEventOperations(loadAllData);
@@ -159,29 +157,6 @@ function GamePackageManagement() {
       }
     }
   }, [selectedEvent, viewMode, setImageData]);
-
-  /**
-   * Wrapper for delete event that also shows confirmation modal
-   */
-  const handleDeleteEventWithModal = (event) => {
-    handleDeleteEvent(event);
-    setShowDeleteConfirmModal(true);
-  };
-
-  /**
-   * Show admin guide
-   */
-  const handleShowAdminGuide = async () => {
-    try {
-      const guide = await getAdminGuide();
-      setAdminGuideContent(guide.guide);
-      setShowAdminGuide(true);
-    } catch (error) {
-      console.error('Failed to load admin guide:', error);
-      alert('❌ Failed to load admin guide');
-    }
-  };
-
 
   // Loading state
   if (loading) {

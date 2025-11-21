@@ -6,13 +6,19 @@
  * Features:
  * - KPI statistics grid
  * - Team progress table with multiple views
+ * - Games analytics tab with detailed metrics
+ * - Rate limit management
+ * - Tabbed interface for organized navigation
  * - Shows default data immediately, updates when API responds
  * - Real-time data updates (TODO: WebSocket integration)
+ *
+ * @since 2025-11-21
  */
 import React, { useState, useEffect } from 'react';
 import StatsGrid from './StatsGrid';
 import TeamProgressTable from './TeamProgressTable.jsx';
 import RateLimitCard from './RateLimitCard.jsx';
+import GamesAnalyticsTab from './GamesAnalyticsTab.jsx';
 import './AdminDashboard.css';
 
 /**
@@ -22,6 +28,7 @@ import './AdminDashboard.css';
  * @returns {JSX.Element}
  */
 const AdminDashboard = ({ user }) => {
+    const [activeTab, setActiveTab] = useState('overview');
     const [viewMode, setViewMode] = useState('summary');
     const [dashboardData, setDashboardData] = useState(null);
 
@@ -80,18 +87,68 @@ const AdminDashboard = ({ user }) => {
         }
     }
 
+    /**
+     * Render tab navigation
+     * @returns {JSX.Element}
+     */
+    const renderTabNavigation = () => {
+        const tabs = [
+            { id: 'overview', label: '📊 Overview', icon: '📊' },
+            { id: 'games-analytics', label: '🎯 Games Analytics', icon: '🎯' },
+            { id: 'rate-limits', label: '⚡ Rate Limits', icon: '⚡' }
+        ];
+
+        return (
+            <div className="dashboard-tabs">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                        aria-label={`Switch to ${tab.label}`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+        );
+    };
+
+    /**
+     * Render active tab content
+     * @returns {JSX.Element}
+     */
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'overview':
+                return (
+                    <>
+                        <StatsGrid data={dashboardData?.stats} />
+                        <TeamProgressTable
+                            data={dashboardData?.teams}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                        />
+                    </>
+                );
+
+            case 'games-analytics':
+                return <GamesAnalyticsTab />;
+
+            case 'rate-limits':
+                return <RateLimitCard user={user} />;
+
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="admin-dashboard">
-            <StatsGrid data={dashboardData?.stats} />
-
-            <TeamProgressTable
-                data={dashboardData?.teams}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-            />
-
-            <RateLimitCard user={user} />
-
+            {renderTabNavigation()}
+            <div className="dashboard-content">
+                {renderTabContent()}
+            </div>
         </div>
     );
 };

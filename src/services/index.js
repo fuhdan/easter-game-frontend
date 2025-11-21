@@ -39,7 +39,6 @@ export const {
   login,
   logout,
   refresh,
-  generateOtp,
   verify,
   reset,
   activateAccount
@@ -84,7 +83,8 @@ export const {
   uploadCSV,
   exportPlayers,
   exportTeams,
-  importPlayers
+  importPlayers,
+  generateOtp
 } = players;
 
 export const {

@@ -66,6 +66,21 @@ const GamePanel = ({ user }) => {
         }
     }
 
+    /**
+     * Get current game ID (if user has one in progress).
+     *
+     * @returns {number|null} Current game ID or null
+     */
+    const getCurrentGameId = () => {
+        if (!games || games.length === 0) return null;
+
+        const currentGame = games.find(
+            (g) => g.progress && g.progress.status === 'in_progress'
+        );
+
+        return currentGame?.id || null;
+    };
+
     if (loading) {
         return (
             <div className="game-panel">
@@ -142,7 +157,9 @@ const GamePanel = ({ user }) => {
                     {/* Team Progress */}
                     <TeamProgress
                         teamId={user.team_id}
-                        games={games}
+                        eventId={activeEvent?.id}
+                        currentGameId={getCurrentGameId()}
+                        onRefresh={loadEventAndGames}
                     />
                 </div>
             </div>

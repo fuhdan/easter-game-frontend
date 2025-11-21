@@ -19,7 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import './AITrainingManagement.css';
 import {
-  getHintsByGame, getSystemPrompts, getEvents,
+  getHintsByGame, getEvents,
   getCategories, getAllGames
 } from '../../services';
 import EventManagement from './EventManagement/EventManagement';

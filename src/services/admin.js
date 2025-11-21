@@ -170,3 +170,114 @@ export const resetRateLimitBulk = (ips) => {
   log.info(`Bulk resetting rate limits for ${ips.length} IP(s)`);
   return request('POST', '/api/admin/reset-rate-limit-bulk', { ips });
 };
+
+/**
+ * Get game statistics overview
+ *
+ * ADMIN ONLY
+ *
+ * Returns aggregate statistics across all games for the active event.
+ * Team-based analytics: Counts teams (not individuals) for completion rates.
+ *
+ * @returns {Promise<Object>} Game statistics overview
+ * @returns {boolean} response.success - Success status
+ * @returns {Object} response.stats - Statistics object
+ * @returns {number} response.stats.total_games - Total games in active event
+ * @returns {number} response.stats.avg_completion_rate - Average completion rate (%)
+ * @returns {Object} response.stats.most_popular - Most completed game
+ * @returns {Object} response.stats.most_difficult - Least completed game
+ * @returns {Array<Object>} response.stats.games_needing_attention - Games with <50% completion
+ * @throws {APIError} 403 if not admin
+ * @throws {APIError} 404 if no active event found
+ *
+ * @example
+ * const stats = await getGameStatistics();
+ * console.log(`Avg completion: ${stats.stats.avg_completion_rate}%`);
+ *
+ * @since 2025-11-21
+ */
+export const getGameStatistics = () => {
+  log.info('Fetching game statistics overview');
+  return request('GET', '/admin/dashboard/games/stats');
+};
+
+/**
+ * Get detailed analytics for each game
+ *
+ * ADMIN ONLY
+ *
+ * Returns per-game metrics including completion rates, avg times, hints used,
+ * ratings, and teams needing help. All metrics are team-based.
+ *
+ * @returns {Promise<Object>} Per-game analytics
+ * @returns {boolean} response.success - Success status
+ * @returns {Array<Object>} response.games - Array of game analytics
+ * @returns {number} response.games[].game_id - Game ID
+ * @returns {string} response.games[].title - Game title
+ * @returns {string} response.games[].category_name - Category name
+ * @returns {string} response.games[].category_icon - Category icon
+ * @returns {number} response.games[].difficulty_level - Difficulty (1-5)
+ * @returns {number} response.games[].completion_rate - Completion rate (%)
+ * @returns {number} response.games[].completed_teams - Teams that completed
+ * @returns {number} response.games[].total_teams - Total active teams
+ * @returns {number} response.games[].avg_time_minutes - Avg completion time
+ * @returns {number} response.games[].total_hints_used - Total hints used
+ * @returns {number} response.games[].avg_hints_per_team - Avg hints per team
+ * @returns {number} response.games[].stuck_teams - Teams stuck (>4h in progress)
+ * @returns {number} response.games[].avg_rating - Average rating (1-5)
+ * @returns {number} response.games[].rating_count - Number of ratings
+ * @returns {boolean} response.games[].needs_attention - Needs admin attention flag
+ * @throws {APIError} 403 if not admin
+ * @throws {APIError} 404 if no active event found
+ *
+ * @example
+ * const analytics = await getPerGameAnalytics();
+ * const needsHelp = analytics.games.filter(g => g.needs_attention);
+ *
+ * @since 2025-11-21
+ */
+export const getPerGameAnalytics = () => {
+  log.info('Fetching per-game analytics');
+  return request('GET', '/admin/dashboard/games/analytics');
+};
+
+/**
+ * Get detailed admin view for a single game
+ *
+ * ADMIN ONLY
+ *
+ * Returns comprehensive breakdown including team completion status,
+ * rating distribution, and recent comments. Does not expose solutions.
+ *
+ * @param {number} gameId - Game ID to get details for
+ * @returns {Promise<Object>} Detailed game data
+ * @returns {boolean} response.success - Success status
+ * @returns {Object} response.game - Game information
+ * @returns {number} response.game.id - Game ID
+ * @returns {string} response.game.title - Game title
+ * @returns {string} response.game.description - Game description
+ * @returns {number} response.game.difficulty_level - Difficulty (1-5)
+ * @returns {number} response.game.points_value - Points value
+ * @returns {number} response.game.max_hints - Max hints available
+ * @returns {Array<Object>} response.team_breakdown - Team completion breakdown
+ * @returns {number} response.team_breakdown[].team_id - Team ID
+ * @returns {string} response.team_breakdown[].team_name - Team name
+ * @returns {number} response.team_breakdown[].completed - Members who completed
+ * @returns {number} response.team_breakdown[].total_members - Total team members
+ * @returns {number} response.team_breakdown[].completion_rate - Team completion % (0-100)
+ * @returns {string} response.team_breakdown[].status - Team status (completed/not_started)
+ * @returns {Object} response.rating_distribution - Rating distribution {1: count, 2: count, ...}
+ * @returns {Array<Object>} response.comments - Recent 10 rating comments
+ * @throws {APIError} 403 if not admin
+ * @throws {APIError} 404 if game not found
+ *
+ * @example
+ * const details = await getGameAdminDetails(5);
+ * console.log(`${details.game.title}: ${details.team_breakdown.length} teams`);
+ *
+ * @since 2025-11-21
+ */
+export const getGameAdminDetails = (gameId) => {
+  log.info(`Fetching admin details for game ${gameId}`);
+  return request('GET', `/admin/dashboard/games/${gameId}/details`);
+};

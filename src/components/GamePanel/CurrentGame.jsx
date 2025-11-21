@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getCategories, getAllGames, submitSolution } from '../../services';
+import { getAllGames, submitSolution } from '../../services';
 
 /**
  * CurrentGame component - Game selection and solution submission
@@ -38,37 +38,20 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   const [solution, setSolution] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
-  const [categories, setCategories] = useState([]);
   const [gameProgress, setGameProgress] = useState({});
 
   useEffect(() => {
-    loadCategories();
     loadGameProgress();
   }, []);
-
-  /**
-   * Load category data to display icons and colors
-   *
-   * Fetches all game categories from the backend to display
-   * category icons and colors for each game.
-   *
-   * @async
-   * @returns {Promise<void>}
-   */
-  async function loadCategories() {
-    try {
-      const response = await getCategories(true);
-      setCategories(response.categories || []);
-    } catch (err) {
-      console.error('Failed to load categories:', err);
-    }
-  }
 
   /**
    * Load game progress to determine which games are completed
    *
    * Fetches user's progress for all games to mark completed games
    * and prevent re-submission.
+   *
+   * Also applies sequential unlock logic - only the first incomplete
+   * game is available, all games after it are locked.
    *
    * @async
    * @returns {Promise<void>}
@@ -91,6 +74,29 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   }
 
   /**
+   * Check if a game is locked based on sequential progression
+   *
+   * Games must be completed in order. A game is locked if any
+   * previous game (lower order_index) is not completed.
+   *
+   * @param {Object} game - Game to check
+   * @param {number} game.order_index - Game's position in sequence
+   * @returns {boolean} True if game is locked
+   */
+  function isGameLocked(game) {
+    if (!games || !gameProgress) return false;
+
+    // Find all games with lower order_index
+    const previousGames = games.filter(g => g.order_index < game.order_index);
+
+    // Game is locked if any previous game is not completed
+    return previousGames.some(prevGame => {
+      const progress = gameProgress[prevGame.id];
+      return !progress || progress.status !== 'completed';
+    });
+  }
+
+  /**
    * Get category details for a game
    *
    * Extracts category information (name, icon, color) from the game object.
@@ -110,7 +116,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
    * // Returns: { name: 'Puzzle', icon: '🧩', color: '#FF5733' }
    */
   function getCategoryForGame(game) {
-    // If game has category info, use it directly
+    // Games have embedded category info - use it directly
     if (game.category_name) {
       return {
         name: game.category_name,
@@ -118,8 +124,8 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
         color: game.category_color || '#005da0'
       };
     }
-    // Fallback to looking up by name if available
-    return categories.find(cat => cat.name === game.category_name) || null;
+    // No category info available
+    return null;
   }
 
   /**
@@ -275,28 +281,33 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
             const category = getCategoryForGame(game);
             const progress = gameProgress[game.id];
             const isCompleted = progress && progress.status === 'completed';
+            const isLocked = isGameLocked(game);
 
             return (
               <div
                 key={game.id}
-                onClick={() => setSelectedGame(game)}
+                onClick={() => !isLocked && setSelectedGame(game)}
                 style={{
                   padding: '15px',
                   marginBottom: '10px',
                   border: `2px solid ${category?.color || '#005da0'}`,
                   borderRadius: '8px',
-                  cursor: 'pointer',
+                  cursor: isLocked ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
-                  background: isCompleted ? '#f0f8f0' : '#fff',
-                  opacity: isCompleted ? 0.8 : 1
+                  background: isLocked ? '#f8f9fa' : (isCompleted ? '#f0f8f0' : '#fff'),
+                  opacity: isLocked ? 0.5 : (isCompleted ? 0.8 : 1)
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = isCompleted ? '#e0f0e0' : '#e8f4f8';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  if (!isLocked) {
+                    e.currentTarget.style.background = isCompleted ? '#e0f0e0' : '#e8f4f8';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = isCompleted ? '#f0f8f0' : '#fff';
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  if (!isLocked) {
+                    e.currentTarget.style.background = isCompleted ? '#f0f8f0' : '#fff';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
                 }}
               >
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
@@ -332,15 +343,26 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                       </>
                     )}
 
-                    {/* Challenge text (always shown) */}
-                    <p style={{
-                      margin: isCompleted ? '8px 0 0 0' : '0',
-                      fontSize: '15px',
-                      fontWeight: isCompleted ? 'normal' : '500',
-                      color: '#333'
-                    }}>
-                      {game.challenge_text || game.description}
-                    </p>
+                    {/* Locked game message or challenge text */}
+                    {isLocked ? (
+                      <p style={{
+                        margin: '0',
+                        fontSize: '15px',
+                        fontStyle: 'italic',
+                        color: '#6c757d'
+                      }}>
+                        🔒 Complete previous games to unlock Game {game.order_index}
+                      </p>
+                    ) : (
+                      <p style={{
+                        margin: isCompleted ? '8px 0 0 0' : '0',
+                        fontSize: '15px',
+                        fontWeight: isCompleted ? 'normal' : '500',
+                        color: '#333'
+                      }}>
+                        {game.challenge_text || game.description}
+                      </p>
+                    )}
                   </div>
 
                   {/* Difficulty and Status */}
@@ -373,6 +395,11 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                     {isCompleted && (
                       <div style={{ fontSize: '12px', color: '#28a745', marginTop: '4px', fontWeight: '600' }}>
                         COMPLETED
+                      </div>
+                    )}
+                    {isLocked && (
+                      <div style={{ fontSize: '12px', color: '#721c24', marginTop: '4px', fontWeight: '600' }}>
+                        🔒 LOCKED
                       </div>
                     )}
                   </div>

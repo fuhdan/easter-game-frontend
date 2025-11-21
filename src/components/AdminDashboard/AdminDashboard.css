@@ -22,6 +22,58 @@
   font-size: 1.1rem;
 }
 
+/* ========================================
+ * TAB NAVIGATION
+ * ======================================== */
+
+.dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.85rem 1.5rem;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  background: var(--light-gray, #f8f9fa);
+  color: var(--primary-blue, #005da0);
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, var(--primary-blue, #005da0), var(--dark-blue, #004271));
+  color: white;
+  border-color: var(--primary-blue, #005da0);
+  box-shadow: 0 4px 8px rgba(0, 93, 160, 0.3);
+}
+
+.tab-button.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 93, 160, 0.4);
+}
+
+/* Dashboard content area */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .admin-dashboard {
@@ -32,14 +84,27 @@
     margin: 0 1rem 1rem 1rem;
     padding: 1rem;
   }
-  
+
   .view-options {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  
+
   .view-btn {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
+  }
+
+  /* Tab navigation mobile */
+  .dashboard-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    text-align: left;
   }
 }

@@ -307,8 +307,17 @@ const TeamManagementCard = ({ user }) => {
   }
 
   // Filter visible members based on user role
+  // SECURITY: Exclude system admins who don't play the game
   const visibleMembers = teamMembers.filter(member => {
+    // Filter out admins and super_admins (they don't play)
+    if (['super_admin', 'admin'].includes(member.role)) {
+      return false;
+    }
+
+    // Admins can see all team members
     if (['super_admin', 'admin'].includes(user?.role)) return true;
+
+    // Team captains see only their team
     return Number(member.team_id) === Number(user.team_id);
   });
 

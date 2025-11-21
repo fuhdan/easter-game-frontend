@@ -165,3 +165,37 @@ export const updateMyTeamName = (name) => {
   log.info('Updating team name to:', name);
   return request('PUT', '/api/teams/my-team/name', { name });
 };
+
+/**
+ * Get progress overview for current user's team
+ *
+ * Team-based gameplay:
+ * - Returns aggregate team stats (not individual members)
+ * - Shows completed games, total score, progress percentage
+ * - Current user's active game highlighted in response
+ *
+ * @returns {Promise<Object>} Team progress data
+ * @returns {Object} return.team - Team information
+ * @returns {number} return.team.id - Team ID
+ * @returns {string} return.team.name - Team name
+ * @returns {number} return.team.member_count - Number of team members
+ * @returns {Object} return.summary - Progress summary
+ * @returns {number} return.summary.total_score - Team's total score
+ * @returns {number} return.summary.completed_games - Games completed by team
+ * @returns {number} return.summary.total_games - Total games in event
+ * @returns {number} return.summary.progress_percentage - Completion % (0-100)
+ * @returns {Array<Object>} return.games - Per-game progress data
+ * @throws {APIError} 401 if not authenticated
+ * @throws {APIError} 403 if user not assigned to a team
+ * @throws {APIError} 404 if no active event found
+ *
+ * @example
+ * const progress = await getMyTeamProgress();
+ * console.log(`Team ${progress.team.name}: ${progress.summary.progress_percentage}% complete`);
+ *
+ * @since 2025-11-21
+ */
+export const getMyTeamProgress = () => {
+  log.info('Fetching team progress');
+  return request('GET', '/api/teams/me/progress');
+};
