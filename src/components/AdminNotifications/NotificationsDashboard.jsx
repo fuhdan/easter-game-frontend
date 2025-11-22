@@ -15,9 +15,10 @@
  * @since 2025-11-12
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import NotificationCard from './NotificationCard';
 import NotificationFilters from './NotificationFilters';
+import NotificationsSSE from '../../services/notificationsSSE';
 import './NotificationsDashboard.css';
 
 /**
@@ -31,6 +32,7 @@ const NotificationsDashboard = ({ user }) => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'connected', 'connecting', 'disconnected'
 
     // Filter states
     const [activeTab, setActiveTab] = useState('open'); // 'open', 'resolved'
@@ -38,19 +40,167 @@ const NotificationsDashboard = ({ user }) => {
     const [typeFilter, setTypeFilter] = useState(null);
     const [teamFilter, setTeamFilter] = useState(null);
 
-    // Pagination
-    const [limit] = useState(50);
+    // SSE client reference
+    const sseClient = useRef(null);
 
+    // Initialize SSE connection for 'open' tab only
     useEffect(() => {
-        loadNotifications();
-        // Poll for updates every 10 seconds
-        const interval = setInterval(loadNotifications, 10000);
-        return () => clearInterval(interval);
+        // Only use SSE for 'open' notifications (real-time updates)
+        // For 'acknowledged' and 'resolved', use traditional API calls
+        if (activeTab === 'open') {
+            console.log('[NotificationsDashboard] Setting up SSE connection for open notifications');
+            setConnectionStatus('connecting');
+
+            // Create SSE client if not exists
+            if (!sseClient.current) {
+                sseClient.current = new NotificationsSSE();
+
+                // Handle notification events
+                sseClient.current.on('notification', (notificationData) => {
+                    console.log('[NotificationsDashboard] Received notification:', notificationData);
+
+                    // Apply filters
+                    if (!matchesFilters(notificationData)) {
+                        console.log('[NotificationsDashboard] Notification filtered out');
+                        return;
+                    }
+
+                    // Update or add notification with proper priority ordering
+                    setNotifications(prevNotifications => {
+                        const existingIndex = prevNotifications.findIndex(n => n.id === notificationData.id);
+
+                        if (existingIndex >= 0) {
+                            // Update existing notification and re-sort
+                            const updated = [...prevNotifications];
+                            updated[existingIndex] = notificationData;
+                            return sortNotificationsByPriority(updated);
+                        } else {
+                            // Add new notification and sort
+                            const updated = [...prevNotifications, notificationData];
+                            return sortNotificationsByPriority(updated);
+                        }
+                    });
+                });
+
+                // Handle heartbeat
+                sseClient.current.on('heartbeat', (data) => {
+                    console.log('[NotificationsDashboard] Heartbeat:', data.count, 'notifications');
+                });
+
+                // Handle connection status
+                sseClient.current.on('connected', () => {
+                    console.log('[NotificationsDashboard] SSE connected');
+                    setConnectionStatus('connected');
+                    setError(null);
+                    setLoading(false);
+                });
+
+                sseClient.current.on('disconnected', () => {
+                    console.log('[NotificationsDashboard] SSE disconnected');
+                    setConnectionStatus('disconnected');
+                });
+
+                sseClient.current.on('error', (errorData) => {
+                    console.error('[NotificationsDashboard] SSE error:', errorData);
+                    setError(errorData.message || 'Connection error');
+                    setLoading(false);
+                });
+            }
+
+            // Connect to SSE
+            sseClient.current.connect();
+        } else {
+            // Disconnect SSE for non-open tabs and use traditional API
+            if (sseClient.current) {
+                console.log('[NotificationsDashboard] Disconnecting SSE for non-open tab');
+                sseClient.current.disconnect();
+            }
+
+            // Load notifications via API for acknowledged/resolved tabs
+            loadNotifications();
+        }
+
+        // Cleanup on unmount
+        return () => {
+            if (sseClient.current && activeTab !== 'open') {
+                sseClient.current.disconnect();
+            }
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, priorityFilter, typeFilter, teamFilter]);
+    }, [activeTab]);
+
+    // Reload when filters change (for non-SSE tabs)
+    useEffect(() => {
+        if (activeTab !== 'open') {
+            loadNotifications();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [priorityFilter, typeFilter, teamFilter]);
 
     /**
-     * Load notifications from API with current filters
+     * Sort notifications by priority, repeat count, and timestamp
+     *
+     * Sort order:
+     * 1. Priority (urgent > high > normal)
+     * 2. Repeat count (more repeats = higher urgency)
+     * 3. Last seen timestamp (newest first)
+     *
+     * @param {Array} notifications - Array of notification objects
+     * @returns {Array} Sorted array
+     */
+    function sortNotificationsByPriority(notifications) {
+        const priorityOrder = {
+            'urgent': 3,
+            'high': 2,
+            'normal': 1
+        };
+
+        return [...notifications].sort((a, b) => {
+            // First, sort by priority
+            const priorityDiff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+            if (priorityDiff !== 0) {
+                return priorityDiff;
+            }
+
+            // Second, sort by repeat count (higher count = more urgent)
+            const repeatDiff = (b.repeat_count || 0) - (a.repeat_count || 0);
+            if (repeatDiff !== 0) {
+                return repeatDiff;
+            }
+
+            // Third, sort by last_seen_at (newest first)
+            const dateA = new Date(a.last_seen_at);
+            const dateB = new Date(b.last_seen_at);
+            return dateB - dateA;
+        });
+    }
+
+    /**
+     * Check if notification matches current filters
+     * @param {Object} notification - Notification object
+     * @returns {boolean} True if matches filters
+     */
+    function matchesFilters(notification) {
+        // Check priority filter
+        if (priorityFilter && notification.priority !== priorityFilter) {
+            return false;
+        }
+
+        // Check type filter
+        if (typeFilter && notification.escalation_type !== typeFilter) {
+            return false;
+        }
+
+        // Check team filter
+        if (teamFilter && notification.team_id !== teamFilter) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Load notifications from API with current filters (for non-SSE tabs)
      * @async
      * @returns {Promise<void>}
      */
@@ -62,7 +212,7 @@ const NotificationsDashboard = ({ user }) => {
             // Build query params
             const params = new URLSearchParams({
                 status: activeTab, // 'open', 'acknowledged', 'resolved'
-                limit: limit
+                limit: 50
             });
 
             if (priorityFilter) {
@@ -174,6 +324,34 @@ const NotificationsDashboard = ({ user }) => {
         setTeamFilter(null);
     }
 
+    /**
+     * Create a test notification (development only)
+     */
+    async function createTestNotification() {
+        try {
+            const response = await fetch('/api/test/create-test-notification', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to create test notification');
+            }
+
+            const result = await response.json();
+            console.log('[NotificationsDashboard] Test notification created:', result);
+            alert(`Test notification created! Priority: ${result.priority}`);
+
+        } catch (err) {
+            console.error('Failed to create test notification:', err);
+            alert('Failed to create test notification: ' + err.message);
+        }
+    }
+
     // Calculate stats
     const totalNotifications = notifications.length;
     const highPriorityCount = notifications.filter(n => n.priority === 'high' || n.priority === 'urgent').length;
@@ -182,8 +360,30 @@ const NotificationsDashboard = ({ user }) => {
         <div className="notifications-dashboard">
             <div className="notifications-card-container">
                 <div className="card-header">
-                    <span>Admin Notifications</span>
+                    <div className="header-title-group">
+                        <span>Admin Notifications</span>
+                        {/* Test button (development only) */}
+                        <button
+                            className="test-notification-btn"
+                            onClick={createTestNotification}
+                            title="Create test notification (dev only)"
+                        >
+                            + Test
+                        </button>
+                    </div>
                     <div className="header-stats">
+                        {/* SSE Connection Status (only for 'open' tab) */}
+                        {activeTab === 'open' && (
+                            <div className={`stat-badge connection-status ${connectionStatus}`}>
+                                <span className="status-indicator"></span>
+                                <span className="stat-label">
+                                    {connectionStatus === 'connected' && 'Live'}
+                                    {connectionStatus === 'connecting' && 'Connecting...'}
+                                    {connectionStatus === 'disconnected' && 'Disconnected'}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="stat-badge">
                             <span className="stat-value">{totalNotifications}</span>
                             <span className="stat-label">Total</span>

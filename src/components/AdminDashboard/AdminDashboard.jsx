@@ -29,13 +29,12 @@ import './AdminDashboard.css';
  */
 const AdminDashboard = ({ user }) => {
     const [activeTab, setActiveTab] = useState('overview');
-    const [viewMode, setViewMode] = useState('summary');
     const [dashboardData, setDashboardData] = useState(null);
 
     useEffect(() => {
         loadDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [viewMode]);
+    }, []);
 
     /**
      * Load dashboard data from API.
@@ -126,8 +125,6 @@ const AdminDashboard = ({ user }) => {
                         <StatsGrid data={dashboardData?.stats} />
                         <TeamProgressTable
                             data={dashboardData?.teams}
-                            viewMode={viewMode}
-                            onViewModeChange={setViewMode}
                         />
                     </>
                 );

@@ -2,9 +2,8 @@
  * Component: TeamProgressTable
  * Purpose: Display team progress data in table format
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
- * 
+ *
  * Features:
- * - Multiple view modes (summary, per-game, per-team)
  * - Progress bars with animations
  * - Status badges
  * - Responsive mobile layout
@@ -18,11 +17,9 @@ import './TeamProgressTable.css';
  * Team progress table component showing team statistics and progress.
  * @param {Object} props
  * @param {Array} props.data - Team data from API
- * @param {string} props.viewMode - Current view mode (summary, per-game, per-team)
- * @param {Function} props.onViewModeChange - Callback for view mode changes
  * @returns {JSX.Element}
  */
-const TeamProgressTable = ({ data, viewMode = 'summary', onViewModeChange }) => {
+const TeamProgressTable = ({ data }) => {
     
     // Default teams shown immediately
     const defaultTeams = [
@@ -56,9 +53,13 @@ const TeamProgressTable = ({ data, viewMode = 'summary', onViewModeChange }) => 
     ];
 
     // Use API data when available, fallback to defaults
-    // SECURITY: Filter out system teams (is_system_team=true) from display
+    // SECURITY: Filter out system teams (is_system_team=true) and admin teams from display
     const allTeams = data || defaultTeams;
-    const teams = allTeams.filter(team => !team.is_system_team);
+    const teams = allTeams.filter(team =>
+        !team.is_system_team &&
+        team.name !== 'System Admins' &&
+        team.name !== 'system_admins'
+    );
 
     /**
      * Get appropriate CSS class for status badge.
@@ -98,31 +99,6 @@ const TeamProgressTable = ({ data, viewMode = 'summary', onViewModeChange }) => 
             <div className="card-body">
                 <div className="team-progress-section">
                     <div className="data-table">
-                        {/* Integrated toolbar */}
-                        <div className="table-toolbar">
-                            <span className="toolbar-title">View Options</span>
-                            <div className="toolbar-buttons">
-                        <button 
-                            className={`toolbar-btn ${viewMode === 'summary' ? 'active' : ''}`}
-                            onClick={() => onViewModeChange('summary')}
-                        >
-                            Summary
-                        </button>
-                        <button 
-                            className={`toolbar-btn ${viewMode === 'per-game' ? 'active' : ''}`}
-                            onClick={() => onViewModeChange('per-game')}
-                        >
-                            Per Game
-                        </button>
-                        <button 
-                            className={`toolbar-btn ${viewMode === 'per-team' ? 'active' : ''}`}
-                            onClick={() => onViewModeChange('per-team')}
-                        >
-                            Per Team
-                        </button>
-                    </div>
-                </div>
-
                 <div className="table-header">
                     <div>TEAM</div>
                     <div>PROGRESS</div>

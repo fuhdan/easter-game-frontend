@@ -69,7 +69,7 @@ function MainWindow() {
             return [
                 { id: 'dashboard', label: 'Dashboard', icon: '📊' },
                 { id: 'teams', label: 'Team Creation', icon: '👥' },
-                { id: 'game', label: 'Game Monitor', icon: '🎮' },
+                // Game Panel removed - admins don't play
                 ...commonTabs
             ];
         }

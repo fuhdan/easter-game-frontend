@@ -36,8 +36,8 @@ const GamesAnalyticsTab = () => {
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('completion_rate');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortBy, setSortBy] = useState('game_id');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -241,7 +241,7 @@ const GamesAnalyticsTab = () => {
                     <span className="category-icon">{game.category_icon}</span>
                   )}
                   <div>
-                    <strong>{game.title}</strong>
+                    <strong>#{game.game_id} {game.title}</strong>
                     {game.category_name && (
                       <div className="category-name">{game.category_name}</div>
                     )}

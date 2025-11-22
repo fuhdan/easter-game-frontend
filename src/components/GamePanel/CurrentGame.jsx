@@ -201,7 +201,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
         </div>
         <div className="card-body">
           <p><strong>Question:</strong></p>
-          <p>{selectedGame.description}</p>
+          <p>{selectedGame.challenge_text || selectedGame.description}</p>
 
           <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
             <div>

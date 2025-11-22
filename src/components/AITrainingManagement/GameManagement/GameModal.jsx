@@ -169,6 +169,19 @@ function GameModal({ game, gameForm, events, categories, onFormChange, onSave, o
             </div>
 
             <div className="form-group">
+              <label htmlFor="game-max-hints">Max Hints</label>
+              <input
+                type="number"
+                id="game-max-hints"
+                value={gameForm.max_hints !== undefined ? gameForm.max_hints : 0}
+                onChange={(e) => onFormChange({ ...gameForm, max_hints: parseInt(e.target.value) })}
+                className="form-control"
+                min="0"
+                title="Maximum number of AI hints available for this game (0 = no hints)"
+              />
+            </div>
+
+            <div className="form-group">
               <label htmlFor="game-order">Display Order</label>
               <input
                 type="number"
