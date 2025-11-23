@@ -700,3 +700,112 @@
     text-align: left;
   }
 }
+
+/* ========================================
+ * EXPANDABLE TEAM DETAILS
+ * ======================================== */
+
+.team-breakdown-wrapper {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.team-breakdown-row.clickable:hover {
+  background: #f8f9fa;
+}
+
+.expand-icon {
+  display: inline-block;
+  margin-right: 0.5rem;
+  font-size: 0.8em;
+  color: var(--primary-blue, #005da0);
+  transition: transform 0.2s ease;
+}
+
+.team-details-expanded {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 2px solid var(--primary-blue, #005da0);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.team-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-blue, #005da0);
+}
+
+.completions-list h5 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.completion-item {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.completion-header strong {
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.completion-date {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.completion-details {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.completion-details span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

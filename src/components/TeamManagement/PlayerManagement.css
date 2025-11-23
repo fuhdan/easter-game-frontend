@@ -1,0 +1,287 @@
+/**
+ * PlayerManagement Component Styles
+ * Part of: Easter Quest 2025 - Team Management
+ *
+ * Design System:
+ * - Primary Blue: #005da0 (Ypsomed brand)
+ * - Dark Blue: #004271
+ * - Clean, professional table design
+ * - Consistent with other dashboard components
+ *
+ * @since 2025-11-23
+ */
+
+/* ===================================================================
+   CARD CONTAINER (Hidden in tab context)
+   =================================================================== */
+
+.card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+  padding: 0;
+}
+
+.card-header {
+  display: none; /* Hidden - tab shows the header */
+}
+
+.card-body {
+  padding: 0;
+}
+
+/* ===================================================================
+   CSV UPLOAD AREA
+   =================================================================== */
+
+.csv-upload-area {
+  border: 2px dashed #e9ecef;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.csv-upload-area:hover {
+  background: #f0f7ff;
+  border-color: #005da0;
+}
+
+.csv-upload-area.dragover {
+  background: #e7f3ff;
+  border-color: #005da0;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.6;
+}
+
+.csv-upload-area h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.csv-upload-area p {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.csv-upload-area small {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+/* ===================================================================
+   PLAYER CONTROLS
+   =================================================================== */
+
+.player-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.player-search {
+  flex: 1;
+  max-width: 400px;
+}
+
+.player-search input {
+  width: 100%;
+}
+
+/* ===================================================================
+   TABLE
+   =================================================================== */
+
+.table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.player-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background: white;
+}
+
+.player-table thead {
+  background: #f8f9fa;
+  color: #333;
+}
+
+.player-table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.player-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f8f9fa;
+  vertical-align: middle;
+  background: white;
+}
+
+.player-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Editable input fields in table */
+.player-table input.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 2px solid #e9ecef;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.player-table input.form-control:focus {
+  outline: none;
+  border-color: #005da0;
+  box-shadow: 0 0 0 3px rgba(0, 93, 160, 0.1);
+}
+
+/* ===================================================================
+   BUTTONS
+   =================================================================== */
+
+.btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 20px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: #005da0;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #004271;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  margin: 0 0.25rem;
+  border-radius: 6px;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+/* ===================================================================
+   TABLE SUMMARY
+   =================================================================== */
+
+.table-summary {
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  font-size: 0.875rem;
+  color: #666;
+  text-align: center;
+  border-top: 1px solid #e9ecef;
+}
+
+/* ===================================================================
+   FORM CONTROLS
+   =================================================================== */
+
+.form-control {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #005da0;
+  box-shadow: 0 0 0 3px rgba(0, 93, 160, 0.1);
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   =================================================================== */
+
+@media (max-width: 768px) {
+  .player-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .player-search {
+    max-width: none;
+  }
+
+  .player-table th,
+  .player-table td {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .csv-upload-area {
+    padding: 1.5rem 1rem;
+  }
+
+  .upload-icon {
+    font-size: 2rem;
+  }
+}

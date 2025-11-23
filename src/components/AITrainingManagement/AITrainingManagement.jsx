@@ -9,7 +9,7 @@
  * - Coordination between child components
  *
  * Security:
- * - Only accessible to super_admin role
+ * - Only accessible to admin role
  *
  * @module components/AITrainingManagement
  * @since 2025-11-16

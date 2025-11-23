@@ -94,6 +94,7 @@ export const {
   update: updateGame,
   deleteGame,
   getProgress,
+  startGame,
   submitSolution,
   useHint,
   rate,

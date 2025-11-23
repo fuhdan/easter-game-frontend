@@ -1,0 +1,331 @@
+/**
+ * TeamsTab Styles
+ * Part of: Easter Quest 2025 Frontend - Team Management
+ *
+ * Design: Team display with statistics and member lists
+ *
+ * @since 2025-11-23
+ */
+
+/* ===================================================================
+   Container
+   =================================================================== */
+
+.teams-tab {
+  padding: 0;
+}
+
+/* ===================================================================
+   Team Statistics Section
+   =================================================================== */
+
+.teams-stats-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e9ecef;
+}
+
+.teams-stats-section h3 {
+  margin: 0 0 1rem 0;
+  color: #005da0;
+  font-size: 1.25rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.stat-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #005da0;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Department Distribution */
+.department-distribution {
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.department-distribution h4 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.dept-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dept-stat {
+  padding: 0.5rem 1rem;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e9ecef;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.dept-stat strong {
+  color: #005da0;
+}
+
+/* ===================================================================
+   Teams Grid
+   =================================================================== */
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.team-card {
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ===================================================================
+   Team Card Header
+   =================================================================== */
+
+.team-card-header {
+  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.team-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.member-count {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+}
+
+/* ===================================================================
+   Team Card Body
+   =================================================================== */
+
+.team-card-body {
+  padding: 1.5rem;
+}
+
+.no-members {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* ===================================================================
+   Members List
+   =================================================================== */
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.member-item {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.member-item:hover {
+  background: #e9ecef;
+}
+
+.member-item.is-captain {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-color: #ffc107;
+}
+
+.member-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.captain-badge {
+  background: #ffc107;
+  color: #856404;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.member-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.member-username {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.member-department {
+  color: #005da0;
+  font-weight: 500;
+}
+
+/* ===================================================================
+   Loading & Error States
+   =================================================================== */
+
+.teams-tab-loading,
+.teams-tab-error,
+.teams-tab-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.teams-tab-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-top-color: #005da0;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.teams-tab-error p {
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+.btn-retry {
+  padding: 0.6rem 1.25rem;
+  background: #005da0;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-retry:hover {
+  background: #004271;
+  transform: translateY(-1px);
+}
+
+.teams-tab-empty .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.teams-tab-empty h3 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.teams-tab-empty p {
+  color: #666;
+  margin: 0;
+}
+
+/* ===================================================================
+   Responsive Design
+   =================================================================== */
+
+@media (max-width: 768px) {
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dept-stats {
+    flex-direction: column;
+  }
+
+  .team-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .member-count {
+    align-self: flex-start;
+  }
+
+  .member-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

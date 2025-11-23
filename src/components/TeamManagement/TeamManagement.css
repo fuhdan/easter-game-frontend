@@ -1,0 +1,195 @@
+/**
+ * Team Management Dashboard Styles
+ * Part of: Easter Quest 2025 Frontend - Team Administration
+ *
+ * Design System:
+ * - Primary Blue: #005da0 (Ypsomed brand)
+ * - Dark Blue: #004271
+ * - Accent Red: #c41e3a
+ * - Light Gray: #f8f9fa
+ * - Medium Gray: #e9ecef
+ *
+ * Matches: SystemAdminDashboard, GameAdminDashboard, NotificationsDashboard
+ *
+ * @since 2025-11-23
+ */
+
+/* ===================================================================
+   Container & Layout
+   =================================================================== */
+
+.team-management-dashboard {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+  background: transparent;
+  width: 100%;
+  overflow: visible;
+}
+
+/* Main Card Container - Match other dashboards */
+.team-management-card-container {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  margin-bottom: 2rem;
+}
+
+.team-management-card-container .card-header {
+  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.team-management-card-container .card-body {
+  padding: 1.5rem;
+}
+
+/* ===================================================================
+   Tab Navigation
+   =================================================================== */
+
+.team-management-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.team-management-tabs .tab-button {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: #333;
+}
+
+.team-management-tabs .tab-button:hover {
+  background: #e9ecef;
+  border-color: #005da0;
+}
+
+.team-management-tabs .tab-button.active {
+  background: #005da0;
+  color: white;
+  border-color: #005da0;
+}
+
+/* ===================================================================
+   Dashboard Content
+   =================================================================== */
+
+.dashboard-content {
+  min-height: 400px;
+}
+
+/* CRITICAL: Remove ALL nested card styling - tabs provide the container */
+.dashboard-content .card {
+  border: none !important;
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+  background: transparent !important;
+}
+
+.dashboard-content .card .card-header {
+  display: none !important; /* Hide all nested card headers */
+}
+
+.dashboard-content .card .card-body {
+  padding: 0 !important;
+}
+
+/* Nested TeamCreation component styling */
+.dashboard-content .team-creation {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.dashboard-content .team-creation-title {
+  display: none; /* Hide duplicate title, we have it in card header */
+}
+
+/* Nested TeamManagementCard styling */
+.dashboard-content .profile-card {
+  border: none;
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+.dashboard-content .profile-card .card-header {
+  display: none; /* Hide duplicate header, we have it in main card */
+}
+
+.dashboard-content .profile-card .card-body {
+  padding: 0;
+}
+
+/* Placeholder styles (will be replaced when actual content is added) */
+.tab-content-placeholder {
+  padding: 2rem;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #e9ecef;
+}
+
+.tab-content-placeholder h3 {
+  margin: 0 0 1rem 0;
+  color: #005da0;
+  font-size: 1.5rem;
+}
+
+.tab-content-placeholder p {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* ===================================================================
+   Responsive Design
+   =================================================================== */
+
+@media (max-width: 768px) {
+  .team-management-card-container .card-header {
+    padding: 1rem;
+    font-size: 0.75rem;
+  }
+
+  .team-management-card-container .card-body {
+    padding: 1rem;
+  }
+
+  .team-management-tabs {
+    flex-direction: column;
+  }
+
+  .team-management-tabs .tab-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tab-content-placeholder {
+    padding: 1.5rem 1rem;
+  }
+}

@@ -250,7 +250,80 @@ export function ChatProvider({ children, user }) {
   }, [chatMode, wsSend, addMessage, clearMessages, loadChatHistory]);
 
   const loadAIContext = useCallback(async () => {
-    setAIContext({ game: 'Mystery Hunt', team: user?.team_name || 'Unknown', progress: 60, hints_used: 3 });
+    if (!user) return;
+
+    try {
+      // Fetch active event
+      const eventResponse = await fetch('/api/events/active', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!eventResponse.ok) {
+        console.error('[ChatContext] Failed to fetch active event');
+        setAIContext({ game: null, team: user.team_name || 'Unknown', progress: 0, hints_used: 0, hasActiveGame: false });
+        return;
+      }
+
+      const event = await eventResponse.json();
+
+      // Fetch games with progress for this event
+      const gamesResponse = await fetch(`/api/events/${event.id}/games`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!gamesResponse.ok) {
+        console.error('[ChatContext] Failed to fetch games');
+        setAIContext({ game: null, team: user.team_name || 'Unknown', progress: 0, hints_used: 0, hasActiveGame: false });
+        return;
+      }
+
+      const games = await gamesResponse.json();
+
+      // Calculate overall progress
+      const completedGames = games.filter(g => g.progress && g.progress.status === 'completed').length;
+      const totalGames = games.length;
+      const progressPercentage = totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0;
+
+      // Find current game with priority:
+      // 1. Game with "in_progress" status
+      // 2. Most recently active game (not_started or in_progress)
+      // SECURITY: Only show game info if user has actually started a game
+      let currentGame = games.find(g => g.progress && g.progress.status === 'in_progress');
+
+      if (!currentGame) {
+        // Find most recently active game (any with progress that's not completed)
+        currentGame = games.find(g => g.progress && g.progress.status !== 'completed');
+      }
+
+      // Get hints used and game name (using order_index like TeamProgress does)
+      let hintsUsed = 0;
+      let gameName = null;  // null means no active game
+      let hasActiveGame = false;
+
+      if (currentGame && currentGame.progress) {
+        // Only set game info if there's actual progress
+        hintsUsed = currentGame.progress.hints_used || 0;
+        // Use "Game X" format like in TeamProgress component
+        gameName = currentGame.order_index ? `Game ${currentGame.order_index}` : 'Game';
+        hasActiveGame = true;
+      }
+
+      setAIContext({
+        game: gameName,
+        team: user.team_name || 'Unknown',
+        progress: progressPercentage,
+        hints_used: hintsUsed,
+        hasActiveGame: hasActiveGame  // Add flag to indicate if game is active
+      });
+
+    } catch (error) {
+      console.error('[ChatContext] Error loading AI context:', error);
+      setAIContext({ game: null, team: user.team_name || 'Unknown', progress: 0, hints_used: 0, hasActiveGame: false });
+    }
   }, [user]);
 
   useEffect(() => { if (chatMode === 'ai' && user) loadAIContext(); }, [chatMode, user, loadAIContext]);

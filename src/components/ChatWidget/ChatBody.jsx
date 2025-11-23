@@ -170,7 +170,7 @@ const ChatBody = ({ user }) => {
   // Team chat UI
   if (chatMode === 'team') {
     // SECURITY: Check if user is admin
-    const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
+    const isAdmin = user && (user.role === 'admin' || user.role === 'game_admin');
 
     // Admin Team Chat: Show all teams with expandable members
     if (isAdmin) {
@@ -224,7 +224,11 @@ const ChatBody = ({ user }) => {
         <div className="ai-context-info">
           <div className="ai-context-title">AI knows your status:</div>
           <div className="ai-context-details">
-            Game: {aiContext.game} | Team: {aiContext.team} | Progress: {aiContext.progress}% | Hints: {aiContext.hints_used}
+            {aiContext.hasActiveGame ? (
+              <>Game: {aiContext.game} | Team: {aiContext.team} | Progress: {aiContext.progress}% | Hints: {aiContext.hints_used}</>
+            ) : (
+              <>Team: {aiContext.team} | Overall Progress: {aiContext.progress}% | No game started yet</>
+            )}
           </div>
         </div>
       )}

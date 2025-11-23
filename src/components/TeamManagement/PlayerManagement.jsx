@@ -16,6 +16,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { getAllPlayers } from '../../services';
+import './PlayerManagement.css';
 
 /**
  * PlayerManagement component - Player list management

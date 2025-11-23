@@ -38,7 +38,7 @@ const TeamBroadcast = ({ user, selectedTeam }) => {
       }
 
       // Regular user view: exclude admin messages
-      if (msg.sender_role === 'admin' || msg.sender_role === 'super_admin') {
+      if (msg.sender_role === 'admin' || msg.sender_role === 'game_admin') {
         return false;
       }
 
@@ -110,7 +110,7 @@ const TeamBroadcast = ({ user, selectedTeam }) => {
 
         {teamMessages.map((message, index) => {
           const isOwnMessage = message.sender_id === user?.id;
-          const isAdminMessage = message.sender_role === 'admin' || message.sender_role === 'super_admin';
+          const isAdminMessage = message.sender_role === 'admin' || message.sender_role === 'game_admin';
 
           return (
             <div

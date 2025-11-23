@@ -1,70 +1,146 @@
-/* FILE: components/AdminDashboard/AdminDashboard.css */
+/* FILE: components/AdminDashboard/GameAdminDashboard.css */
 /*
- * Admin dashboard component styles
+ * Game Admin Dashboard component styles
+ *
+ * Dashboard for monitoring running Easter game events, displaying:
+ * - Team progress and completion stats
+ * - Game analytics and difficulty metrics
+ * - Rate limit management
+ *
+ * Design: Matches NotificationsDashboard card structure
+ * Colors: Ypsomed brand colors (--primary-blue, --accent-red)
  */
 
-.admin-dashboard {
+/* Main Container - Transparent like other dashboards */
+.game-admin-dashboard {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
   background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0; /* Remove padding completely */
   width: 100%;
   overflow: visible;
 }
 
-/* Loading state */
-.dashboard-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  color: var(--primary-blue);
-  font-size: 1.1rem;
+/* Main Card Container - Match NotificationsDashboard style */
+.game-dashboard-card-container {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  margin-bottom: 2rem;
 }
 
-/* ========================================
- * TAB NAVIGATION
- * ======================================== */
+.game-dashboard-card-container .card-header {
+  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-.dashboard-tabs {
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Connection Status Badge (SSE) - Match NotificationsDashboard */
+.stat-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-badge.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+}
+
+.stat-badge.connection-status .status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6c757d;
+}
+
+/* Connection states */
+.stat-badge.connection-status.connected .status-indicator {
+  background: #28a745;
+}
+
+.stat-badge.connection-status.connecting .status-indicator {
+  background: #ffc107;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.stat-badge.connection-status.disconnected .status-indicator {
+  background: #dc3545;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.game-dashboard-card-container .card-body {
+  padding: 1.5rem;
+}
+
+/* Tab Navigation - Match NotificationsDashboard */
+.game-dashboard-tabs {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
-  background: white;
-  padding: 0.75rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
 }
 
-.tab-button {
-  flex: 1;
-  padding: 0.85rem 1.5rem;
-  background: transparent;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6c757d;
+.game-dashboard-tabs .tab-button {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: #333;
 }
 
-.tab-button:hover {
-  background: var(--light-gray, #f8f9fa);
-  color: var(--primary-blue, #005da0);
+.game-dashboard-tabs .tab-button:hover {
+  border-color: #005da0;
+  background: rgba(0, 93, 160, 0.05);
+  transform: translateY(-1px);
 }
 
-.tab-button.active {
-  background: linear-gradient(135deg, var(--primary-blue, #005da0), var(--dark-blue, #004271));
+.game-dashboard-tabs .tab-button.active {
+  background: #005da0;
   color: white;
-  border-color: var(--primary-blue, #005da0);
-  box-shadow: 0 4px 8px rgba(0, 93, 160, 0.3);
-}
-
-.tab-button.active:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 93, 160, 0.4);
+  border-color: #005da0;
+  box-shadow: 0 2px 4px rgba(0, 93, 160, 0.2);
 }
 
 /* Dashboard content area */
@@ -76,35 +152,22 @@
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .admin-dashboard {
-    padding: 0 1rem; /* Reduce padding on mobile */
+  .game-admin-dashboard {
+    padding: 0 1rem;
   }
 
-  .dashboard-controls {
-    margin: 0 1rem 1rem 1rem;
-    padding: 1rem;
+  .game-dashboard-card-container .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 
-  .view-options {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .view-btn {
-    padding: 0.6rem 1rem;
-    font-size: 0.8rem;
-  }
-
-  /* Tab navigation mobile */
-  .dashboard-tabs {
+  .game-dashboard-tabs {
     flex-direction: column;
     gap: 0.5rem;
-    padding: 0.5rem;
   }
 
-  .tab-button {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+  .game-dashboard-tabs .tab-button {
     text-align: left;
   }
 }

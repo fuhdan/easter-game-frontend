@@ -1,36 +1,35 @@
 /**
  * Component: Profile
- * Purpose: User profile management with role-based functionality
+ * Purpose: User profile management with tab-based interface
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
  *
  * Features:
  * - All roles: Password change
- * - Team Captains: Team management + game rating
- * - Admins: Team management
- * - Super Admins: System administration
- * 
+ * - Team Captains: Team settings + game rating
+ * - Tab-based design matching other dashboards
+ *
  * Notes:
- * - Uses proper grid layout for team management
- * - Team management gets full width when present
- * - Responsive design with mobile support
+ * - Team management moved to TeamManagement panel
+ * - Card-based design with rounded tabs
+ * - Role-based tab visibility
+ *
+ * @since 2025-08-27
+ * @updated 2025-11-23 - Refactored to tab-based design
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import PasswordChangeCard from './PasswordChangeCard';
-import TeamManagementCard from './TeamManagementCard';
 import GameRatingCard from './GameRatingCard';
 import TeamNameCard from './TeamNameCard';
 import './Profile.css';
 
 /**
- * Profile component - User profile management with role-based functionality
+ * Profile component - User profile management with tab-based interface
  *
- * Displays different interface elements based on user role:
- * - All users: Password change functionality
- * - Team Captains: Team name editing, team management, game rating
- * - Admins: Team management
- * - Super Admins: System administration access
+ * Displays tabs based on user role:
+ * - All users: Password tab
+ * - Team Captains: Password, Team Settings, Game Rating tabs
  *
  * @param {Object} props - Component props
  * @param {Object} props.user - Current authenticated user object
@@ -38,7 +37,7 @@ import './Profile.css';
  * @param {string} props.user.username - Username
  * @param {string} props.user.email - Email address
  * @param {string} props.user.display_name - Display name
- * @param {string} props.user.role - User role (player/team_captain/admin/super_admin)
+ * @param {string} props.user.role - User role (player/team_captain/game_admin/admin)
  * @param {number} [props.user.team_id] - Team ID (if user is in a team)
  * @param {string} [props.user.team_name] - Team name (if user is in a team)
  * @returns {JSX.Element} Profile interface with role-appropriate features
@@ -47,6 +46,9 @@ import './Profile.css';
  * <Profile user={currentUser} />
  */
 const Profile = ({ user }) => {
+    // State for active tab
+    const [activeTab, setActiveTab] = useState('password');
+
     // SECURITY: Validate user prop and required fields
     if (!user) {
         console.error('Profile component: user prop is required');
@@ -79,66 +81,84 @@ const Profile = ({ user }) => {
 
     const currentUser = user;
 
-    // Check if user has team management access
-    const hasTeamManagement = currentUser.role === 'team_captain' || 
-                             currentUser.role === 'super_admin' || 
-                             currentUser.role === 'admin';
+    /**
+     * Render tab navigation buttons
+     * Tabs shown based on user role:
+     * - All: Password
+     * - Team Captain: Password, Team Settings, Game Rating
+     *
+     * @returns {JSX.Element} Tab navigation
+     */
+    const renderTabNavigation = () => {
+        const tabs = [];
+
+        // Password tab - All users
+        tabs.push({ id: 'password', label: '🔒 Password' });
+
+        // Team Settings tab - Team captains only
+        if (currentUser.role === 'team_captain') {
+            tabs.push({ id: 'team-settings', label: '✏️ Team Settings' });
+        }
+
+        // Game Rating tab - Team captains only
+        if (currentUser.role === 'team_captain') {
+            tabs.push({ id: 'game-rating', label: '⭐ Game Rating' });
+        }
+
+        return (
+            <div className="profile-tabs">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                        aria-label={`Switch to ${tab.label}`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+        );
+    };
 
     /**
-     * SuperAdminCard - Placeholder for super admin features
+     * Render content for active tab
      *
-     * @returns {JSX.Element} Super admin card placeholder
-     * @note Future implementation will include system administration features
+     * @returns {JSX.Element} Tab content
      */
-    const SuperAdminCard = () => (
-        <div className="profile-card">
-            <div className="card-header">
-                🔧 System Administration
-            </div>
-            <div className="card-body">
-                <p>Super admin features will be implemented later</p>
-                <p><small>Note: Full system access and admin management</small></p>
-            </div>
-        </div>
-    );
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'password':
+                return <PasswordChangeCard />;
+
+            case 'team-settings':
+                return <TeamNameCard user={currentUser} />;
+
+            case 'game-rating':
+                return <GameRatingCard />;
+
+            default:
+                return <PasswordChangeCard />;
+        }
+    };
 
     return (
         <div className="profile">
-            {hasTeamManagement ? (
-                // Layout with team management - uses full width layout
-                <div className="profile-grid-with-team">
-                    {/* Top row: Smaller cards side by side */}
-                    <div className="profile-grid-team-row">
-                        <PasswordChangeCard />
-                        {currentUser.role === 'team_captain' && <TeamNameCard user={currentUser} />}
-                        {currentUser.role === 'team_captain' && <GameRatingCard />}
+            <div className="profile-card-container">
+                {/* Card Header */}
+                <div className="card-header">
+                    <div className="header-title-group">
+                        <span>👤 PROFILE</span>
                     </div>
+                </div>
 
-                    {/* Full width: Team Management */}
-                    <div className="team-management-full">
-                        <TeamManagementCard user={currentUser} />
+                {/* Card Body with Tabs */}
+                <div className="card-body">
+                    {renderTabNavigation()}
+                    <div className="profile-content">
+                        {renderTabContent()}
                     </div>
-
-                    {/* Super admin card if needed */}
-                    {currentUser.role === 'super_admin' && <SuperAdminCard />}
                 </div>
-            ) : (
-                // Simple layout for basic users - standard grid
-                <div className="profile-grid">
-                    <PasswordChangeCard />
-                </div>
-            )}
-
-            <div className="role-info">
-                <h4 className="role-title">
-                    Current Role: {currentUser.role.replace('_', ' ').toUpperCase()}
-                </h4>
-                <p className="role-description">
-                    {currentUser.role === 'player' && 'You can change your password.'}
-                    {currentUser.role === 'team_captain' && 'You can manage your team members, change your team name, change your password, and rate games.'}
-                    {currentUser.role === 'admin' && 'You can change your password and manage team members.'}
-                    {currentUser.role === 'super_admin' && 'You have full system access including admin management and system configuration.'}
-                </p>
             </div>
         </div>
     );
@@ -154,7 +174,7 @@ Profile.propTypes = {
         username: PropTypes.string.isRequired,
         email: PropTypes.string.isRequired,
         display_name: PropTypes.string,
-        role: PropTypes.oneOf(['player', 'team_captain', 'admin', 'super_admin']).isRequired,
+        role: PropTypes.oneOf(['player', 'team_captain', 'game_admin', 'admin']).isRequired,
         team_id: PropTypes.number,
         team_name: PropTypes.string,
         is_team_leader: PropTypes.bool

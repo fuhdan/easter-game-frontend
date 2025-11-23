@@ -1,6 +1,6 @@
 /**
  * Component: SystemAdminDashboard
- * Purpose: System configuration management interface (super_admin only)
+ * Purpose: System configuration management interface (admin only)
  * Part of: Easter Quest 2025 Frontend - System Administration
  *
  * Features:
@@ -11,7 +11,7 @@
  * - Configuration change confirmation
  *
  * Security:
- * - Only accessible to super_admin role
+ * - Only accessible to admin role
  * - All changes confirmed via modal
  * - Type validation on client and server
  *
@@ -30,6 +30,7 @@ import ConfirmModal from './ConfirmModal';
 
 function SystemAdminDashboard() {
   // State management
+  const [activeTab, setActiveTab] = useState('events'); // 'events', 'system-config'
   const [configs, setConfigs] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -184,55 +185,101 @@ function SystemAdminDashboard() {
     return <div className="error-message">{error}</div>;
   }
 
+  /**
+   * Render tab navigation
+   */
+  const renderTabNavigation = () => {
+    const tabs = [
+      { id: 'events', label: '🎮 Events' },
+      { id: 'system-config', label: '⚙️ System Config' }
+    ];
+
+    return (
+      <div className="system-dashboard-tabs">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+            aria-label={`Switch to ${tab.label}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  /**
+   * Render tab content based on active tab
+   */
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'events':
+        return <GamePackageManagement />;
+
+      case 'system-config':
+        return (
+          <div className="system-config-content">
+            <div className="config-header-actions">
+              <button className="btn-action" onClick={_loadConfiguration}>
+                🔄 Reload
+              </button>
+              <button className="btn-action" onClick={_handleReloadCache}>
+                💾 Clear Cache
+              </button>
+            </div>
+
+            {/* Category Filter */}
+            <ConfigCategoryFilter
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+
+            {/* Configuration Sections by Category */}
+            {Object.entries(groupedConfigs).map(([category, categoryConfigs]) => (
+              <div key={category} className="config-category-section">
+                <div className="section-header">
+                  <h3>{category}</h3>
+                </div>
+                <div className="config-grid">
+                  {categoryConfigs.map(config => (
+                    <ConfigItem
+                      key={config.key}
+                      config={config}
+                      isEditing={editingKey === config.key}
+                      editValue={editValue}
+                      onEditStart={_handleEditStart}
+                      onEditCancel={_handleEditCancel}
+                      onEditSave={_handleEditSave}
+                      onEditValueChange={setEditValue}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="system-admin-dashboard">
-      {/* Game Package Management Card (includes AI Training and System Prompts) */}
-      <GamePackageManagement />
-
-      {/* System Configuration Card */}
-      <div className="system-config-card">
+      <div className="system-dashboard-card-container">
         <div className="card-header">
-          ⚙️ System Configuration
-          <div className="header-actions">
-            <button className="btn-header-action" onClick={_loadConfiguration}>
-              🔄 Reload
-            </button>
-            <button className="btn-header-action" onClick={_handleReloadCache}>
-              💾 Clear Cache
-            </button>
+          <div className="header-title-group">
+            <span>🔧 SYSTEM ADMIN DASHBOARD</span>
           </div>
         </div>
-
         <div className="card-body">
-          {/* Category Filter */}
-          <ConfigCategoryFilter
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-          />
-
-          {/* Configuration Sections by Category */}
-          {Object.entries(groupedConfigs).map(([category, categoryConfigs]) => (
-            <div key={category} className="config-category-section">
-              <div className="section-header">
-                <h3>{category}</h3>
-              </div>
-              <div className="config-grid">
-                {categoryConfigs.map(config => (
-                  <ConfigItem
-                    key={config.key}
-                    config={config}
-                    isEditing={editingKey === config.key}
-                    editValue={editValue}
-                    onEditStart={_handleEditStart}
-                    onEditCancel={_handleEditCancel}
-                    onEditSave={_handleEditSave}
-                    onEditValueChange={setEditValue}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+          {renderTabNavigation()}
+          <div className="dashboard-content">
+            {renderTabContent()}
+          </div>
         </div>
       </div>
 

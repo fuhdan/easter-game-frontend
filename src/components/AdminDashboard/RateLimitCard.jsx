@@ -14,7 +14,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { onTokenRefresh, getConfig, resetRateLimitBulk, utils, getCurrentUser } from '../../services';
+import { getConfig, resetRateLimitBulk, utils, getCurrentUser } from '../../services';
+import GenericSSEClient from '../../services/GenericSSEClient';
 import './RateLimitCard.css';
 
 /**
@@ -30,7 +31,7 @@ const RateLimitCard = ({ user }) => {
     const [selectedIPs, setSelectedIPs] = useState(new Set());
     const [connectionStatus, setConnectionStatus] = useState('disconnected');
     const [lastUpdated, setLastUpdated] = useState(null);
-    const [eventSource, setEventSource] = useState(null);
+    const [sseClient, setSseClient] = useState(null);
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null);
     const [rateLimitConfig, setRateLimitConfig] = useState(null);
@@ -99,70 +100,6 @@ const RateLimitCard = ({ user }) => {
         return `${remainingSeconds}s`;
     };
 
-    /**
-     * Connect to SSE stream for real-time blocked IP updates
-     */
-    const connectToSSE = useCallback(() => {
-        // Close existing connection if any
-        setEventSource(prevES => {
-            if (prevES) {
-                console.log('Closing existing SSE connection');
-                prevES.close();
-            }
-            return null;
-        });
-
-        setConnectionStatus('connecting');
-
-        const es = new EventSource('/api/admin/blocked-ips/stream', {
-            withCredentials: true  // Send cookies for authentication
-        });
-
-        // Handle blocked IPs updates
-        es.addEventListener('blocked_ips_update', (event) => {
-            const data = JSON.parse(event.data);
-            setBlockedIPs(data.blocked_ips);
-            setLastUpdated(new Date(data.timestamp));
-            setConnectionStatus('connected');
-        });
-
-        // Handle heartbeat
-        es.addEventListener('heartbeat', (event) => {
-            // Just keep connection alive, no UI update needed
-            console.log('SSE heartbeat received');
-        });
-
-        // Handle errors
-        es.addEventListener('error', (event) => {
-            if (event.data) {
-                const data = JSON.parse(event.data);
-                console.error('SSE error event:', data.error);
-                showNotification('Failed to retrieve blocked IPs', 'error');
-            }
-        });
-
-        // Handle connection errors (network issues, auth loss)
-        es.onerror = (error) => {
-            console.error('SSE connection error:', error);
-            setConnectionStatus('disconnected');
-
-            // EventSource automatically reconnects
-            setTimeout(() => {
-                if (es.readyState === EventSource.CONNECTING) {
-                    setConnectionStatus('connecting');
-                }
-            }, 1000);
-        };
-
-        // Handle successful connection
-        es.onopen = () => {
-            console.log('SSE connection opened');
-            setConnectionStatus('connected');
-        };
-
-        setEventSource(es);
-        return es;
-    }, []); // Empty dependency array - function never needs to be recreated
 
     /**
      * Handle bulk reset of selected IPs
@@ -236,31 +173,21 @@ const RateLimitCard = ({ user }) => {
     };
 
     /**
-     * Handle manual reconnect - check/refresh authentication before connecting
-     * SECURITY: Ensures tokens are valid before establishing SSE connection
+     * Handle manual reconnect
+     *
+     * Disconnects and reconnects the SSE client.
+     * Useful when connection is lost and automatic reconnection failed.
      */
-    const handleManualReconnect = async () => {
-        try {
+    const handleManualReconnect = () => {
+        if (sseClient) {
+            console.log('[RateLimitCard] Manual reconnect requested');
             setConnectionStatus('connecting');
-            setLoading(true);
 
-            // Make a lightweight API call to trigger token refresh if needed
-            // This will use the existing token refresh mechanism in api.js
-            console.log('Checking authentication before SSE reconnect...');
-            await getCurrentUser();
-
-            // Small delay to ensure cookies are properly set
+            // Disconnect and reconnect
+            sseClient.disconnect();
             setTimeout(() => {
-                console.log('Authentication valid - connecting to SSE');
-                connectToSSE();
-                setLoading(false);
+                sseClient.connect();
             }, 100);
-
-        } catch (error) {
-            console.error('Failed to reconnect SSE:', error);
-            setConnectionStatus('disconnected');
-            setLoading(false);
-            showNotification('Failed to reconnect. Please try again.', 'error');
         }
     };
 
@@ -269,18 +196,54 @@ const RateLimitCard = ({ user }) => {
         // Load rate limit configuration
         loadRateLimitConfig();
 
-        const es = connectToSSE();
-
-        // Subscribe to token refresh events to reconnect SSE with new tokens
-        const unsubscribe = onTokenRefresh(() => {
-            console.log('Token refreshed - reconnecting SSE with new tokens');
-            connectToSSE();
+        // Create SSE client for blocked IPs
+        const client = new GenericSSEClient({
+            endpoint: '/api/admin/blocked-ips/stream',
+            eventTypes: ['blocked_ips_update', 'heartbeat', 'error'],
+            maxReconnectAttempts: 5,
+            reconnectDelay: 1000,
+            maxReconnectDelay: 30000,
+            name: 'RateLimitSSE'
         });
+
+        // Setup event listeners
+        client.on('connected', () => {
+            console.log('[RateLimitCard] SSE connected');
+            setConnectionStatus('connected');
+        });
+
+        client.on('disconnected', () => {
+            console.log('[RateLimitCard] SSE disconnected');
+            setConnectionStatus('disconnected');
+        });
+
+        client.on('blocked_ips_update', (data) => {
+            console.log('[RateLimitCard] Blocked IPs update:', data.blocked_ips.length, 'IPs');
+            setBlockedIPs(data.blocked_ips);
+            setLastUpdated(new Date(data.timestamp));
+            setConnectionStatus('connected');
+        });
+
+        client.on('heartbeat', () => {
+            console.log('[RateLimitCard] Heartbeat received');
+        });
+
+        client.on('error', (error) => {
+            console.error('[RateLimitCard] SSE error:', error);
+            setConnectionStatus('disconnected');
+            if (error.message && error.message !== 'Connection lost') {
+                showNotification('Failed to retrieve blocked IPs', 'error');
+            }
+        });
+
+        // Connect
+        client.connect();
+        setSseClient(client);
 
         // Cleanup on unmount
         return () => {
-            es.close();
-            unsubscribe();
+            console.log('[RateLimitCard] Component unmounting - disconnecting SSE');
+            client.disconnect();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty dependency array - only run once

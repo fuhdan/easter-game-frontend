@@ -85,6 +85,28 @@ export const deleteGame = (id) => request('DELETE', `/admin/ai/games/${id}`);
 export const getProgress = (gameId, teamId) => request('GET', `/api/games/${gameId}/progress/${teamId}`);
 
 /**
+ * Start a game
+ *
+ * Creates a GameProgress record with status "in_progress" and records start time.
+ * This should be called when the user clicks "Start Challenge" button.
+ * Idempotent - safe to call multiple times (returns success if already started).
+ *
+ * @param {number} gameId - Game ID
+ * @returns {Promise<Object>} Start result
+ * @returns {boolean} result.success - Whether game was started successfully
+ * @returns {string} result.message - Success message
+ * @returns {string} result.status - Current game status (in_progress/completed)
+ * @returns {boolean} result.already_started - True if game was already started
+ * @returns {string} [result.started_at] - ISO timestamp when game was started
+ * @throws {APIError} 401 if not authenticated, 404 if game not found
+ *
+ * @example
+ * const result = await startGame(1);
+ * // { success: true, message: "Game started successfully", status: "in_progress", already_started: false }
+ */
+export const startGame = (gameId) => request('POST', `/api/games/${gameId}/start`);
+
+/**
  * Submit solution for a game
  *
  * @param {number} gameId - Game ID

@@ -1,0 +1,58 @@
+/**
+ * File: components/Footer/Footer.css
+ * Purpose: Footer component styles for role-based information display
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * Design:
+ * - Light blue background (#e7f3ff) matching role-info from Profile
+ * - Ypsomed brand blue for title text (var(--primary-blue))
+ * - Left-aligned text with rounded corners
+ * - Responsive design for mobile devices
+ * - Matches Profile.css .role-info styling
+ *
+ * @since 2025-11-23
+ */
+
+/* ===== FOOTER CONTAINER ===== */
+.app-footer {
+    width: 100%;
+    margin-top: 3rem;
+    padding: 0;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    background: #e7f3ff;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
+}
+
+/* ===== ROLE TITLE ===== */
+.footer-role-title {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-blue);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* ===== ROLE DESCRIPTION ===== */
+.footer-role-description {
+    margin: 0;
+    color: #666;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .app-footer {
+        margin-top: 2rem;
+    }
+
+    .footer-content {
+        padding: 1rem;
+        margin: 0 1rem;
+    }
+}

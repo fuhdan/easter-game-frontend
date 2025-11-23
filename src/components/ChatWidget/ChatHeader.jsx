@@ -30,8 +30,8 @@ import './ChatHeader.css';
 const ChatHeader = ({ onClose }) => {
   const { chatMode, switchMode, connectionStatus, unreadCounts, user } = useChat();
 
-  // SECURITY: Check if user is admin/super_admin to hide admin mode button
-  const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
+  // SECURITY: Check if user is admin/game_admin to hide admin mode button
+  const isAdmin = user && (user.role === 'admin' || user.role === 'game_admin');
 
   // Calculate team chat unread count
   const teamUnreadCount = unreadCounts

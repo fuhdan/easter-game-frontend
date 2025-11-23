@@ -31,7 +31,7 @@ const AdminBroadcast = ({ user }) => {
   // Use useMemo to avoid re-filtering on every render
   const adminMessages = React.useMemo(() => {
     return teamBroadcastMessages.filter(msg => {
-      return msg.sender_role === 'admin' || msg.sender_role === 'super_admin';
+      return msg.sender_role === 'admin' || msg.sender_role === 'game_admin';
     });
   }, [teamBroadcastMessages]);
 

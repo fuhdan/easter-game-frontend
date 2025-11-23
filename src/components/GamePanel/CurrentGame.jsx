@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getAllGames, submitSolution } from '../../services';
+import { getAllGames, submitSolution, startGame } from '../../services';
 
 /**
  * CurrentGame component - Game selection and solution submission
@@ -39,6 +39,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
   const [gameProgress, setGameProgress] = useState({});
+  const [startingGameId, setStartingGameId] = useState(null);
 
   useEffect(() => {
     loadGameProgress();
@@ -127,6 +128,39 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
     // No category info available
     return null;
   }
+
+  /**
+   * Handle starting a game from the game list
+   *
+   * Calls the backend to create a GameProgress record with in_progress status.
+   * Reloads progress and triggers parent refresh to update Team Progress panel.
+   *
+   * @param {number} gameId - ID of the game to start
+   * @param {Event} e - Click event (to stop propagation)
+   * @returns {Promise<void>}
+   */
+  const handleStartGame = async (gameId, e) => {
+    e.stopPropagation(); // Prevent clicking the game card
+
+    try {
+      setStartingGameId(gameId);
+
+      const result = await startGame(gameId);
+
+      if (result.success) {
+        // Reload progress to get the new status
+        await loadGameProgress();
+        // Trigger parent refresh to update Team Progress immediately
+        if (onSubmitSolution) {
+          onSubmitSolution();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to start game:', err);
+    } finally {
+      setStartingGameId(null);
+    }
+  };
 
   /**
    * Handle solution form submission
@@ -281,30 +315,32 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
             const category = getCategoryForGame(game);
             const progress = gameProgress[game.id];
             const isCompleted = progress && progress.status === 'completed';
+            const isStarted = progress && (progress.status === 'in_progress' || progress.status === 'completed');
             const isLocked = isGameLocked(game);
+            const isStartingThisGame = startingGameId === game.id;
 
             return (
               <div
                 key={game.id}
-                onClick={() => !isLocked && setSelectedGame(game)}
+                onClick={() => !isLocked && isStarted && setSelectedGame(game)}
                 style={{
                   padding: '15px',
                   marginBottom: '10px',
                   border: `2px solid ${category?.color || '#005da0'}`,
                   borderRadius: '8px',
-                  cursor: isLocked ? 'not-allowed' : 'pointer',
+                  cursor: isLocked ? 'not-allowed' : (isStarted ? 'pointer' : 'default'),
                   transition: 'all 0.2s',
                   background: isLocked ? '#f8f9fa' : (isCompleted ? '#f0f8f0' : '#fff'),
                   opacity: isLocked ? 0.5 : (isCompleted ? 0.8 : 1)
                 }}
                 onMouseEnter={(e) => {
-                  if (!isLocked) {
+                  if (!isLocked && isStarted) {
                     e.currentTarget.style.background = isCompleted ? '#e0f0e0' : '#e8f4f8';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isLocked) {
+                  if (!isLocked && isStarted) {
                     e.currentTarget.style.background = isCompleted ? '#f0f8f0' : '#fff';
                     e.currentTarget.style.transform = 'translateY(0)';
                   }
@@ -330,18 +366,10 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
 
                   {/* Game Content */}
                   <div style={{ flex: 1 }}>
-                    {/* Show title and description only if completed */}
-                    {isCompleted && (
-                      <>
-                        <h4 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
-                          ✅ {game.order_index}. {game.title}
-                        </h4>
-                        <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
-                          {game.description.substring(0, 100)}
-                          {game.description.length > 100 ? '...' : ''}
-                        </p>
-                      </>
-                    )}
+                    {/* Game title */}
+                    <h4 style={{ margin: '0 0 8px 0', color: isCompleted ? '#28a745' : '#333' }}>
+                      {isCompleted && '✅ '}Game {game.order_index}
+                    </h4>
 
                     {/* Locked game message or challenge text */}
                     {isLocked ? (
@@ -351,17 +379,55 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                         fontStyle: 'italic',
                         color: '#6c757d'
                       }}>
-                        🔒 Complete previous games to unlock Game {game.order_index}
+                        🔒 Complete previous games to unlock
                       </p>
                     ) : (
-                      <p style={{
-                        margin: isCompleted ? '8px 0 0 0' : '0',
-                        fontSize: '15px',
-                        fontWeight: isCompleted ? 'normal' : '500',
-                        color: '#333'
-                      }}>
-                        {game.challenge_text || game.description}
-                      </p>
+                      <>
+                        <p style={{
+                          margin: '0 0 12px 0',
+                          fontSize: '15px',
+                          fontWeight: isCompleted ? 'normal' : '500',
+                          color: '#333',
+                          filter: isStarted ? 'none' : 'blur(5px)',
+                          userSelect: isStarted ? 'auto' : 'none',
+                          transition: 'filter 0.3s ease'
+                        }}>
+                          {game.challenge_text || game.description}
+                        </p>
+
+                        {/* Start Challenge Button - Only show if not started */}
+                        {!isStarted && (
+                          <button
+                            onClick={(e) => handleStartGame(game.id, e)}
+                            disabled={isStartingThisGame}
+                            style={{
+                              padding: '8px 20px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              background: 'linear-gradient(135deg, #005da0, #004271)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: isStartingThisGame ? 'not-allowed' : 'pointer',
+                              opacity: isStartingThisGame ? 0.6 : 1,
+                              transition: 'all 0.2s',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isStartingThisGame) {
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                            }}
+                          >
+                            {isStartingThisGame ? '🎯 Starting...' : '🎯 Start Challenge'}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -399,7 +465,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                     )}
                     {isLocked && (
                       <div style={{ fontSize: '12px', color: '#721c24', marginTop: '4px', fontWeight: '600' }}>
-                        🔒 LOCKED
+                        LOCKED
                       </div>
                     )}
                   </div>

@@ -5,15 +5,16 @@
  *
  * Features:
  * - Role-based tab visibility
- * - System Admin Dashboard (super_admin only)
- * - Game Admin Dashboard (admin + super_admin)
- * - Notifications (admin + super_admin)
- * - Team Creation (admin + super_admin)
+ * - System Admin Dashboard (admin only)
+ * - Game Admin Dashboard (game_admin + admin)
+ * - Notifications (game_admin + admin)
+ * - Team Management (admin + team_captain)
  * - Game Panel (all users)
  * - Profile (all users)
  * - Active tab highlighting
  *
  * @since 2025-08-27
+ * @updated 2025-11-23 - Renamed Team Creation to Team Management
  */
 
 import React from 'react';
@@ -31,7 +32,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
         { id: 'system_admin', label: '⚙️ System Admin Dashboard' },
         { id: 'dashboard', label: '📊 Game Admin Dashboard' },
         { id: 'notifications', label: '🔔 Notifications' },
-        { id: 'teams', label: '👥 Team Creation' },
+        { id: 'team_management', label: '👥 Team Management' },
         { id: 'game', label: '🎮 Game Panel' },
         { id: 'profile', label: '👤 Profile' }
     ];
@@ -39,8 +40,8 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
     return (
         <nav className="nav-tabs">
 
-            {/* ✅ Only show System Admin Dashboard for super_admin */}
-            {user.role === 'super_admin' && (
+            {/* ✅ Only show System Admin Dashboard for admin */}
+            {user.role === 'admin' && (
                 <button
                     className={`nav-tab ${activeTab === 'system_admin' ? 'active' : ''}`}
                     onClick={() => onTabChange('system_admin')}
@@ -49,8 +50,8 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                 </button>
             )}
 
-            {/* ✅ Only show Dashboard for admin and super_admin */}
-            {(user.role === 'super_admin' || user.role === 'admin') && (
+            {/* ✅ Only show Dashboard for game_admin and admin */}
+            {(user.role === 'admin' || user.role === 'game_admin') && (
                 <button
                 className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                 onClick={() => onTabChange('dashboard')}
@@ -59,8 +60,8 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                 </button>
             )}
 
-            {/* ✅ Only show Notifications for admin and super_admin */}
-            {(user.role === 'super_admin' || user.role === 'admin') && (
+            {/* ✅ Only show Notifications for game_admin and admin */}
+            {(user.role === 'admin' || user.role === 'game_admin') && (
                 <button
                 className={`nav-tab ${activeTab === 'notifications' ? 'active' : ''}`}
                 onClick={() => onTabChange('notifications')}
@@ -69,11 +70,11 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                 </button>
             )}
 
-            {/* ✅ Only show Team Creation for super_admin */}
-            {user.role === 'super_admin' && (
+            {/* ✅ Only show Team Management for admin and team_captain */}
+            {(user.role === 'admin' || user.role === 'team_captain') && (
                 <button
-                    className={`nav-tab ${activeTab === 'team_creation' ? 'active' : ''}`}
-                    onClick={() => onTabChange('team_creation')}
+                    className={`nav-tab ${activeTab === 'team_management' ? 'active' : ''}`}
+                    onClick={() => onTabChange('team_management')}
                 >
                     {tabs[3].label}  {/* ✅ Label will show */}
                 </button>

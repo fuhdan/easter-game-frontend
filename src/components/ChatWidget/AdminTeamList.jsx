@@ -56,7 +56,7 @@ const AdminTeamList = ({ onSelectMember, onSelectTeam }) => {
       }
     };
 
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (user && (user.role === 'admin' || user.role === 'game_admin')) {
       loadTeams();
     }
   }, [user]);

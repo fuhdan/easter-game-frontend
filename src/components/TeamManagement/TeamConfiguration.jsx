@@ -23,6 +23,7 @@
 
 import React from 'react';
 import { createTeams, resetTeams, utils } from '../../services';
+import './TeamConfiguration.css';
 
 /**
  * TeamConfiguration component - Team generation configuration

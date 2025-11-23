@@ -6,7 +6,7 @@
 .dashboard-header {
   background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
   color: white;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem 3rem;
   border-radius: var(--border-radius);
   margin-bottom: 1.5rem;
   box-shadow: var(--shadow-lg);
@@ -14,7 +14,7 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 2rem;
   width: 100%;
 }
 
@@ -22,6 +22,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  padding-left: 1rem;
 }
 
 .dashboard-logo .ypsomed-logo {
@@ -45,17 +46,22 @@
 .dashboard-title h1 {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
+  color: white;
+  margin: 0;
 }
 
 .dashboard-title p {
   font-size: 0.9rem;
   opacity: 0.9;
+  color: white;
+  margin: 0;
 }
 
-.header-actions {
+.dashboard-header .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem !important;
+  padding-right: 1rem;
 }
 
 .user-info {

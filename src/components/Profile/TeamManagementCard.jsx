@@ -61,7 +61,7 @@ const TeamManagementCard = ({ user }) => {
         } else {
           throw new Error('Failed to load team members');
         }
-      } else if (['admin', 'super_admin'].includes(user.role)) {
+      } else if (['admin', 'game_admin'].includes(user.role)) {
         // Admins see all teams and members
         const teamsResponse = await getAllTeams();
         if (teamsResponse.success) {
@@ -309,13 +309,13 @@ const TeamManagementCard = ({ user }) => {
   // Filter visible members based on user role
   // SECURITY: Exclude system admins who don't play the game
   const visibleMembers = teamMembers.filter(member => {
-    // Filter out admins and super_admins (they don't play)
-    if (['super_admin', 'admin'].includes(member.role)) {
+    // Filter out admins and game_admins (they don't play)
+    if (['admin', 'game_admin'].includes(member.role)) {
       return false;
     }
 
     // Admins can see all team members
-    if (['super_admin', 'admin'].includes(user?.role)) return true;
+    if (['admin', 'game_admin'].includes(user?.role)) return true;
 
     // Team captains see only their team
     return Number(member.team_id) === Number(user.team_id);
@@ -328,10 +328,10 @@ const TeamManagementCard = ({ user }) => {
         
         {/* Team info header */}
         <div className="team-info" style={{ marginBottom: '1.5rem' }}>
-          {['super_admin', 'admin'].includes(user?.role) ? (
+          {['admin', 'game_admin'].includes(user?.role) ? (
             <div>
               <h4>All Teams Overview</h4>
-              <p>You are logged in as <strong>{user.role.replace('_', ' ')}</strong>. 
+              <p>You are logged in as <strong>{user.role.replace('_', ' ')}</strong>.
                  This panel shows all teams and members with their activation status.</p>
             </div>
           ) : (
@@ -379,7 +379,7 @@ const TeamManagementCard = ({ user }) => {
                             <div className="member-department" style={{ fontSize: '0.875rem', color: '#666' }}>
                               {member.department || 'No Department'}
                             </div>
-                            {['super_admin', 'admin'].includes(user?.role) && (
+                            {['admin', 'game_admin'].includes(user?.role) && (
                               <div className="member-details" style={{ fontSize: '0.75rem', color: '#999' }}>
                                 {member.team_name} | Role: {member.is_captain ? 'Team Captain 👑' : 'Player'}
                               </div>

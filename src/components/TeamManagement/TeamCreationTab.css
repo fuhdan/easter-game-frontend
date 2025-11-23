@@ -1,0 +1,122 @@
+/**
+ * TeamCreationTab Styles
+ * Part of: Easter Quest 2025 Frontend - Team Management
+ *
+ * Design: Team statistics and configuration panel
+ *
+ * @since 2025-11-23
+ */
+
+/* ===================================================================
+   Container
+   =================================================================== */
+
+.team-creation-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0;
+}
+
+/* ===================================================================
+   Team Statistics Card
+   =================================================================== */
+
+.team-stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 2px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.team-stats-card h3 {
+  margin: 0 0 1.5rem 0;
+  color: #005da0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.stats-grid-horizontal {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.stat-box {
+  text-align: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #005da0;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ===================================================================
+   Team Configuration Card
+   =================================================================== */
+
+.team-config-card {
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Remove duplicate styling from nested TeamConfiguration */
+.team-config-card .sidebar {
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
+/* ===================================================================
+   Responsive Design
+   =================================================================== */
+
+@media (max-width: 1200px) {
+  .stats-grid-horizontal {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid-horizontal {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-box {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .team-stats-card {
+    padding: 1.5rem;
+  }
+}

@@ -20,9 +20,118 @@
   padding: 0;
   max-width: 100%;
   margin: 0;
+  background: transparent;
+  width: 100%;
+  overflow: visible;
 }
 
-/* Main Configuration Card - Match Profile/Dashboard card style */
+/* Main Card Container - Match NotificationsDashboard and GameAdminDashboard */
+.system-dashboard-card-container {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  margin-bottom: 2rem;
+}
+
+.system-dashboard-card-container .card-header {
+  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.system-dashboard-card-container .card-body {
+  padding: 1.5rem;
+}
+
+/* Tab Navigation - Match NotificationsDashboard and GameAdminDashboard */
+.system-dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.system-dashboard-tabs .tab-button {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: #333;
+}
+
+.system-dashboard-tabs .tab-button:hover {
+  border-color: #005da0;
+  background: rgba(0, 93, 160, 0.05);
+  transform: translateY(-1px);
+}
+
+.system-dashboard-tabs .tab-button.active {
+  background: #005da0;
+  color: white;
+  border-color: #005da0;
+  box-shadow: 0 2px 4px rgba(0, 93, 160, 0.2);
+}
+
+/* Dashboard content area */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* System Config Content */
+.system-config-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Config Header Actions */
+.config-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.btn-action {
+  background: #005da0;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  background: #004271;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Legacy card styles - Keep for backward compatibility */
 .system-config-card {
   width: 100%;
   background: white;

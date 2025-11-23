@@ -18,12 +18,13 @@ import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import Login from './components/Login/Login';
 import Header from './components/Header/Header';
 import Navigation from './components/Navigation/Navigation';
-import AdminDashboard from './components/AdminDashboard/AdminDashboard';
+import GameAdminDashboard from './components/AdminDashboard/GameAdminDashboard';
 import SystemAdminDashboard from './components/SystemAdminDashboard/SystemAdminDashboard';
 import { NotificationsDashboard } from './components/AdminNotifications';
-import TeamCreation from './components/TeamCreation/TeamCreation';
+import TeamManagement from './components/TeamManagement/TeamManagement';
 import GamePanel from './components/GamePanel/GamePanel';
 import Profile from './components/Profile/Profile';
+import Footer from './components/Footer/Footer';
 import Loader from './components/Loader/Loader';
 import { ChatProvider } from './contexts/ChatContext';
 import { ChatWidget } from './components/ChatWidget';
@@ -51,9 +52,9 @@ const App = () => {
     useEffect(() => {
         if (user && !activeTab) {
             // Set default tab based on role
-            if (user.role === 'super_admin') {
+            if (user.role === 'admin') {
                 setActiveTab('system_admin');
-            } else if (user.role === 'admin') {
+            } else if (user.role === 'game_admin') {
                 setActiveTab('dashboard');
             } else if (user.role === 'team_captain' || user.role === 'player') {
                 setActiveTab('game');
@@ -186,27 +187,27 @@ const App = () => {
                         user={user}
                     />
 
-                {/* System Admin Dashboard - Only super_admin can see this */}
-                {activeTab === 'system_admin' && user.role === 'super_admin' && (
+                {/* System Admin Dashboard - Only admin can see this */}
+                {activeTab === 'system_admin' && user.role === 'admin' && (
                     <SystemAdminDashboard user={user} />
                 )}
 
-                {/* Route to appropriate component based on active tab */}
-                {activeTab === 'dashboard' && (user.role === 'super_admin' || user.role === 'admin') && (
-                    <AdminDashboard user={user} />
+                {/* Game Admin Dashboard - Monitors running game progress */}
+                {activeTab === 'dashboard' && (user.role === 'admin' || user.role === 'game_admin') && (
+                    <GameAdminDashboard user={user} />
                 )}
 
-                {/* Notifications Dashboard - Only admin and super_admin can see this */}
-                {activeTab === 'notifications' && (user.role === 'super_admin' || user.role === 'admin') && (
+                {/* Notifications Dashboard - Only admin and game_admin can see this */}
+                {activeTab === 'notifications' && (user.role === 'admin' || user.role === 'game_admin') && (
                     <NotificationsDashboard user={user} />
                 )}
 
-                {/* ✅ Only super_admin can see this tab */}
-                {activeTab === 'team_creation' && user.role === 'super_admin' && (
-                    <TeamCreation user={user} />
+                {/* Team Management - Admin and team_captain can access */}
+                {activeTab === 'team_management' && (user.role === 'admin' || user.role === 'team_captain') && (
+                    <TeamManagement user={user} />
                 )}
 
-                {/* Game Panel - Only team_captain and player (NOT admin or super_admin) */}
+                {/* Game Panel - Only team_captain and player (NOT admin or game_admin) */}
                 {activeTab === 'game' && (user.role === 'team_captain' || user.role === 'player') && (
                     <GamePanel user={user} />
                 )}
@@ -215,6 +216,9 @@ const App = () => {
                 {activeTab === 'profile' && (
                     <Profile user={user} />
                 )}
+
+                {/* Footer - Shows current role and permissions on all pages */}
+                <Footer user={user} />
                 </div>
 
                 {/* Chat Widget - Available to all authenticated users */}

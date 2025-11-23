@@ -38,6 +38,7 @@ const GamesAnalyticsTab = () => {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('game_id');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [expandedTeams, setExpandedTeams] = useState(new Set());
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -93,6 +94,23 @@ const GamesAnalyticsTab = () => {
   const closeDetails = () => {
     setSelectedGame(null);
     setGameDetails(null);
+    setExpandedTeams(new Set()); // Reset expanded teams when closing
+  };
+
+  /**
+   * Toggle team details expansion
+   * @param {number} teamId - Team ID to toggle
+   */
+  const toggleTeamExpansion = (teamId) => {
+    setExpandedTeams(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(teamId)) {
+        newSet.delete(teamId);
+      } else {
+        newSet.add(teamId);
+      }
+      return newSet;
+    });
   };
 
   /**
@@ -342,17 +360,68 @@ const GamesAnalyticsTab = () => {
             <div className="details-section">
               <h4>Team Completion Breakdown</h4>
               <div className="team-breakdown-table">
-                {team_breakdown.map((team) => (
-                  <div key={team.team_id} className="team-breakdown-row">
-                    <span className="team-name">{team.team_name}</span>
-                    <span className="team-completion">
-                      {team.completed}/{team.total_members} members ({team.completion_rate}%)
-                    </span>
-                    <span className={`team-status status-${team.status}`}>
-                      {team.status === 'completed' ? '✓ Complete' : '○ Not Started'}
-                    </span>
-                  </div>
-                ))}
+                {team_breakdown.map((team) => {
+                  const isExpanded = expandedTeams.has(team.team_id);
+                  const hasCompletions = team.completions && team.completions.length > 0;
+
+                  return (
+                    <div key={team.team_id} className="team-breakdown-wrapper">
+                      <div
+                        className={`team-breakdown-row ${hasCompletions ? 'clickable' : ''}`}
+                        onClick={() => hasCompletions && toggleTeamExpansion(team.team_id)}
+                        style={{ cursor: hasCompletions ? 'pointer' : 'default' }}
+                      >
+                        <span className="team-name">
+                          {hasCompletions && (
+                            <span className="expand-icon">{isExpanded ? '▼' : '▶'}</span>
+                          )}
+                          {team.team_name}
+                        </span>
+                        <span className="team-completion">
+                          {team.completed}/{team.total_members} members ({team.completion_rate}%)
+                        </span>
+                        <span className={`team-status status-${team.status}`}>
+                          {team.status === 'completed' ? '✓ Complete' : '○ Not Started'}
+                        </span>
+                      </div>
+
+                      {/* Expanded Details */}
+                      {isExpanded && hasCompletions && (
+                        <div className="team-details-expanded">
+                          <div className="team-stats">
+                            <div className="stat-item">
+                              <span className="stat-label">Avg Hints Used:</span>
+                              <span className="stat-value">{team.avg_hints_used}</span>
+                            </div>
+                            <div className="stat-item">
+                              <span className="stat-label">Avg Time:</span>
+                              <span className="stat-value">{team.avg_time_minutes} min</span>
+                            </div>
+                          </div>
+
+                          <div className="completions-list">
+                            <h5>Team Members Who Completed:</h5>
+                            {team.completions.map((completion, idx) => (
+                              <div key={idx} className="completion-item">
+                                <div className="completion-header">
+                                  <strong>{completion.username}</strong>
+                                  <span className="completion-date">
+                                    {new Date(completion.completed_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <div className="completion-details">
+                                  <span>⏱️ {completion.time_spent_minutes} min</span>
+                                  <span>💡 {completion.hints_used} hints</span>
+                                  <span>⭐ {completion.score} pts</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
