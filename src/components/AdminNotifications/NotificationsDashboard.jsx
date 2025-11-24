@@ -404,6 +404,7 @@ const NotificationsDashboard = ({ user }) => {
                     className={`tab-button ${activeTab === 'open' ? 'active' : ''}`}
                     onClick={() => setActiveTab('open')}
                 >
+                    <span className="tab-icon">🔔</span>
                     Open
                     {activeTab === 'open' && totalNotifications > 0 && (
                         <span className="tab-badge">{totalNotifications}</span>
@@ -413,6 +414,7 @@ const NotificationsDashboard = ({ user }) => {
                     className={`tab-button ${activeTab === 'acknowledged' ? 'active' : ''}`}
                     onClick={() => setActiveTab('acknowledged')}
                 >
+                    <span className="tab-icon">👁️</span>
                     Acknowledged
                     {activeTab === 'acknowledged' && totalNotifications > 0 && (
                         <span className="tab-badge">{totalNotifications}</span>
@@ -422,6 +424,7 @@ const NotificationsDashboard = ({ user }) => {
                     className={`tab-button ${activeTab === 'resolved' ? 'active' : ''}`}
                     onClick={() => setActiveTab('resolved')}
                 >
+                    <span className="tab-icon">✅</span>
                     Resolved
                 </button>
             </div>

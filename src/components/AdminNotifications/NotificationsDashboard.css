@@ -163,6 +163,9 @@
     font-weight: 500;
     transition: all 0.3s ease;
     color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .tab-button:hover {
@@ -178,6 +181,14 @@
     box-shadow: 0 2px 4px rgba(0, 93, 160, 0.2);
 }
 
+.tab-icon {
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .tab-badge {
     background: rgba(255, 255, 255, 0.3);
     color: white;
@@ -185,7 +196,7 @@
     border-radius: 12px;
     font-size: 0.7rem;
     font-weight: 700;
-    margin-left: 0.5rem;
+    margin-left: 0.25rem;
 }
 
 /* Notifications Container */
