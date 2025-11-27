@@ -149,12 +149,41 @@ function ActivationCodesTab({ user }) {
 
   /**
    * Copy activation code to clipboard
+   * Uses modern clipboard API with fallback for non-secure contexts
    */
   const copyToClipboard = async (code, memberId) => {
     try {
-      await navigator.clipboard.writeText(code);
-      setCopySuccess(prev => ({ ...prev, [memberId]: true }));
-      setTimeout(() => setCopySuccess(prev => ({ ...prev, [memberId]: false })), 2000);
+      // Try modern clipboard API first (requires secure context)
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+        setCopySuccess(prev => ({ ...prev, [memberId]: true }));
+        setTimeout(() => setCopySuccess(prev => ({ ...prev, [memberId]: false })), 2000);
+        return;
+      }
+
+      // Fallback for non-secure contexts (HTTP)
+      const textArea = document.createElement('textarea');
+      textArea.value = code;
+      textArea.style.position = 'fixed';  // Avoid scrolling to bottom
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopySuccess(prev => ({ ...prev, [memberId]: true }));
+          setTimeout(() => setCopySuccess(prev => ({ ...prev, [memberId]: false })), 2000);
+        } else {
+          console.error('Failed to copy code using fallback');
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+      } finally {
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error('Failed to copy code:', err);
     }
