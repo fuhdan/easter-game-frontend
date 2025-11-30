@@ -149,11 +149,13 @@ const GameAdminDashboard = ({ user }) => {
 
                 // Update the specific team in the teams array
                 const updatedTeams = prev.teams.map(team => {
-                    if (team.id === teamData.team_id) {
+                    if (team.team_id === teamData.team_id) {
                         return {
                             ...team,
-                            progress_percentage: teamData.progress_percentage,
-                            completed_games: teamData.completed_games,
+                            team_id: teamData.team_id,
+                            team_name: teamData.team_name,
+                            progress: teamData.progress_percentage,
+                            games_completed: teamData.completed_games,
                             help_requests: teamData.help_requests,
                             status: teamData.status
                         };

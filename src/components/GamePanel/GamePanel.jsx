@@ -14,13 +14,14 @@
  * @since 2025-08-27
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import CurrentGame from './CurrentGame';
 import TeamProgress from './TeamProgress';
 import { getActive, getGames } from '../../services';
 import { replaceImagePlaceholder } from '../../utils/imageUtils';
+import TeamGameUpdatesSSE from '../../services/TeamGameUpdatesSSE';
 import './GamePanel.css';
 
 /**
@@ -36,9 +37,67 @@ const GamePanel = ({ user }) => {
     const [error, setError] = useState(null);
     const [storyCollapsed, setStoryCollapsed] = useState(false);
 
+    // SSE client reference for real-time team game updates
+    const sseClient = useRef(null);
+
     useEffect(() => {
         loadEventAndGames();
     }, []);
+
+    // SSE: Set up real-time team game updates
+    useEffect(() => {
+        console.log('[GamePanel] Setting up SSE for team game updates');
+
+        // Create SSE client if not exists
+        if (!sseClient.current) {
+            sseClient.current = new TeamGameUpdatesSSE();
+
+            // Handle game_started event
+            sseClient.current.on('game_started', (data) => {
+                console.log('[GamePanel] Team member started game:', data);
+                // Refresh games list to show updated progress
+                loadEventAndGames();
+            });
+
+            // Handle game_completed event
+            sseClient.current.on('game_completed', (data) => {
+                console.log('[GamePanel] Team member completed game:', data);
+                // Refresh games list to show completion
+                loadEventAndGames();
+            });
+
+            // Handle hint_used event (optional)
+            sseClient.current.on('hint_used', (data) => {
+                console.log('[GamePanel] Team member used hint:', data);
+                // Optionally refresh to show updated hint count
+            });
+
+            // Handle connection status
+            sseClient.current.on('connected', () => {
+                console.log('[GamePanel] SSE connected');
+            });
+
+            sseClient.current.on('disconnected', () => {
+                console.log('[GamePanel] SSE disconnected');
+            });
+
+            sseClient.current.on('error', (errorData) => {
+                console.error('[GamePanel] SSE error:', errorData);
+            });
+        }
+
+        // Connect to SSE
+        sseClient.current.connect();
+
+        // Cleanup on unmount
+        return () => {
+            if (sseClient.current) {
+                console.log('[GamePanel] Disconnecting SSE');
+                sseClient.current.disconnect();
+                sseClient.current = null;
+            }
+        };
+    }, []); // Empty deps = only runs on mount/unmount
 
     /**
      * Load active event and its games.

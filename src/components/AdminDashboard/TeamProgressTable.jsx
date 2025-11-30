@@ -24,8 +24,8 @@ const TeamProgressTable = ({ data }) => {
     // Default teams shown immediately
     const defaultTeams = [
         {
-            id: 1,
-            name: 'Team Alpha',
+            team_id: 1,
+            team_name: 'Team Alpha',
             progress: 95,
             games_completed: 9,
             total_games: 10,
@@ -33,8 +33,8 @@ const TeamProgressTable = ({ data }) => {
             status: 'active'
         },
         {
-            id: 2,
-            name: 'Team Beta',
+            team_id: 2,
+            team_name: 'Team Beta',
             progress: 100,
             games_completed: 10,
             total_games: 10,
@@ -42,8 +42,8 @@ const TeamProgressTable = ({ data }) => {
             status: 'completed'
         },
         {
-            id: 3,
-            name: 'Team Gamma',
+            team_id: 3,
+            team_name: 'Team Gamma',
             progress: 70,
             games_completed: 7,
             total_games: 10,
@@ -57,8 +57,8 @@ const TeamProgressTable = ({ data }) => {
     const allTeams = data || defaultTeams;
     const teams = allTeams.filter(team =>
         !team.is_system_team &&
-        team.name !== 'System Admins' &&
-        team.name !== 'system_admins'
+        team.team_name !== 'System Admins' &&
+        team.team_name !== 'system_admins'
     );
 
     /**
@@ -109,13 +109,13 @@ const TeamProgressTable = ({ data }) => {
                 
                 <div className="table-body">
                     {teams.map((team) => (
-                        <div key={team.id} className="table-row">
-                            <div data-label="Team">{team.name}</div>
+                        <div key={team.team_id} className="table-row">
+                            <div data-label="Team">{team.team_name}</div>
                             <div data-label="Progress">
                                 <div className="progress-container">
                                     <div className="progress-bar">
-                                        <div 
-                                            className="progress-fill" 
+                                        <div
+                                            className="progress-fill"
                                             style={{ width: `${team.progress || 0}%` }}
                                         ></div>
                                     </div>
@@ -123,10 +123,10 @@ const TeamProgressTable = ({ data }) => {
                                 </div>
                             </div>
                             <div data-label="Games">
-                                {team.games_completed || team.gamesCompleted || 0}/
-                                {team.total_games || team.totalGames || 10}
+                                {team.games_completed || 0}/
+                                {team.total_games || 10}
                             </div>
-                            <div data-label="Help">{team.help_requests || team.helpRequests || 0}</div>
+                            <div data-label="Help">{team.help_requests || 0}</div>
                             <div data-label="Status">
                                 <span className={`status-badge ${getStatusClass(team.status)}`}>
                                     {getStatusText(team.status)}

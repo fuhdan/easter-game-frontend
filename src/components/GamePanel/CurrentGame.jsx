@@ -45,6 +45,13 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
     loadGameProgress();
   }, []);
 
+  // Reload game progress when games prop changes (e.g., after teammate starts/completes game)
+  useEffect(() => {
+    if (games && games.length > 0) {
+      loadGameProgress();
+    }
+  }, [games]);
+
   /**
    * Load game progress to determine which games are completed
    *
@@ -181,7 +188,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
 
       const result = await submitSolution(selectedGame.id, solution.trim());
 
-      if (result.success) {
+      if (result.correct) {
         setMessage({ type: 'success', text: result.message });
         setSolution('');
         // Reload progress to update completed status

@@ -156,7 +156,9 @@ class GenericSSEClient {
       this.eventSource.addEventListener(eventType, (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log(`[${this.name}] ${eventType} received:`, data);
+          // Generic logging format: [ClientName] EventType: {data}
+          const eventLabel = eventType.charAt(0).toUpperCase() + eventType.slice(1);
+          console.log(`[${this.name}] ${eventLabel}:`, data);
           this.emit(eventType, data);
         } catch (error) {
           console.error(`[${this.name}] Failed to parse ${eventType}:`, error);

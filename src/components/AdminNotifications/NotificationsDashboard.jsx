@@ -82,11 +82,6 @@ const NotificationsDashboard = ({ user }) => {
                     });
                 });
 
-                // Handle heartbeat
-                sseClient.current.on('heartbeat', (data) => {
-                    console.log('[NotificationsDashboard] Heartbeat:', data.count, 'notifications');
-                });
-
                 // Handle connection status
                 sseClient.current.on('connected', () => {
                     console.log('[NotificationsDashboard] SSE connected');
@@ -120,14 +115,28 @@ const NotificationsDashboard = ({ user }) => {
             loadNotifications();
         }
 
-        // Cleanup on unmount
+        // Cleanup on unmount or tab change
         return () => {
+            // SECURITY: Always disconnect when component unmounts (e.g., on logout)
+            // Only skip disconnect if staying on 'open' tab
             if (sseClient.current && activeTab !== 'open') {
+                console.log('[NotificationsDashboard] Cleaning up SSE connection (tab change)');
                 sseClient.current.disconnect();
             }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
+
+    // SECURITY: Cleanup SSE connection on component unmount (e.g., logout)
+    useEffect(() => {
+        return () => {
+            if (sseClient.current) {
+                console.log('[NotificationsDashboard] Component unmounting - disconnecting SSE');
+                sseClient.current.disconnect();
+                sseClient.current = null;
+            }
+        };
+    }, []); // Empty deps = only runs on mount/unmount
 
     // Reload when filters change (for non-SSE tabs)
     useEffect(() => {

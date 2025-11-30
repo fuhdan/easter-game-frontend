@@ -8,7 +8,7 @@
  * - Per-game completion status
  * - Total score and progress percentage
  * - Current game highlighting
- * - Real-time updates
+ * - Real-time updates via SSE
  *
  * Team-based gameplay:
  * - When ANY member completes a game, entire team completes it
@@ -20,7 +20,6 @@
  * @param {number} props.teamId - Current user's team ID
  * @param {number} props.eventId - Active event ID (optional)
  * @param {number} props.currentGameId - User's current game ID (optional, for highlighting)
- * @param {Function} props.onRefresh - Callback to trigger refresh (optional)
  *
  * @since 2025-11-21
  */
@@ -28,7 +27,7 @@
 import React, { useState, useEffect } from 'react';
 import { getMyTeamProgress } from '../../services/teams';
 
-const TeamProgress = ({ teamId, eventId, currentGameId, onRefresh }) => {
+const TeamProgress = ({ teamId, eventId, currentGameId }) => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -235,14 +234,6 @@ const TeamProgress = ({ teamId, eventId, currentGameId, onRefresh }) => {
         <h3 className="card-title">
           👥 {progressData?.team?.name || 'Team'} Progress
         </h3>
-        <button
-          className="btn btn-sm btn-outline refresh-btn"
-          onClick={fetchTeamProgress}
-          title="Refresh progress"
-          aria-label="Refresh team progress"
-        >
-          🔄
-        </button>
       </div>
       <div className="card-body">
         {renderProgressTable()}
