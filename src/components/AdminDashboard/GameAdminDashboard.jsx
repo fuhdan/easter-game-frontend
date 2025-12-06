@@ -23,6 +23,7 @@
  * @updated 2025-11-23 - Renamed to GameAdminDashboard, prepared for SSE integration
  */
 import React, { useState, useEffect } from 'react';
+import { buildApiUrl } from '../../config/apiConfig';
 import StatsGrid from './StatsGrid';
 import TeamProgressTable from './TeamProgressTable.jsx';
 import RateLimitCard from './RateLimitCard.jsx';
@@ -60,7 +61,7 @@ const GameAdminDashboard = ({ user }) => {
     async function loadDashboardData() {
         try {
             // Fetch dashboard data from admin endpoint
-            const response = await fetch('/api/admin/dashboard', {
+            const response = await fetch(buildApiUrl('admin/dashboard'), {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -113,7 +114,7 @@ const GameAdminDashboard = ({ user }) => {
 
         // Create SSE client for game dashboard updates
         const client = new GenericSSEClient({
-            endpoint: '/api/admin/game-dashboard/stream',
+            endpoint: buildApiUrl('admin/game-dashboard/stream'),
             eventTypes: ['stats_update', 'team_progress_update', 'heartbeat', 'error'],
             maxReconnectAttempts: 5,
             reconnectDelay: 1000,

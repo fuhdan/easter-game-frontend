@@ -20,11 +20,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import TeamMemberList from './TeamMemberList';
-import AdminContacts from './AdminContacts';
 import AdminTeamList from './AdminTeamList';
 import PrivateConversation from './PrivateConversation';
 import TeamBroadcast from './TeamBroadcast';
-import AdminBroadcast from './AdminBroadcast';
 import './ChatBody.css';
 
 /**
@@ -40,7 +38,7 @@ import './ChatBody.css';
  * <ChatBody user={currentUser} />
  */
 const ChatBody = ({ user }) => {
-  const { messages, chatMode, aiContext, isTyping, connectionStatus, selectedTeamMember, selectTeamMember, selectedTeam, viewingAdminBroadcast } = useChat();
+  const { messages, chatMode, aiContext, isTyping, connectionStatus, selectedTeamMember, selectTeamMember, selectedTeam } = useChat();
   const messageListRef = useRef(null);
   const shouldAutoScroll = useRef(true);
 
@@ -109,13 +107,14 @@ const ChatBody = ({ user }) => {
 
     // Helper to get escalation status badge
     const getEscalationBadge = () => {
-      if (!metadata?.escalation_status) return null;
+      // Check metadata for escalation status
+      const status = metadata?.status;
+      if (!status) return null;
 
-      const status = metadata.escalation_status;
       const statusConfig = {
-        open: { label: 'Open', emoji: '🔵', color: '#3498db' },
-        acknowledged: { label: 'Acknowledged', emoji: '👁️', color: '#f39c12' },
-        resolved: { label: 'Resolved', emoji: '✅', color: '#27ae60' }
+        open: { label: 'New', emoji: '🔴', color: '#dc3545' },  // Red for new/open
+        acknowledged: { label: 'Acknowledged', emoji: '👁️', color: '#007bff' },  // Blue for acknowledged
+        resolved: { label: 'Solved', emoji: '✅', color: '#28a745' }  // Green for resolved/solved
       };
 
       const config = statusConfig[status] || statusConfig.open;
@@ -126,16 +125,16 @@ const ChatBody = ({ user }) => {
           style={{
             backgroundColor: config.color,
             color: 'white',
-            padding: '2px 8px',
+            padding: '4px 10px',
             borderRadius: '12px',
-            fontSize: '11px',
+            fontSize: '12px',
             fontWeight: '600',
-            marginLeft: '8px',
+            marginLeft: 'auto',  // Push to the far right
             display: 'inline-block'
           }}
-          title={metadata.resolved_at ? `Resolved ${formatTime(metadata.resolved_at)}` :
-                 metadata.acknowledged_at ? `Acknowledged ${formatTime(metadata.acknowledged_at)}` :
-                 'Waiting for admin response'}
+          title={status === 'resolved' ? `Admin resolved this request` :
+                 status === 'acknowledged' ? `Admin is working on this` :
+                 `Waiting for admin response`}
         >
           {config.emoji} {config.label}
         </span>
@@ -203,12 +202,9 @@ const ChatBody = ({ user }) => {
         <div className="team-chat-container">
           <div className="team-chat-sidebar">
             <TeamMemberList />
-            <AdminContacts />
           </div>
           {selectedTeamMember ? (
             <PrivateConversation user={user} />
-          ) : viewingAdminBroadcast ? (
-            <AdminBroadcast user={user} />
           ) : (
             <TeamBroadcast user={user} />
           )}

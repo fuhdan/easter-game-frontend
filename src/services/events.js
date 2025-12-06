@@ -21,7 +21,7 @@ import { request, log } from './api';
  */
 export const getAll = () => {
   log.info('Fetching all events');
-  return request('GET', '/api/events');
+  return request('GET', '/events');
 };
 
 /**
@@ -40,7 +40,7 @@ export const getAll = () => {
  */
 export const getActive = () => {
   log.info('Fetching active event with story');
-  return request('GET', '/api/events/active');
+  return request('GET', '/events/active');
 };
 
 /**
@@ -52,7 +52,7 @@ export const getActive = () => {
  */
 export const getByYear = (year) => {
   log.info(`Fetching event for year ${year}`);
-  return request('GET', `/api/events/${year}`);
+  return request('GET', `/events/${year}`);
 };
 
 /**
@@ -64,5 +64,5 @@ export const getByYear = (year) => {
  */
 export const getGames = (eventId) => {
   log.info(`Fetching games for event ${eventId}`);
-  return request('GET', `/api/events/${eventId}/games`);
+  return request('GET', `/events/${eventId}/games`);
 };

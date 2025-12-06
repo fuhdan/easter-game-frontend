@@ -27,7 +27,7 @@ import { request, log } from './api';
  */
 export const sendToAI = (message, context) => {
   log.info('Sending message to AI assistant');
-  return request('POST', '/api/chat/ai', { message, context });
+  return request('POST', '/chat/ai', { message, context });
 };
 
 /**
@@ -42,7 +42,7 @@ export const sendToAI = (message, context) => {
  */
 export const sendToAdmin = (message) => {
   log.info('Sending message to admin');
-  return request('POST', '/api/chat/admin', { message });
+  return request('POST', '/chat/admin', { message });
 };
 
 /**
@@ -55,7 +55,7 @@ export const sendToAdmin = (message) => {
  * @returns {string} message.timestamp - Timestamp
  * @throws {APIError} 401 if not authenticated
  */
-export const getHistory = () => request('GET', '/api/chat/history');
+export const getHistory = () => request('GET', '/chat/history');
 
 /**
  * Mark messages as read
@@ -64,7 +64,7 @@ export const getHistory = () => request('GET', '/api/chat/history');
  * @returns {Promise<Object>} Success confirmation
  * @throws {APIError} 401 if not authenticated
  */
-export const markAsRead = (messageIds) => request('PUT', '/api/chat/read', { messageIds });
+export const markAsRead = (messageIds) => request('PUT', '/chat/read', { messageIds });
 
 /**
  * Get admin chat messages
@@ -74,7 +74,7 @@ export const markAsRead = (messageIds) => request('PUT', '/api/chat/read', { mes
  * @returns {Promise<Array>} Array of admin chat messages from all users
  * @throws {APIError} 403 if not admin
  */
-export const getAdminMessages = () => request('GET', '/api/admin/chat/messages');
+export const getAdminMessages = () => request('GET', '/admin/chat/messages');
 
 /**
  * Reply to user message

@@ -372,6 +372,91 @@ const handleError = (message, context) => {
 };
 
 /**
+ * Handle new escalation notification (for admins)
+ *
+ * @param {object} message - New escalation message
+ * @param {number} message.notification_id - Notification ID
+ * @param {number} message.team_id - Team ID
+ * @param {string} message.escalation_type - Type of escalation
+ * @param {string} message.priority - Priority level
+ * @param {object} context - Chat context state and methods
+ */
+const handleNewEscalation = (message, context) => {
+  console.log('[MessageHandler] New escalation for admin:', {
+    notification_id: message.notification_id,
+    team_id: message.team_id,
+    priority: message.priority
+  });
+
+  // This is sent to admins via WebSocket when a new escalation is created
+  // The admin notification dashboard handles this via SSE, so we can safely ignore it here
+  // Just log it to prevent "unknown message type" warnings
+};
+
+/**
+ * Handle escalation created notification (for users)
+ *
+ * @param {object} message - Escalation created message
+ * @param {string} message.escalation_type - Type of escalation
+ * @param {number} message.notification_id - Created notification ID
+ * @param {string} message.status - Notification status (open, acknowledged, resolved)
+ * @param {number} message.repeat_count - Number of times triggered
+ * @param {object} context - Chat context state and methods
+ */
+const handleEscalationCreated = (message, context) => {
+  console.log('[MessageHandler] Escalation created:', {
+    notification_id: message.notification_id,
+    status: message.status,
+    repeat_count: message.repeat_count
+  });
+
+  const { updateLastUserMessage } = context;
+
+  // Add escalation status to the user's actual message (not a separate system message)
+  if (updateLastUserMessage) {
+    updateLastUserMessage({
+      metadata: {
+        notification_id: message.notification_id,
+        status: message.status,
+        escalation_type: message.escalation_type
+      }
+    });
+  } else {
+    console.warn('[MessageHandler] updateLastUserMessage not available - cannot attach badge to user message');
+  }
+};
+
+/**
+ * Handle escalation status update
+ *
+ * @param {object} message - Status update message
+ * @param {number} message.notification_id - Notification ID
+ * @param {string} message.status - New status (acknowledged, resolved)
+ * @param {number} message.repeat_count - Number of times triggered
+ * @param {object} context - Chat context state and methods
+ */
+const handleEscalationStatusUpdated = (message, context) => {
+  console.log('[MessageHandler] Escalation status updated:', {
+    notification_id: message.notification_id,
+    status: message.status,
+    repeat_count: message.repeat_count
+  });
+
+  const { updateMessagesByNotificationId } = context;
+
+  // Update ALL messages with this notification_id (multiple users may have sent the same message)
+  if (updateMessagesByNotificationId) {
+    updateMessagesByNotificationId(message.notification_id, {
+      metadata: {
+        status: message.status
+      }
+    });
+  } else {
+    console.warn('[MessageHandler] updateMessagesByNotificationId not available - status update failed');
+  }
+};
+
+/**
  * Message type to handler mapping
  *
  * IMPORTANT: Add new message types here as they are implemented
@@ -389,6 +474,9 @@ const MESSAGE_HANDLERS = {
   'rate_limit_exceeded': handleRateLimitError,  // Backend sends this variant
   'system_notification': handleSystemNotification,
   'error': handleError,  // Generic error messages
+  'new_escalation': handleNewEscalation,  // New escalation notification (for admins)
+  'escalation_created': handleEscalationCreated,  // Escalation created confirmation (for users)
+  'escalation_status_updated': handleEscalationStatusUpdated,  // Status updates for escalations
 
   // Team chat handlers (Phase 4)
   'team_private_message': handleTeamPrivateMessage,

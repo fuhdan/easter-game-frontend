@@ -21,7 +21,7 @@ import { request, log } from './api';
  * @returns {Promise<Array>} Array of team objects
  * @throws {APIError} 401 if not authenticated
  */
-export const getAllTeams = () => request('GET', '/api/teams');
+export const getAllTeams = () => request('GET', '/teams');
 
 /**
  * Get team by ID
@@ -30,7 +30,7 @@ export const getAllTeams = () => request('GET', '/api/teams');
  * @returns {Promise<Object>} Team object
  * @throws {APIError} 404 if team not found
  */
-export const getById = (id) => request('GET', `/api/teams/${id}`);
+export const getById = (id) => request('GET', `/teams/${id}`);
 
 /**
  * Get current user's team members
@@ -38,7 +38,7 @@ export const getById = (id) => request('GET', `/api/teams/${id}`);
  * @returns {Promise<Object>} Team object with members
  * @throws {APIError} 401 if not authenticated, 404 if no team
  */
-export const getMyTeamPlayers = () => request('GET', '/api/teams/my');
+export const getMyTeamPlayers = () => request('GET', '/teams/my');
 
 /**
  * Create teams using backend algorithm
@@ -59,7 +59,7 @@ export const getMyTeamPlayers = () => request('GET', '/api/teams/my');
  */
 export const create = (players, config) => {
   log.info(`Creating teams for ${players.length} players`);
-  return request('POST', '/api/teams/create', { players, config });
+  return request('POST', '/teams/create', { players, config });
 };
 
 /**
@@ -74,7 +74,7 @@ export const create = (players, config) => {
  * @returns {Promise<Object>} Updated team object
  * @throws {APIError} 400 if validation fails, 403 if not admin, 404 if not found
  */
-export const update = (id, teamData) => request('PUT', `/api/teams/${id}`, teamData);
+export const update = (id, teamData) => request('PUT', `/teams/${id}`, teamData);
 
 /**
  * Delete team
@@ -85,7 +85,7 @@ export const update = (id, teamData) => request('PUT', `/api/teams/${id}`, teamD
  * @returns {Promise<Object>} Deletion confirmation
  * @throws {APIError} 403 if not admin, 404 if team not found
  */
-export const deleteTeam = (id) => request('DELETE', `/api/teams/${id}`);
+export const deleteTeam = (id) => request('DELETE', `/teams/${id}`);
 
 /**
  * Reset all teams
@@ -99,7 +99,7 @@ export const deleteTeam = (id) => request('DELETE', `/api/teams/${id}`);
  */
 export const reset = () => {
   log.info('Resetting all teams');
-  return request('DELETE', '/api/teams/reset');
+  return request('DELETE', '/teams/reset');
 };
 
 /**
@@ -110,7 +110,7 @@ export const reset = () => {
  * @returns {Promise<string>} CSV data
  * @throws {APIError} 403 if not admin
  */
-export const exportTeams = () => request('GET', '/api/teams/export', null, {
+export const exportTeams = () => request('GET', '/teams/export', null, {
   headers: { 'Accept': 'text/csv' }
 });
 
@@ -124,7 +124,7 @@ export const exportTeams = () => request('GET', '/api/teams/export', null, {
  * @returns {Promise<Object>} Updated team object
  * @throws {APIError} 400 if user already in team, 403 if not admin, 404 if not found
  */
-export const addMember = (teamId, userId) => request('POST', `/api/teams/${teamId}/members`, { userId });
+export const addMember = (teamId, userId) => request('POST', `/teams/${teamId}/members`, { userId });
 
 /**
  * Remove member from team
@@ -136,7 +136,7 @@ export const addMember = (teamId, userId) => request('POST', `/api/teams/${teamI
  * @returns {Promise<Object>} Updated team object
  * @throws {APIError} 403 if not admin, 404 if not found
  */
-export const removeMember = (teamId, userId) => request('DELETE', `/api/teams/${teamId}/members/${userId}`);
+export const removeMember = (teamId, userId) => request('DELETE', `/teams/${teamId}/members/${userId}`);
 
 /**
  * Set team captain
@@ -148,7 +148,7 @@ export const removeMember = (teamId, userId) => request('DELETE', `/api/teams/${
  * @returns {Promise<Object>} Updated team object
  * @throws {APIError} 400 if user not in team, 403 if not admin, 404 if not found
  */
-export const setCaptain = (teamId, userId) => request('PUT', `/api/teams/${teamId}/captain`, { userId });
+export const setCaptain = (teamId, userId) => request('PUT', `/teams/${teamId}/captain`, { userId });
 
 /**
  * Update team name
@@ -163,7 +163,7 @@ export const setCaptain = (teamId, userId) => request('PUT', `/api/teams/${teamI
  */
 export const updateMyTeamName = (name) => {
   log.info('Updating team name to:', name);
-  return request('PUT', '/api/teams/my-team/name', { name });
+  return request('PUT', '/teams/my-team/name', { name });
 };
 
 /**
@@ -197,5 +197,5 @@ export const updateMyTeamName = (name) => {
  */
 export const getMyTeamProgress = () => {
   log.info('Fetching team progress');
-  return request('GET', '/api/teams/me/progress');
+  return request('GET', '/teams/me/progress');
 };

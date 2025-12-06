@@ -34,6 +34,7 @@
  */
 
 import GenericSSEClient from './GenericSSEClient';
+import { buildApiUrl } from '../config/apiConfig';
 
 /**
  * SSE Client for Admin Notifications
@@ -57,7 +58,7 @@ class NotificationsSSE extends GenericSSEClient {
    */
   constructor() {
     super({
-      endpoint: '/api/chat/admin/notifications/stream',
+      endpoint: buildApiUrl('chat/admin/notifications/stream'),
       eventTypes: ['notification', 'heartbeat', 'error'],
       maxReconnectAttempts: 5,
       reconnectDelay: 1000,

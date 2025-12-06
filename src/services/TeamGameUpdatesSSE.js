@@ -37,6 +37,7 @@
  */
 
 import GenericSSEClient from './GenericSSEClient';
+import { buildApiUrl } from '../config/apiConfig';
 
 /**
  * SSE Client for Team Game Updates
@@ -64,7 +65,7 @@ class TeamGameUpdatesSSE extends GenericSSEClient {
    */
   constructor() {
     super({
-      endpoint: '/sse/team/game-updates/stream',
+      endpoint: buildApiUrl('sse/team/game-updates/stream'),
       eventTypes: ['game_started', 'game_completed', 'hint_used', 'heartbeat', 'error'],
       maxReconnectAttempts: 5,
       reconnectDelay: 1000,

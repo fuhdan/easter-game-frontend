@@ -15,6 +15,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { buildApiUrl } from '../../config/apiConfig';
 import './AdminTeamList.css';
 
 /**
@@ -35,7 +36,7 @@ const AdminTeamList = ({ onSelectMember, onSelectTeam }) => {
     const loadTeams = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/teams/all-with-members', {
+        const response = await fetch(buildApiUrl('teams/all-with-members'), {
           method: 'GET',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' }

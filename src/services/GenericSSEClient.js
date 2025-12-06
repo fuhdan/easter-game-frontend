@@ -14,7 +14,7 @@
  * Usage:
  * ```javascript
  * const client = new GenericSSEClient({
- *   endpoint: '/api/admin/notifications/stream',
+ *   endpoint: '/admin/notifications/stream',
  *   eventTypes: ['notification', 'heartbeat'],
  *   maxReconnectAttempts: 5,
  *   reconnectDelay: 1000,

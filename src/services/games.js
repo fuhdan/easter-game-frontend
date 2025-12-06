@@ -20,7 +20,7 @@ import { request } from './api';
  * @returns {Promise<Array>} Array of game objects
  * @throws {APIError} 401 if not authenticated
  */
-export const getAll = () => request('GET', '/api/games');
+export const getAll = () => request('GET', '/games');
 
 /**
  * Get game by ID
@@ -29,7 +29,7 @@ export const getAll = () => request('GET', '/api/games');
  * @returns {Promise<Object>} Game object with full details
  * @throws {APIError} 404 if game not found
  */
-export const getById = (id) => request('GET', `/api/games/${id}`);
+export const getById = (id) => request('GET', `/games/${id}`);
 
 /**
  * Create new game
@@ -82,7 +82,7 @@ export const deleteGame = (id) => request('DELETE', `/admin/ai/games/${id}`);
  * @returns {number} progress.score - Score achieved
  * @throws {APIError} 403 if not authorized, 404 if not found
  */
-export const getProgress = (gameId, teamId) => request('GET', `/api/games/${gameId}/progress/${teamId}`);
+export const getProgress = (gameId, teamId) => request('GET', `/games/${gameId}/progress/${teamId}`);
 
 /**
  * Start a game
@@ -104,7 +104,7 @@ export const getProgress = (gameId, teamId) => request('GET', `/api/games/${game
  * const result = await startGame(1);
  * // { success: true, message: "Game started successfully", status: "in_progress", already_started: false }
  */
-export const startGame = (gameId) => request('POST', `/api/games/${gameId}/start`);
+export const startGame = (gameId) => request('POST', `/games/${gameId}/start`);
 
 /**
  * Submit solution for a game
@@ -117,7 +117,7 @@ export const startGame = (gameId) => request('POST', `/api/games/${gameId}/start
  * @returns {string} [result.feedback] - Feedback message
  * @throws {APIError} 400 if invalid solution format, 403 if not authorized, 404 if not found
  */
-export const submitSolution = (gameId, solution) => request('POST', `/api/games/${gameId}/submit`, { solution });
+export const submitSolution = (gameId, solution) => request('POST', `/games/${gameId}/submit`, { solution });
 
 /**
  * Request a hint for a game
@@ -131,7 +131,7 @@ export const submitSolution = (gameId, solution) => request('POST', `/api/games/
  * @returns {number} hint.hints_remaining - Hints remaining for this game
  * @throws {APIError} 403 if no hints remaining, 404 if game not found
  */
-export const useHint = (gameId) => request('POST', `/api/games/${gameId}/hint`);
+export const useHint = (gameId) => request('POST', `/games/${gameId}/hint`);
 
 /**
  * Rate a game
@@ -144,7 +144,7 @@ export const useHint = (gameId) => request('POST', `/api/games/${gameId}/hint`);
  * @returns {Promise<Object>} Rating confirmation
  * @throws {APIError} 400 if invalid rating, 403 if not completed, 404 if not found
  */
-export const rate = (gameId, rating, comment) => request('POST', `/api/games/${gameId}/rate`, { rating, comment });
+export const rate = (gameId, rating, comment) => request('POST', `/games/${gameId}/rate`, { rating, comment });
 
 /**
  * Get all ratings for a game
@@ -155,4 +155,4 @@ export const rate = (gameId, rating, comment) => request('POST', `/api/games/${g
  * @returns {Promise<Array>} Array of rating objects
  * @throws {APIError} 403 if not admin, 404 if game not found
  */
-export const getRatings = (gameId) => request('GET', `/api/games/${gameId}/ratings`);
+export const getRatings = (gameId) => request('GET', `/games/${gameId}/ratings`);

@@ -25,7 +25,7 @@ import { request, buildHeaders } from './api';
 export const uploadCSV = (file) => {
   const formData = new FormData();
   formData.append('file', file);
-  return request('POST', '/api/files/csv', formData, {
+  return request('POST', '/files/csv', formData, {
     headers: buildHeaders(null) // No content-type for FormData
   });
 };
@@ -44,7 +44,7 @@ export const uploadCSV = (file) => {
 export const uploadImage = (file) => {
   const formData = new FormData();
   formData.append('image', file);
-  return request('POST', '/api/files/image', formData, {
+  return request('POST', '/files/image', formData, {
     headers: buildHeaders(null)
   });
 };

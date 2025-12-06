@@ -28,6 +28,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import useWebSocket from '../hooks/useWebSocket';
 import { handleWebSocketMessage } from '../services/websocket/messageHandler';
+import { buildApiUrl } from '../config/apiConfig';
 
 const ChatContext = createContext();
 
@@ -89,16 +90,66 @@ export function ChatProvider({ children, user }) {
 
   // Team chat state
   const [teamMembers, setTeamMembers] = useState([]);
-  const [adminContacts, setAdminContacts] = useState([]); // Admins who have contacted the user
   const [selectedTeamMember, setSelectedTeamMember] = useState(null); // For private chat
   const [selectedTeam, setSelectedTeam] = useState(null); // For team broadcast (admin view)
-  const [viewingAdminBroadcast, setViewingAdminBroadcast] = useState(false); // Whether viewing admin broadcast messages
   const [teamBroadcastMessages, setTeamBroadcastMessages] = useState([]);
   const [privateConversations, setPrivateConversations] = useState({}); // { userId: [messages] }
   const [unreadCounts, setUnreadCounts] = useState({ broadcast: 0, private: {} }); // Track unread messages
 
   const addMessage = useCallback((message) => { setMessages(prev => [...prev, message]); }, []);
   const clearMessages = useCallback(() => { setMessages([]); }, []);
+  const updateMessage = useCallback((messageId, updates) => {
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId ? { ...msg, ...updates } : msg
+    ));
+  }, []);
+  const addOrUpdateMessage = useCallback((message) => {
+    setMessages(prev => {
+      const existingIndex = prev.findIndex(msg => msg.id === message.id);
+      if (existingIndex >= 0) {
+        // Update existing message
+        const updated = [...prev];
+        updated[existingIndex] = { ...updated[existingIndex], ...message };
+        return updated;
+      } else {
+        // Add new message
+        return [...prev, message];
+      }
+    });
+  }, []);
+
+  // Update the most recent user message (for adding escalation status)
+  const updateLastUserMessage = useCallback((updates) => {
+    setMessages(prev => {
+      // Find the last user message (sender_type === 'user' or type === 'user')
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (prev[i].sender_type === 'user' || prev[i].type === 'user') {
+          const updated = [...prev];
+          updated[i] = {
+            ...updated[i],
+            ...updates,
+            metadata: { ...updated[i].metadata, ...updates.metadata }
+          };
+          return updated;
+        }
+      }
+      return prev; // No user message found
+    });
+  }, []);
+
+  // Update all messages with a specific notification_id
+  const updateMessagesByNotificationId = useCallback((notificationId, updates) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.metadata?.notification_id === notificationId) {
+        return {
+          ...msg,
+          ...updates,
+          metadata: { ...msg.metadata, ...updates.metadata }
+        };
+      }
+      return msg;
+    }));
+  }, []);
 
   // Team chat handlers
   const handleIncomingPrivateMessage = useCallback((message) => {
@@ -151,6 +202,10 @@ export function ChatProvider({ children, user }) {
       console.log('[ChatContext] Message received in listener:', data.type);
       handleWebSocketMessage(data, {
         addMessage,
+        updateMessage,
+        addOrUpdateMessage,
+        updateLastUserMessage,
+        updateMessagesByNotificationId,
         setIsTyping,
         setLastError,
         setRateLimitStatus,
@@ -165,10 +220,19 @@ export function ChatProvider({ children, user }) {
       console.log('[ChatContext] Cleaning up message handler');
       unsubscribe();
     };
-  }, [onMessage, addMessage, handleIncomingPrivateMessage, handleIncomingBroadcast]);
+  }, [onMessage, addMessage, updateMessage, addOrUpdateMessage, updateLastUserMessage, updateMessagesByNotificationId, handleIncomingPrivateMessage, handleIncomingBroadcast]);
 
-  const sendMessage = useCallback((content) => {
+  const sendMessage = useCallback((content, messageType = null) => {
     if (!content || !content.trim()) return false;
+
+    // Use explicit messageType if provided, otherwise use chatMode
+    const effectiveMessageType = messageType || chatMode;
+
+    // Only allow 'ai' or 'admin' message types
+    if (effectiveMessageType !== 'ai' && effectiveMessageType !== 'admin') {
+      return false;
+    }
+
     addMessage({
       id: generateMessageId(),
       type: 'user',
@@ -176,11 +240,8 @@ export function ChatProvider({ children, user }) {
       content: content.trim(),
       timestamp: new Date().toISOString()
     });
-    if (chatMode === 'ai') setIsTyping(true);
-    if (chatMode === 'ai' || chatMode === 'admin') {
-      return wsSend('user_message', { content: content.trim(), message_type: chatMode });
-    }
-    return false;
+    if (effectiveMessageType === 'ai') setIsTyping(true);
+    return wsSend('user_message', { content: content.trim(), message_type: effectiveMessageType });
   }, [chatMode, wsSend, addMessage]);
 
   // Load AI/Admin chat history
@@ -189,7 +250,7 @@ export function ChatProvider({ children, user }) {
 
     try {
       console.log(`[ChatContext] Loading ${sessionType} chat history...`);
-      const response = await fetch(`/chat/messages?session_type=${sessionType}&limit=50`, {
+      const response = await fetch(`${buildApiUrl('chat/messages')}?session_type=${sessionType}&limit=50`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -200,6 +261,8 @@ export function ChatProvider({ children, user }) {
         console.log(`[ChatContext] Loaded ${data.count} messages from ${sessionType} session`);
 
         // Convert to UI message format
+        // Note: The messages endpoint now includes notification_id, status, and escalation_type
+        // directly in the response for user messages that triggered escalations
         const uiMessages = data.messages.map(msg => ({
           id: msg.id.toString(),
           type: msg.sender_type,
@@ -208,12 +271,11 @@ export function ChatProvider({ children, user }) {
           content: msg.content,
           timestamp: msg.created_at,
           metadata: {
-            ...( msg.processing_time_ms ? { processing_time_ms: msg.processing_time_ms } : {}),
-            ...( msg.escalation_status ? {
-              escalation_status: msg.escalation_status,
-              escalation_id: msg.escalation_id,
-              acknowledged_at: msg.acknowledged_at,
-              resolved_at: msg.resolved_at
+            ...(msg.processing_time_ms ? { processing_time_ms: msg.processing_time_ms } : {}),
+            ...(msg.notification_id ? {
+              notification_id: msg.notification_id,
+              status: msg.status,
+              escalation_type: msg.escalation_type
             } : {})
           }
         }));
@@ -254,7 +316,7 @@ export function ChatProvider({ children, user }) {
 
     try {
       // Fetch active event
-      const eventResponse = await fetch('/api/events/active', {
+      const eventResponse = await fetch(buildApiUrl('events/active'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -269,7 +331,7 @@ export function ChatProvider({ children, user }) {
       const event = await eventResponse.json();
 
       // Fetch games with progress for this event
-      const gamesResponse = await fetch(`/api/events/${event.id}/games`, {
+      const gamesResponse = await fetch(buildApiUrl(`events/${event.id}/games`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -357,7 +419,7 @@ export function ChatProvider({ children, user }) {
 
     try {
       console.log('[ChatContext] Loading team broadcast history...');
-      const response = await fetch('/api/team-chat/broadcast/history', {
+      const response = await fetch(buildApiUrl('team-chat/broadcast/history'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -381,7 +443,7 @@ export function ChatProvider({ children, user }) {
 
     try {
       console.log('[ChatContext] Loading team members...');
-      const response = await fetch('/api/team-chat/members', {
+      const response = await fetch(buildApiUrl('team-chat/members'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -401,34 +463,9 @@ export function ChatProvider({ children, user }) {
     }
   }, [user]);
 
-  // Load admin contacts
-  const loadAdminContacts = useCallback(async () => {
-    try {
-      console.log('[ChatContext] Loading admin contacts...');
-      const response = await fetch('/api/team-chat/admin-contacts', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[ChatContext] Admin contacts loaded:', data.members.length);
-        setAdminContacts(data.members || []);
-      } else {
-        console.error('[ChatContext] Failed to load admin contacts:', response.status);
-        setAdminContacts([]);
-      }
-    } catch (error) {
-      console.error('[ChatContext] Error loading admin contacts:', error);
-      setAdminContacts([]);
-    }
-  }, [user]);
-
   useEffect(() => {
     if (chatMode === 'team' && user) {
       loadTeamMembers();
-      loadAdminContacts();
       loadBroadcastHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -460,7 +497,7 @@ export function ChatProvider({ children, user }) {
 
     try {
       console.log(`[ChatContext] Loading conversation history with user ${otherUserId}...`);
-      const response = await fetch(`/api/team-chat/conversation/${otherUserId}`, {
+      const response = await fetch(buildApiUrl(`team-chat/conversation/${otherUserId}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -487,8 +524,6 @@ export function ChatProvider({ children, user }) {
     setSelectedTeamMember(member);
     // Clear team selection when selecting a member
     setSelectedTeam(null);
-    // Clear admin broadcast view when selecting a member
-    setViewingAdminBroadcast(false);
 
     // Load conversation history when selecting a member
     if (member) {
@@ -532,24 +567,23 @@ export function ChatProvider({ children, user }) {
     messages,
     addMessage,
     clearMessages,
+    updateMessage,
     sendMessage,
     chatMode,
     switchMode,
     aiContext,
     loadAIContext,
+    loadChatHistory,  // Export for loading admin/ai chat history
     isTyping,
     rateLimitStatus,
     setRateLimitStatus,  // Export setter for countdown timer
     // Team chat
     teamMembers,
     setTeamMembers,
-    adminContacts,
     selectedTeamMember,
     selectTeamMember,
     selectedTeam,
     selectTeam,
-    viewingAdminBroadcast,
-    setViewingAdminBroadcast,
     teamBroadcastMessages,
     privateConversations,
     sendTeamPrivateMessage,
@@ -568,23 +602,22 @@ export function ChatProvider({ children, user }) {
     messages,
     addMessage,
     clearMessages,
+    updateMessage,
     sendMessage,
     chatMode,
     switchMode,
     aiContext,
     loadAIContext,
+    loadChatHistory,
     isTyping,
     rateLimitStatus,
     setRateLimitStatus,
     teamMembers,
     setTeamMembers,
-    adminContacts,
     selectedTeamMember,
     selectTeamMember,
     selectedTeam,
     selectTeam,
-    viewingAdminBroadcast,
-    setViewingAdminBroadcast,
     teamBroadcastMessages,
     privateConversations,
     sendTeamPrivateMessage,

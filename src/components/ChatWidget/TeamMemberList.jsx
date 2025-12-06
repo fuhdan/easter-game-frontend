@@ -22,22 +22,17 @@ import './TeamMemberList.css';
  * @returns {JSX.Element}
  */
 const TeamMemberList = () => {
-  const { teamMembers, selectedTeamMember, selectTeamMember, user, viewingAdminBroadcast, setViewingAdminBroadcast } = useChat();
-
+  const { teamMembers, selectedTeamMember, selectTeamMember, user } = useChat();
 
   const teamName = user?.team_name || 'Team';
 
   const handleHeaderClick = () => {
     // Clear selection to show team broadcast
     selectTeamMember(null);
-    // Clear admin broadcast view to show team broadcast
-    if (setViewingAdminBroadcast) {
-      setViewingAdminBroadcast(false);
-    }
   };
 
   // Check if header should be highlighted (viewing team broadcast)
-  const isHeaderSelected = !selectedTeamMember && !viewingAdminBroadcast;
+  const isHeaderSelected = !selectedTeamMember;
 
   return (
     <div className="team-member-list">

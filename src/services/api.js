@@ -12,11 +12,13 @@
  * @since 2025-11-20
  */
 
+import { API_CONFIG } from '../config/apiConfig';
+
 /**
  * Configuration
  */
 const CONFIG = {
-  BASE_URL: '', // Empty string since auth uses /api/auth/login directly
+  BASE_URL: API_CONFIG.BASE_URL, // Versioned API base URL from centralized config
   TIMEOUT: 30000,
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000,
@@ -172,7 +174,7 @@ export const request = async (method, endpoint, data = null, options = {}) => {
       log.error(`Attempt ${attempt} failed:`, error.message);
 
       // Handle 401 with automatic token refresh (with mutex)
-      if (error.status === 401 && endpoint !== '/api/auth/refresh' && endpoint !== '/api/auth/login') {
+      if (error.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
         log.info('401 Unauthorized - attempting token refresh');
 
         try {
@@ -182,7 +184,7 @@ export const request = async (method, endpoint, data = null, options = {}) => {
 
             // Start the refresh and store the promise
             // eslint-disable-next-line no-loop-func
-            refreshPromise = fetch(`${CONFIG.BASE_URL}/api/auth/refresh`, {
+            refreshPromise = fetch(`${CONFIG.BASE_URL}/auth/refresh`, {
               method: 'POST',
               credentials: 'include'
             })
@@ -338,7 +340,7 @@ export const utils = {
    */
   isAuthenticated: async () => {
     try {
-      await request('GET', '/api/auth/me');
+      await request('GET', '/auth/me');
       return true;
     } catch (error) {
       return false;

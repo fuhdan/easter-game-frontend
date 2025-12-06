@@ -31,6 +31,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { API_CONFIG } from '../config/apiConfig';
 import { login, logout } from '../services';
 
 const AuthContext = createContext();
@@ -114,7 +115,7 @@ export function AuthProvider({ children }) {
         try {
             setLoading(true);
             // Use /auth/me to validate session (benefits from auto-refresh)
-            const response = await fetch('/api/auth/me', {
+            const response = await fetch(API_CONFIG.ENDPOINTS.AUTH.ME, {
                 method: 'GET',
                 credentials: 'include'
             });

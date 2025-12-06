@@ -23,7 +23,7 @@ import { request } from './api';
  * @returns {Promise<Array>} Array of user objects
  * @throws {APIError} 403 if not admin
  */
-export const getAll = () => request('GET', '/api/users');
+export const getAll = () => request('GET', '/users');
 
 /**
  * Get user by ID
@@ -34,7 +34,7 @@ export const getAll = () => request('GET', '/api/users');
  * @returns {Promise<Object>} User object
  * @throws {APIError} 403 if not admin, 404 if user not found
  */
-export const getById = (id) => request('GET', `/api/users/${id}`);
+export const getById = (id) => request('GET', `/users/${id}`);
 
 /**
  * Create new user
@@ -50,7 +50,7 @@ export const getById = (id) => request('GET', `/api/users/${id}`);
  * @returns {Promise<Object>} Created user object with ID
  * @throws {APIError} 400 if validation fails, 403 if not admin, 409 if username/email exists
  */
-export const create = (userData) => request('POST', '/api/users', userData);
+export const create = (userData) => request('POST', '/users', userData);
 
 /**
  * Update user
@@ -66,7 +66,7 @@ export const create = (userData) => request('POST', '/api/users', userData);
  * @returns {Promise<Object>} Updated user object
  * @throws {APIError} 400 if validation fails, 403 if not admin, 404 if user not found
  */
-export const update = (id, userData) => request('PUT', `/api/users/${id}`, userData);
+export const update = (id, userData) => request('PUT', `/users/${id}`, userData);
 
 /**
  * Delete user
@@ -77,7 +77,7 @@ export const update = (id, userData) => request('PUT', `/api/users/${id}`, userD
  * @returns {Promise<Object>} Deletion confirmation
  * @throws {APIError} 403 if not admin, 404 if user not found, 409 if user is team leader
  */
-export const deleteUser = (id) => request('DELETE', `/api/users/${id}`);
+export const deleteUser = (id) => request('DELETE', `/users/${id}`);
 
 /**
  * Bulk create users from CSV data
@@ -92,7 +92,7 @@ export const deleteUser = (id) => request('DELETE', `/api/users/${id}`);
  * @returns {Promise<Object>} Creation results with success/error counts
  * @throws {APIError} 400 if validation fails, 403 if not admin
  */
-export const bulkCreate = (users) => request('POST', '/api/users/bulk-create', { users });
+export const bulkCreate = (users) => request('POST', '/users/bulk-create', { users });
 
 /**
  * Get current user profile
@@ -100,7 +100,7 @@ export const bulkCreate = (users) => request('POST', '/api/users/bulk-create', {
  * @returns {Promise<Object>} Current user object
  * @throws {APIError} 401 if not authenticated
  */
-export const getCurrentUser = () => request('GET', '/api/users/me');
+export const getCurrentUser = () => request('GET', '/users/me');
 
 /**
  * Update current user profile
@@ -112,7 +112,7 @@ export const getCurrentUser = () => request('GET', '/api/users/me');
  * @returns {Promise<Object>} Updated user object
  * @throws {APIError} 400 if validation fails, 401 if not authenticated
  */
-export const updateProfile = (profileData) => request('PUT', '/api/users/me', profileData);
+export const updateProfile = (profileData) => request('PUT', '/users/me', profileData);
 
 /**
  * Change password for current user
@@ -123,4 +123,4 @@ export const updateProfile = (profileData) => request('PUT', '/api/users/me', pr
  * @returns {Promise<Object>} Success confirmation
  * @throws {APIError} 400 if validation fails, 401 if old password incorrect
  */
-export const changePassword = (passwordData) => request('PUT', '/api/users/me/password', passwordData);
+export const changePassword = (passwordData) => request('PUT', '/users/me/password', passwordData);

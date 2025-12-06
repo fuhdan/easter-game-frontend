@@ -16,6 +16,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getConfig, resetRateLimitBulk, utils, getCurrentUser } from '../../services';
 import GenericSSEClient from '../../services/GenericSSEClient';
+import { buildApiUrl } from '../../config/apiConfig';
 import './RateLimitCard.css';
 
 /**
@@ -198,7 +199,7 @@ const RateLimitCard = ({ user }) => {
 
         // Create SSE client for blocked IPs
         const client = new GenericSSEClient({
-            endpoint: '/api/admin/blocked-ips/stream',
+            endpoint: buildApiUrl('admin/blocked-ips/stream'),
             eventTypes: ['blocked_ips_update', 'heartbeat', 'error'],
             maxReconnectAttempts: 5,
             reconnectDelay: 1000,

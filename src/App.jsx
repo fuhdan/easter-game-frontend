@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { API_CONFIG } from './config/apiConfig';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import Login from './components/Login/Login';
 import Header from './components/Header/Header';
@@ -72,7 +73,7 @@ const App = () => {
     async function checkAuthStatus() {
         try {
             setLoading(true);
-            const response = await fetch('/api/auth/me', {
+            const response = await fetch(API_CONFIG.ENDPOINTS.AUTH.ME, {
                 method: 'GET',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
@@ -103,7 +104,7 @@ const App = () => {
             setError(null);
             setLoading(true);
 
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -140,7 +141,7 @@ const App = () => {
     async function logout() {
         try {
             setLoading(true);
-            await fetch('/api/auth/logout', {
+            await fetch(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }

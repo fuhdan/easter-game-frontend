@@ -31,7 +31,7 @@ import { request, log } from './api';
  */
 export const login = (credentials) => {
   log.info('Attempting login for:', credentials.username);
-  return request('POST', '/api/auth/login', credentials);
+  return request('POST', '/auth/login', credentials);
 };
 
 /**
@@ -46,7 +46,7 @@ export const login = (credentials) => {
  */
 export const activateAccount = (activationData) => {
   log.info('Activating account for:', activationData.username);
-  return request('POST', '/api/users/change-password', activationData);
+  return request('POST', '/users/change-password', activationData);
 };
 
 /**
@@ -57,7 +57,7 @@ export const activateAccount = (activationData) => {
  * @returns {Promise<Object>} Logout response
  * @throws {APIError} If logout fails
  */
-export const logout = () => request('POST', '/api/auth/logout');
+export const logout = () => request('POST', '/auth/logout');
 
 /**
  * Refresh access token using refresh token
@@ -68,7 +68,7 @@ export const logout = () => request('POST', '/api/auth/logout');
  * @returns {Promise<Object>} Refresh response with new tokens
  * @throws {APIError} 401 if refresh token invalid/expired
  */
-export const refresh = () => request('POST', '/api/auth/refresh');
+export const refresh = () => request('POST', '/auth/refresh');
 
 /**
  * Get current authenticated user
@@ -83,7 +83,7 @@ export const refresh = () => request('POST', '/api/auth/refresh');
  * @returns {string} user.role - Role (player/admin/super_admin)
  * @throws {APIError} 401 if not authenticated
  */
-export const me = () => request('GET', '/api/auth/me');
+export const me = () => request('GET', '/auth/me');
 
 /**
  * Verify authentication token
@@ -93,4 +93,4 @@ export const me = () => request('GET', '/api/auth/me');
  * @returns {Promise<Object>} Current user object
  * @throws {APIError} 401 if not authenticated
  */
-export const verify = () => request('GET', '/api/auth/me');
+export const verify = () => request('GET', '/auth/me');

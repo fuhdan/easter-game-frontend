@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { buildApiUrl } from '../../config/apiConfig';
 import NotificationCard from './NotificationCard';
 import NotificationFilters from './NotificationFilters';
 import NotificationsSSE from '../../services/notificationsSSE';
@@ -50,6 +51,12 @@ const NotificationsDashboard = ({ user }) => {
         if (activeTab === 'open') {
             console.log('[NotificationsDashboard] Setting up SSE connection for open notifications');
             setConnectionStatus('connecting');
+
+            // BUGFIX: Load initial data before connecting to SSE
+            // This ensures we start with a clean slate when switching tabs
+            loadNotifications().then(() => {
+                console.log('[NotificationsDashboard] Initial notifications loaded, connecting to SSE');
+            });
 
             // Create SSE client if not exists
             if (!sseClient.current) {
@@ -236,7 +243,7 @@ const NotificationsDashboard = ({ user }) => {
                 params.append('team_id', teamFilter);
             }
 
-            const response = await fetch(`/api/chat/admin/notifications?${params.toString()}`, {
+            const response = await fetch(`${buildApiUrl('chat/admin/notifications')}?${params.toString()}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -266,7 +273,7 @@ const NotificationsDashboard = ({ user }) => {
      */
     async function handleResolve(notificationId) {
         try {
-            const response = await fetch(`/api/chat/admin/notifications/${notificationId}/resolve`, {
+            const response = await fetch(buildApiUrl(`chat/admin/notifications/${notificationId}/resolve`), {
                 method: 'PUT',
                 credentials: 'include',
                 headers: {
@@ -294,7 +301,7 @@ const NotificationsDashboard = ({ user }) => {
      */
     async function handleAcknowledge(notificationId) {
         try {
-            const response = await fetch(`/api/chat/admin/notifications/${notificationId}/acknowledge`, {
+            const response = await fetch(buildApiUrl(`chat/admin/notifications/${notificationId}/acknowledge`), {
                 method: 'PUT',
                 credentials: 'include',
                 headers: {
@@ -338,7 +345,7 @@ const NotificationsDashboard = ({ user }) => {
      */
     async function createTestNotification() {
         try {
-            const response = await fetch('/api/test/create-test-notification', {
+            const response = await fetch(buildApiUrl('test/create-test-notification'), {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

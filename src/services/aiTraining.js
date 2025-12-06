@@ -33,7 +33,7 @@ export const getHints = (filters = {}) => {
   if (filters.hint_type) params.append('hint_type', filters.hint_type);
   if (filters.hint_level) params.append('hint_level', filters.hint_level);
 
-  const url = `/api/admin/ai/training-hints${params.toString() ? '?' + params.toString() : ''}`;
+  const url = `/admin/ai/training-hints${params.toString() ? '?' + params.toString() : ''}`;
   log.info('Fetching AI training hints', filters);
   return request('GET', url);
 };
@@ -48,7 +48,7 @@ export const getHints = (filters = {}) => {
  */
 export const getHintsByGame = () => {
   log.info('Fetching AI training hints by game');
-  return request('GET', '/api/admin/ai/training-hints/by-game');
+  return request('GET', '/admin/ai/training-hints/by-game');
 };
 
 /**
@@ -66,7 +66,7 @@ export const getHintsByGame = () => {
  */
 export const createHint = (hintData) => {
   log.info('Creating AI training hint', hintData);
-  return request('POST', '/api/admin/ai/training-hints', hintData);
+  return request('POST', '/admin/ai/training-hints', hintData);
 };
 
 /**
@@ -81,7 +81,7 @@ export const createHint = (hintData) => {
  */
 export const updateHint = (hintId, updates) => {
   log.info(`Updating AI training hint ${hintId}`, updates);
-  return request('PUT', `/api/admin/ai/training-hints/${hintId}`, updates);
+  return request('PUT', `/admin/ai/training-hints/${hintId}`, updates);
 };
 
 /**
@@ -95,7 +95,7 @@ export const updateHint = (hintId, updates) => {
  */
 export const deleteHint = (hintId) => {
   log.info(`Deleting AI training hint ${hintId}`);
-  return request('DELETE', `/api/admin/ai/training-hints/${hintId}`);
+  return request('DELETE', `/admin/ai/training-hints/${hintId}`);
 };
 
 /**
@@ -109,7 +109,7 @@ export const deleteHint = (hintId) => {
  */
 export const bulkDeleteHints = (gameId) => {
   log.info(`Bulk deleting AI training hints for game ${gameId}`);
-  return request('POST', '/api/admin/ai/training-hints/bulk-delete', { game_id: gameId });
+  return request('POST', '/admin/ai/training-hints/bulk-delete', { game_id: gameId });
 };
 
 /**
@@ -122,7 +122,7 @@ export const bulkDeleteHints = (gameId) => {
  */
 export const getSystemPrompts = () => {
   log.info('Fetching AI system prompts');
-  return request('GET', '/api/admin/ai/system-prompts');
+  return request('GET', '/admin/ai/system-prompts');
 };
 
 /**
@@ -139,7 +139,7 @@ export const getSystemPrompts = () => {
  */
 export const createSystemPrompt = (promptData) => {
   log.info('Creating AI system prompt', promptData);
-  return request('POST', '/api/admin/ai/system-prompts', promptData);
+  return request('POST', '/admin/ai/system-prompts', promptData);
 };
 
 /**
@@ -154,7 +154,7 @@ export const createSystemPrompt = (promptData) => {
  */
 export const updateSystemPrompt = (promptId, updates) => {
   log.info(`Updating AI system prompt ${promptId}`, updates);
-  return request('PUT', `/api/admin/ai/system-prompts/${promptId}`, updates);
+  return request('PUT', `/admin/ai/system-prompts/${promptId}`, updates);
 };
 
 /**
@@ -168,7 +168,7 @@ export const updateSystemPrompt = (promptId, updates) => {
  */
 export const deleteSystemPrompt = (promptId) => {
   log.info(`Deleting AI system prompt ${promptId}`);
-  return request('DELETE', `/api/admin/ai/system-prompts/${promptId}`);
+  return request('DELETE', `/admin/ai/system-prompts/${promptId}`);
 };
 
 /**
@@ -182,7 +182,7 @@ export const deleteSystemPrompt = (promptId) => {
  */
 export const getAdminGuide = () => {
   log.info('Fetching AI training admin guide');
-  return request('GET', '/api/admin/ai/admin-guide');
+  return request('GET', '/admin/ai/admin-guide');
 };
 
 /**
@@ -195,7 +195,7 @@ export const getAdminGuide = () => {
  */
 export const getEvents = () => {
   log.info('Fetching all events');
-  return request('GET', '/api/admin/ai/events');
+  return request('GET', '/admin/ai/events');
 };
 
 /**
@@ -209,7 +209,7 @@ export const getEvents = () => {
  */
 export const getEvent = (eventId) => {
   log.info(`Fetching event ${eventId}`);
-  return request('GET', `/api/admin/ai/events/${eventId}`);
+  return request('GET', `/admin/ai/events/${eventId}`);
 };
 
 /**
@@ -226,7 +226,7 @@ export const getEvent = (eventId) => {
  */
 export const createEvent = (eventData) => {
   log.info('Creating new event', eventData);
-  return request('POST', '/api/admin/events/', eventData);
+  return request('POST', '/admin/events/', eventData);
 };
 
 /**
@@ -241,7 +241,7 @@ export const createEvent = (eventData) => {
  */
 export const updateEvent = (eventId, updates) => {
   log.info(`Updating event ${eventId}`, updates);
-  return request('PUT', `/api/admin/ai/events/${eventId}`, updates);
+  return request('PUT', `/admin/ai/events/${eventId}`, updates);
 };
 
 /**
@@ -255,7 +255,7 @@ export const updateEvent = (eventId, updates) => {
  */
 export const deleteEvent = (eventId) => {
   log.info(`Deleting event ${eventId}`);
-  return request('DELETE', `/api/admin/events/${eventId}`);
+  return request('DELETE', `/admin/events/${eventId}`);
 };
 
 /**
@@ -268,7 +268,7 @@ export const deleteEvent = (eventId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getCategories = (activeOnly = false) => {
-  const url = `/api/admin/ai/categories${activeOnly ? '?active_only=true' : ''}`;
+  const url = `/admin/ai/categories${activeOnly ? '?active_only=true' : ''}`;
   log.info('Fetching game categories');
   return request('GET', url);
 };
@@ -286,7 +286,7 @@ export const getCategories = (activeOnly = false) => {
  */
 export const createCategory = (categoryData) => {
   log.info('Creating game category', categoryData);
-  return request('POST', '/api/admin/ai/categories', categoryData);
+  return request('POST', '/admin/ai/categories', categoryData);
 };
 
 /**
@@ -301,7 +301,7 @@ export const createCategory = (categoryData) => {
  */
 export const updateCategory = (categoryId, updates) => {
   log.info(`Updating game category ${categoryId}`, updates);
-  return request('PUT', `/api/admin/ai/categories/${categoryId}`, updates);
+  return request('PUT', `/admin/ai/categories/${categoryId}`, updates);
 };
 
 /**
@@ -315,7 +315,7 @@ export const updateCategory = (categoryId, updates) => {
  */
 export const deleteCategory = (categoryId) => {
   log.info(`Deleting game category ${categoryId}`);
-  return request('DELETE', `/api/admin/ai/categories/${categoryId}`);
+  return request('DELETE', `/admin/ai/categories/${categoryId}`);
 };
 
 /**
@@ -328,7 +328,7 @@ export const deleteCategory = (categoryId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getAllGames = (includeInactive = false) => {
-  const url = `/api/admin/ai/games${includeInactive ? '?include_inactive=true' : ''}`;
+  const url = `/admin/ai/games${includeInactive ? '?include_inactive=true' : ''}`;
   log.info('Fetching all games with full content');
   return request('GET', url);
 };
@@ -344,7 +344,7 @@ export const getAllGames = (includeInactive = false) => {
  */
 export const getGame = (gameId) => {
   log.info(`Fetching game ${gameId} with full content`);
-  return request('GET', `/api/admin/ai/games/${gameId}`);
+  return request('GET', `/admin/ai/games/${gameId}`);
 };
 
 /**
@@ -358,7 +358,7 @@ export const getGame = (gameId) => {
  */
 export const createGame = (gameData) => {
   log.info('Creating new game', gameData);
-  return request('POST', '/api/admin/ai/games', gameData);
+  return request('POST', '/admin/ai/games', gameData);
 };
 
 /**
@@ -373,7 +373,7 @@ export const createGame = (gameData) => {
  */
 export const updateGame = (gameId, updates) => {
   log.info(`Updating game ${gameId}`, updates);
-  return request('PUT', `/api/admin/ai/games/${gameId}`, updates);
+  return request('PUT', `/admin/ai/games/${gameId}`, updates);
 };
 
 /**
@@ -387,5 +387,5 @@ export const updateGame = (gameId, updates) => {
  */
 export const deleteGame = (gameId) => {
   log.info(`Deleting game ${gameId}`);
-  return request('DELETE', `/api/admin/ai/games/${gameId}`);
+  return request('DELETE', `/admin/ai/games/${gameId}`);
 };

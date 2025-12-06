@@ -29,7 +29,7 @@ import { request, log } from './api';
  * @returns {number} stats.completed_games - Completed games
  * @throws {APIError} 403 if not admin
  */
-export const getStats = () => request('GET', '/api/admin/stats');
+export const getStats = () => request('GET', '/admin/stats');
 
 /**
  * Get team progress
@@ -43,7 +43,7 @@ export const getStats = () => request('GET', '/api/admin/stats');
  * @returns {number} progress[].total_score - Total score
  * @throws {APIError} 403 if not admin
  */
-export const getTeamProgress = () => request('GET', '/api/admin/teams/progress');
+export const getTeamProgress = () => request('GET', '/admin/teams/progress');
 
 /**
  * Get overall game progress
@@ -57,7 +57,7 @@ export const getTeamProgress = () => request('GET', '/api/admin/teams/progress')
  * @returns {number} progress[].avg_time - Average completion time
  * @throws {APIError} 403 if not admin
  */
-export const getGameProgress = () => request('GET', '/api/admin/games/progress');
+export const getGameProgress = () => request('GET', '/admin/games/progress');
 
 /**
  * Reset a specific game
@@ -70,7 +70,7 @@ export const getGameProgress = () => request('GET', '/api/admin/games/progress')
  * @returns {Promise<Object>} Reset confirmation
  * @throws {APIError} 403 if not admin, 404 if game not found
  */
-export const resetGame = (gameId) => request('POST', `/api/admin/games/${gameId}/reset`);
+export const resetGame = (gameId) => request('POST', `/admin/games/${gameId}/reset`);
 
 /**
  * Reset all progress for all teams
@@ -82,7 +82,7 @@ export const resetGame = (gameId) => request('POST', `/api/admin/games/${gameId}
  * @returns {Promise<Object>} Reset confirmation
  * @throws {APIError} 403 if not admin
  */
-export const resetAllProgress = () => request('POST', '/api/admin/reset-all');
+export const resetAllProgress = () => request('POST', '/admin/reset-all');
 
 /**
  * Get system information
@@ -96,7 +96,7 @@ export const resetAllProgress = () => request('POST', '/api/admin/reset-all');
  * @returns {Object} info.redis - Redis info
  * @throws {APIError} 403 if not admin
  */
-export const getSystemInfo = () => request('GET', '/api/admin/system');
+export const getSystemInfo = () => request('GET', '/admin/system');
 
 /**
  * Export all data
@@ -106,7 +106,7 @@ export const getSystemInfo = () => request('GET', '/api/admin/system');
  * @returns {Promise<Object>} Exported data
  * @throws {APIError} 403 if not admin
  */
-export const exportAllData = () => request('GET', '/api/admin/export');
+export const exportAllData = () => request('GET', '/admin/export');
 
 /**
  * Promote user to admin
@@ -117,7 +117,7 @@ export const exportAllData = () => request('GET', '/api/admin/export');
  * @returns {Promise<Object>} Updated user object
  * @throws {APIError} 403 if not super_admin, 404 if user not found
  */
-export const promoteUser = (userId) => request('PUT', `/api/admin/users/${userId}/promote`);
+export const promoteUser = (userId) => request('PUT', `/admin/users/${userId}/promote`);
 
 /**
  * Demote admin user to player
@@ -128,7 +128,7 @@ export const promoteUser = (userId) => request('PUT', `/api/admin/users/${userId
  * @returns {Promise<Object>} Updated user object
  * @throws {APIError} 403 if not super_admin, 404 if user not found
  */
-export const demoteUser = (userId) => request('PUT', `/api/admin/users/${userId}/demote`);
+export const demoteUser = (userId) => request('PUT', `/admin/users/${userId}/demote`);
 
 /**
  * Update game content
@@ -140,7 +140,7 @@ export const demoteUser = (userId) => request('PUT', `/api/admin/users/${userId}
  * @returns {Promise<Object>} Updated game object
  * @throws {APIError} 400 if validation fails, 403 if not admin, 404 if not found
  */
-export const updateGameContent = (gameId, content) => request('PUT', `/api/admin/games/${gameId}/content`, content);
+export const updateGameContent = (gameId, content) => request('PUT', `/admin/games/${gameId}/content`, content);
 
 /**
  * Reset rate limit for specific target
@@ -154,7 +154,7 @@ export const updateGameContent = (gameId, content) => request('PUT', `/api/admin
  */
 export const resetRateLimit = (target, identifier) => {
   log.info(`Resetting ${target} rate limit for: ${identifier}`);
-  return request('POST', '/api/admin/reset-rate-limit', { target, identifier });
+  return request('POST', '/admin/reset-rate-limit', { target, identifier });
 };
 
 /**
@@ -168,7 +168,7 @@ export const resetRateLimit = (target, identifier) => {
  */
 export const resetRateLimitBulk = (ips) => {
   log.info(`Bulk resetting rate limits for ${ips.length} IP(s)`);
-  return request('POST', '/api/admin/reset-rate-limit-bulk', { ips });
+  return request('POST', '/admin/reset-rate-limit-bulk', { ips });
 };
 
 /**

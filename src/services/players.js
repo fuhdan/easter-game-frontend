@@ -23,7 +23,7 @@ import { request, log } from './api';
  * @returns {Promise<Array>} Array of player objects
  * @throws {APIError} 403 if not admin
  */
-export const getAll = () => request('GET', '/api/players');
+export const getAll = () => request('GET', '/players');
 
 /**
  * Get player by ID
@@ -34,7 +34,7 @@ export const getAll = () => request('GET', '/api/players');
  * @returns {Promise<Object>} Player object
  * @throws {APIError} 403 if not admin, 404 if player not found
  */
-export const getById = (id) => request('GET', `/api/players/${id}`);
+export const getById = (id) => request('GET', `/players/${id}`);
 
 /**
  * Create player
@@ -48,7 +48,7 @@ export const getById = (id) => request('GET', `/api/players/${id}`);
  * @returns {Promise<Object>} Created player object with ID
  * @throws {APIError} 400 if validation fails, 403 if not admin
  */
-export const create = (playerData) => request('POST', '/api/players', playerData);
+export const create = (playerData) => request('POST', '/players', playerData);
 
 /**
  * Update player
@@ -60,7 +60,7 @@ export const create = (playerData) => request('POST', '/api/players', playerData
  * @returns {Promise<Object>} Updated player object
  * @throws {APIError} 400 if validation fails, 403 if not admin, 404 if not found
  */
-export const update = (id, playerData) => request('PUT', `/api/players/${id}`, playerData);
+export const update = (id, playerData) => request('PUT', `/players/${id}`, playerData);
 
 /**
  * Delete player
@@ -71,7 +71,7 @@ export const update = (id, playerData) => request('PUT', `/api/players/${id}`, p
  * @returns {Promise<Object>} Deletion confirmation
  * @throws {APIError} 403 if not admin, 404 if player not found
  */
-export const deletePlayer = (id) => request('DELETE', `/api/players/${id}`);
+export const deletePlayer = (id) => request('DELETE', `/players/${id}`);
 
 /**
  * Bulk create players from CSV data
@@ -87,7 +87,7 @@ export const deletePlayer = (id) => request('DELETE', `/api/players/${id}`);
  */
 export const bulkCreate = (players) => {
   log.info(`Uploading ${players.length} players`);
-  return request('POST', '/api/players/bulk-create', { players });
+  return request('POST', '/players/bulk-create', { players });
 };
 
 /**
@@ -99,7 +99,7 @@ export const bulkCreate = (players) => {
  * @returns {Promise<Object>} Import results with success/error counts
  * @throws {APIError} 400 if invalid CSV format, 403 if not admin
  */
-export const importPlayers = (csvData) => request('POST', '/api/players/import', { csvData });
+export const importPlayers = (csvData) => request('POST', '/players/import', { csvData });
 
 /**
  * Export players as CSV
@@ -109,7 +109,7 @@ export const importPlayers = (csvData) => request('POST', '/api/players/import',
  * @returns {Promise<string>} CSV data
  * @throws {APIError} 403 if not admin
  */
-export const exportPlayers = () => request('GET', '/api/players/export');
+export const exportPlayers = () => request('GET', '/players/export');
 
 /**
  * Generate one-time password for player
@@ -126,5 +126,5 @@ export const exportPlayers = () => request('GET', '/api/players/export');
  */
 export const generateOtp = (playerId) => {
   log.info(`Generating OTP for player ${playerId}`);
-  return request('POST', `/api/players/${playerId}/generate-otp`);
+  return request('POST', `/players/${playerId}/generate-otp`);
 };

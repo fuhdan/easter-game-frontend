@@ -19,7 +19,7 @@ import { request, log } from './api';
  * @returns {Promise<Object>} Health status
  * @returns {string} health.status - Status (ok/error)
  */
-export const health = () => request('GET', '/api/health');
+export const health = () => request('GET', '/health');
 
 /**
  * Get system version
@@ -28,7 +28,7 @@ export const health = () => request('GET', '/api/health');
  * @returns {string} version.version - Application version
  * @returns {string} version.build - Build number
  */
-export const version = () => request('GET', '/api/version');
+export const version = () => request('GET', '/version');
 
 /**
  * Basic ping test
@@ -36,7 +36,7 @@ export const version = () => request('GET', '/api/version');
  * @returns {Promise<Object>} Ping response
  * @returns {string} response.message - Pong message
  */
-export const ping = () => request('GET', '/api/ping');
+export const ping = () => request('GET', '/ping');
 
 /**
  * Get system configuration
@@ -52,7 +52,7 @@ export const ping = () => request('GET', '/api/ping');
  * @throws {APIError} 403 if not super_admin
  */
 export const getConfig = (category = null) => {
-  const url = category ? `/api/system/config?category=${category}` : '/api/system/config';
+  const url = category ? `/system/config?category=${category}` : '/system/config';
   log.info(`Fetching system configuration${category ? ` (category: ${category})` : ''}`);
   return request('GET', url);
 };
@@ -69,7 +69,7 @@ export const getConfig = (category = null) => {
  */
 export const updateConfig = (key, value) => {
   log.info(`Updating configuration: ${key} = ${value}`);
-  return request('PATCH', `/api/system/config/${key}`, { value });
+  return request('PATCH', `/system/config/${key}`, { value });
 };
 
 /**
@@ -84,5 +84,5 @@ export const updateConfig = (key, value) => {
  */
 export const reloadConfig = () => {
   log.info('Reloading configuration cache');
-  return request('POST', '/api/system/config/reload');
+  return request('POST', '/system/config/reload');
 };
