@@ -286,17 +286,40 @@ const handleTypingIndicator = (message, context) => {
  *
  * @param {object} message - Message sent confirmation
  * @param {object} message.message - Sent TeamMessage object
+ * @param {object} message.success - Success status
+ * @param {string} message.team_name - Target team name (for admin broadcasts)
  * @param {object} context - Chat context state and methods
  */
 const handleMessageSent = (message, context) => {
-  console.log('[MessageHandler] Message sent confirmation');
+  console.log('[MessageHandler] Message sent confirmation:', message);
+  console.log('[MessageHandler] message.success:', message.success, 'message.message:', message.message, 'message.team_name:', message.team_name);
 
-  // Note: Both broadcast and private messages are already added via WebSocket events:
+  // Check if this is an admin broadcast (admin sending to a team they're not part of)
+  // Admin broadcasts include team_name in the response
+  if (message.success && message.message && message.team_name) {
+    const { addAdminSentBroadcast } = context;
+    const sentMessage = message.message;
+    console.log('[MessageHandler] Admin broadcast detected, sentMessage:', sentMessage);
+    console.log('[MessageHandler] addAdminSentBroadcast available:', !!addAdminSentBroadcast);
+
+    // This is an admin broadcast - add to local state so admin can see their own message
+    const isAdminBroadcast = sentMessage.sender_role === 'admin' ||
+                              sentMessage.sender_role === 'game_admin';
+    console.log('[MessageHandler] isAdminBroadcast:', isAdminBroadcast, 'sender_role:', sentMessage.sender_role);
+
+    if (isAdminBroadcast && addAdminSentBroadcast) {
+      console.log('[MessageHandler] Adding admin broadcast to local state:', sentMessage);
+      addAdminSentBroadcast(sentMessage);
+    } else {
+      console.log('[MessageHandler] NOT adding - isAdminBroadcast:', isAdminBroadcast, 'addAdminSentBroadcast:', !!addAdminSentBroadcast);
+    }
+  } else {
+    console.log('[MessageHandler] Not an admin broadcast - missing fields');
+  }
+
+  // Note: Regular team broadcasts and private messages are already added via WebSocket events:
   // - team_broadcast_message: Sent to ALL team members (including sender)
   // - team_private_message: Sent to recipient AND sender
-  //
-  // This confirmation is just to verify the message was sent successfully.
-  // No need to add messages here - they're already in the UI via real-time events.
 };
 
 /**

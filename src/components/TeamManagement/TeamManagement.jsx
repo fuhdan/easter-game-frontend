@@ -4,7 +4,7 @@
  * Part of: Easter Quest 2025 Frontend - Team Administration
  *
  * Features:
- * - Player Management (admin + game_admin) - Manage player list, CSV import
+ * - Player Management (admin only) - Manage player list, CSV import
  * - Team Creation (admin only) - Team statistics summary + configuration panel
  * - Teams View (admin + game_admin: all teams, team_captain: own team)
  * - Activation Codes (admin + game_admin + team_captain) - Member activation codes
@@ -15,7 +15,7 @@
  *
  * Tab Structure:
  * - Admin: 4 tabs (Player Management, Team Creation, Teams, Activation Codes)
- * - Game Admin: 3 tabs (Player Management, Teams, Activation Codes)
+ * - Game Admin: 2 tabs (Teams, Activation Codes)
  * - Team Captain: 2 tabs (Teams, Activation Codes)
  *
  * Workflow:
@@ -56,8 +56,8 @@ import ActivationCodesTab from './ActivationCodesTab';
 function TeamManagement({ user }) {
   // Determine default tab based on role
   const getDefaultTab = () => {
-    if (user.role === 'admin' || user.role === 'game_admin') return 'player-management';
-    if (user.role === 'team_captain') return 'teams';
+    if (user.role === 'admin') return 'player-management';
+    if (user.role === 'game_admin' || user.role === 'team_captain') return 'teams';
     return 'teams'; // Fallback
   };
 
@@ -77,8 +77,8 @@ function TeamManagement({ user }) {
   const renderTabNavigation = () => {
     const tabs = [];
 
-    // Player Management tab - Admin and game_admin only
-    if (user.role === 'admin' || user.role === 'game_admin') {
+    // Player Management tab - Admin only
+    if (user.role === 'admin') {
       tabs.push({ id: 'player-management', label: '👤 Player Management' });
     }
 

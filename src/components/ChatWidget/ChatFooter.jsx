@@ -40,7 +40,9 @@ const ChatFooter = () => {
     sendAdminTeamBroadcast,
     selectedTeamMember,
     selectedTeam,
-    user
+    user,
+    showingAdminNotifications,
+    selectedAdminContact
   } = useChat();
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -199,6 +201,22 @@ const ChatFooter = () => {
       default: return '';
     }
   };
+
+  // Show read-only message when viewing Admin Notifications or Admin Contact (one-way channels)
+  if (chatMode === 'team' && (showingAdminNotifications || selectedAdminContact)) {
+    return (
+      <div className="chat-footer chat-footer-readonly">
+        <div className="admin-notifications-footer">
+          <span className="readonly-icon">ℹ️</span>
+          <span className="readonly-text">
+            {selectedAdminContact
+              ? 'Admin messages are one-way. Click on your team name to send messages.'
+              : 'Admin notifications are one-way. Click on your team name to send messages.'}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chat-footer">

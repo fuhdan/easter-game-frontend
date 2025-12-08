@@ -7,20 +7,26 @@
  * - Create entire game packages (year-based events)
  * - Edit events, games, and training hints together
  * - Delete/Archive complete packages
- * - Manage system prompts
+ * - Manage system prompts (admin only)
  * - Visual organization by year/event
  *
  * A "Game Package" includes:
  * - 1 Event (story/theme for the year)
  * - Multiple Games (individual puzzles)
  * - Training Hints (AI knowledge per game)
- * - System Prompts (global AI behavior)
+ * - System Prompts (global AI behavior - admin only)
+ *
+ * Role-based access:
+ * - admin: Full access including system prompts
+ * - content_admin: Events, games, training hints (no system prompts)
  *
  * @module components/GamePackageManagement
  * @since 2025-11-17
+ * @updated 2025-12-07 - Added role-based system prompts access
  */
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import './GamePackageManagement.css';
 import {
@@ -36,7 +42,7 @@ import CreatePackageModal from './Modals/CreatePackageModal';
 import DeleteConfirmModal from './Modals/DeleteConfirmModal';
 import { marked } from 'marked';
 
-function GamePackageManagement() {
+function GamePackageManagement({ user }) {
   // State management for data loading
   const [events, setEvents] = useState([]);
   const [systemPrompts, setSystemPrompts] = useState([]);
@@ -279,5 +285,15 @@ function GamePackageManagement() {
     </div>
   );
 }
+
+/**
+ * PropTypes validation for GamePackageManagement
+ * Requires user prop to determine system prompts access
+ */
+GamePackageManagement.propTypes = {
+  user: PropTypes.shape({
+    role: PropTypes.oneOf(['admin', 'content_admin']).isRequired
+  }).isRequired
+};
 
 export default GamePackageManagement;

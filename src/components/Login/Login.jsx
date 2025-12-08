@@ -18,7 +18,7 @@ import './Login.css';
 
 const Login = ({ onLogin, loading = false, error = null }) => {
   const [credentials, setCredentials] = useState({
-    username: 'fuda2opr',
+    username: 'admin',
     password: 'demo'
   });
   

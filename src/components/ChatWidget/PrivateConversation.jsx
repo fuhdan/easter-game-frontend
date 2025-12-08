@@ -21,14 +21,19 @@ import './PrivateConversation.css';
  *
  * @param {object} props
  * @param {object} props.user - Current user object
+ * @param {object} [props.conversationWith] - Optional user to show conversation with
+ *                                            (overrides selectedTeamMember)
  * @returns {JSX.Element}
  */
-const PrivateConversation = ({ user }) => {
+const PrivateConversation = ({ user, conversationWith }) => {
   const { selectedTeamMember, privateConversations, lastError, setLastError } = useChat();
   const messageListRef = useRef(null);
 
-  const messages = selectedTeamMember
-    ? (privateConversations[selectedTeamMember.id] || [])
+  // Use conversationWith prop if provided, otherwise use selectedTeamMember
+  const otherParty = conversationWith || selectedTeamMember;
+
+  const messages = otherParty
+    ? (privateConversations[otherParty.id] || [])
     : [];
 
   // Auto-dismiss error after 5 seconds
@@ -55,7 +60,7 @@ const PrivateConversation = ({ user }) => {
     });
   };
 
-  if (!selectedTeamMember) {
+  if (!otherParty) {
     return (
       <div className="private-conversation-empty">
         <div className="empty-state-icon">💬</div>
@@ -67,12 +72,16 @@ const PrivateConversation = ({ user }) => {
     );
   }
 
+  // Check if the other party is an admin
+  const isAdminChat = otherParty.role === 'admin' || otherParty.role === 'game_admin';
+
   return (
-    <div className="private-conversation-container">
-      <div className="private-conversation-header">
+    <div className={`private-conversation-container ${isAdminChat ? 'admin-chat' : ''}`}>
+      <div className={`private-conversation-header ${isAdminChat ? 'admin-chat-header' : ''}`}>
         <div className="member-info">
-          <h4>{selectedTeamMember.display_name || selectedTeamMember.username}</h4>
-          <span className="member-username">@{selectedTeamMember.username}</span>
+          <h4>{otherParty.display_name || otherParty.username}</h4>
+          <span className="member-username">@{otherParty.username}</span>
+          {isAdminChat && <span className="admin-badge-small">Admin</span>}
         </div>
       </div>
 
@@ -86,10 +95,10 @@ const PrivateConversation = ({ user }) => {
 
         {messages.length === 0 ? (
           <div className="conversation-start">
-            <div className="conversation-start-avatar">
-              {(selectedTeamMember.display_name || selectedTeamMember.username || '?').charAt(0).toUpperCase()}
+            <div className={`conversation-start-avatar ${isAdminChat ? 'admin-avatar' : ''}`}>
+              {(otherParty.display_name || otherParty.username || '?').charAt(0).toUpperCase()}
             </div>
-            <p>Start a conversation with {selectedTeamMember.display_name || selectedTeamMember.username}</p>
+            <p>Start a conversation with {otherParty.display_name || otherParty.username}</p>
           </div>
         ) : (
           messages.map((message, index) => {

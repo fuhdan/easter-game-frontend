@@ -45,7 +45,7 @@ export const getById = (id) => request('GET', `/games/${id}`);
  * @returns {Promise<Object>} Created game object with ID
  * @throws {APIError} 400 if validation fails, 403 if not admin
  */
-export const create = (gameData) => request('POST', '/admin/ai/games', gameData);
+export const create = (gameData) => request('POST', '/admin/content/games', gameData);
 
 /**
  * Update game
@@ -57,7 +57,7 @@ export const create = (gameData) => request('POST', '/admin/ai/games', gameData)
  * @returns {Promise<Object>} Updated game object
  * @throws {APIError} 400 if validation fails, 403 if not admin, 404 if not found
  */
-export const update = (id, gameData) => request('PUT', `/admin/ai/games/${id}`, gameData);
+export const update = (id, gameData) => request('PUT', `/admin/content/games/${id}`, gameData);
 
 /**
  * Delete game
@@ -68,7 +68,7 @@ export const update = (id, gameData) => request('PUT', `/admin/ai/games/${id}`, 
  * @returns {Promise<Object>} Deletion confirmation
  * @throws {APIError} 403 if not admin, 404 if game not found
  */
-export const deleteGame = (id) => request('DELETE', `/admin/ai/games/${id}`);
+export const deleteGame = (id) => request('DELETE', `/admin/content/games/${id}`);
 
 /**
  * Get game progress for a team

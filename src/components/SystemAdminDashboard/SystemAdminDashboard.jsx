@@ -1,6 +1,6 @@
 /**
  * Component: SystemAdminDashboard
- * Purpose: System configuration management interface (admin only)
+ * Purpose: System configuration management interface
  * Part of: Easter Quest 2025 Frontend - System Administration
  *
  * Features:
@@ -9,17 +9,23 @@
  * - Group by category (Auth, Rate Limits, Security, AI, etc.)
  * - Real-time updates without server restart
  * - Configuration change confirmation
+ * - Role-based tab visibility
  *
  * Security:
- * - Only accessible to admin role
+ * - Accessible to admin, content_admin, system_admin roles
+ * - content_admin: Events tab only (game/puzzle management)
+ * - system_admin: System Config tab only
+ * - admin: All tabs
  * - All changes confirmed via modal
  * - Type validation on client and server
  *
  * @module components/SystemAdminDashboard
  * @since 2025-11-06
+ * @updated 2025-12-07 - Added role-based tab visibility
  */
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import './SystemAdminDashboard.css';
 import { getConfig, updateConfig, reloadConfig } from '../../services';
 import { validateValue, convertToType } from '../../utils/validators/configValidator';
@@ -28,9 +34,23 @@ import ConfigCategoryFilter from './ConfigCategoryFilter';
 import ConfigItem from './ConfigItem';
 import ConfirmModal from './ConfirmModal';
 
-function SystemAdminDashboard() {
+function SystemAdminDashboard({ user }) {
+  /**
+   * Determine default tab based on user role
+   * - content_admin: Can only see Events
+   * - system_admin: Can only see System Config
+   * - admin: Defaults to Events but can see both
+   */
+  const getDefaultTab = () => {
+    if (user?.role === 'system_admin') {
+      return 'system-config';
+    }
+    // admin and content_admin both default to events
+    return 'events';
+  };
+
   // State management
-  const [activeTab, setActiveTab] = useState('events'); // 'events', 'system-config'
+  const [activeTab, setActiveTab] = useState(getDefaultTab); // 'events', 'system-config'
   const [configs, setConfigs] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -42,11 +62,42 @@ function SystemAdminDashboard() {
   const [error, setError] = useState(null);
 
   /**
-   * Load configuration on component mount
+   * Check if user can access a specific tab
+   * - admin: All tabs
+   * - content_admin: Events only
+   * - system_admin: System Config only
+   *
+   * @param {string} tabId - Tab identifier
+   * @returns {boolean} Whether user can access the tab
+   */
+  const canAccessTab = (tabId) => {
+    const role = user?.role;
+
+    if (role === 'admin') {
+      return true; // Admin can access all tabs
+    }
+    if (role === 'content_admin') {
+      return tabId === 'events'; // Content admin only sees Events
+    }
+    if (role === 'system_admin') {
+      return tabId === 'system-config'; // System admin only sees System Config
+    }
+    return false;
+  };
+
+  /**
+   * Load configuration on component mount - only if user can access system-config tab
+   * content_admin doesn't need system config, they only see Events
    */
   useEffect(() => {
-    _loadConfiguration();
-  }, []);
+    // Only load system configuration if user has access to system-config tab
+    if (canAccessTab('system-config')) {
+      _loadConfiguration();
+    } else {
+      // For content_admin, skip loading config and set loading to false
+      setLoading(false);
+    }
+  }, [user?.role]);
 
   /**
    * Fetch configuration from backend API
@@ -187,16 +238,25 @@ function SystemAdminDashboard() {
 
   /**
    * Render tab navigation
+   * Filters tabs based on user role permissions
    */
   const renderTabNavigation = () => {
-    const tabs = [
+    const allTabs = [
       { id: 'events', label: '🎮 Events' },
       { id: 'system-config', label: '⚙️ System Config' }
     ];
 
+    // Filter tabs based on role permissions
+    const visibleTabs = allTabs.filter(tab => canAccessTab(tab.id));
+
+    // Don't show tab navigation if only one tab is accessible
+    if (visibleTabs.length <= 1) {
+      return null;
+    }
+
     return (
       <div className="system-dashboard-tabs">
-        {tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.id}
             className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
@@ -212,11 +272,21 @@ function SystemAdminDashboard() {
 
   /**
    * Render tab content based on active tab
+   * Includes security check to prevent unauthorized access
    */
   const renderTabContent = () => {
+    // SECURITY: Verify tab access before rendering
+    if (!canAccessTab(activeTab)) {
+      return (
+        <div className="error-message">
+          You do not have permission to access this section.
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'events':
-        return <GamePackageManagement />;
+        return <GamePackageManagement user={user} />;
 
       case 'system-config':
         return (
@@ -294,5 +364,15 @@ function SystemAdminDashboard() {
     </div>
   );
 }
+
+/**
+ * PropTypes validation for SystemAdminDashboard
+ * Only admin, content_admin, and system_admin roles can access this component
+ */
+SystemAdminDashboard.propTypes = {
+  user: PropTypes.shape({
+    role: PropTypes.oneOf(['admin', 'content_admin', 'system_admin']).isRequired
+  }).isRequired
+};
 
 export default SystemAdminDashboard;

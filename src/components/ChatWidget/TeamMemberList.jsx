@@ -8,6 +8,7 @@
  * - Green/gray indicator for online/offline status
  * - Click to open private chat
  * - Shows current user differently
+ * - Admin Notifications section for one-way admin broadcasts
  *
  * @since 2025-11-09
  */
@@ -22,29 +23,50 @@ import './TeamMemberList.css';
  * @returns {JSX.Element}
  */
 const TeamMemberList = () => {
-  const { teamMembers, selectedTeamMember, selectTeamMember, user } = useChat();
+  const {
+    teamMembers,
+    selectedTeamMember,
+    selectTeamMember,
+    user,
+    showingAdminNotifications,
+    selectAdminNotifications,
+    clearAdminNotifications,
+    unreadCounts,
+    adminNotifications,
+    adminContacts,
+    selectedAdminContact,
+    selectAdminContact
+  } = useChat();
 
   const teamName = user?.team_name || 'Team';
 
   const handleHeaderClick = () => {
     // Clear selection to show team broadcast
     selectTeamMember(null);
+    clearAdminNotifications();
+    selectAdminContact(null);
   };
 
   // Check if header should be highlighted (viewing team broadcast)
-  const isHeaderSelected = !selectedTeamMember;
+  const isHeaderSelected = !selectedTeamMember && !showingAdminNotifications && !selectedAdminContact;
+
+  // Convert adminContacts object to array
+  const adminContactsList = Object.values(adminContacts || {});
 
   return (
     <div className="team-member-list">
+      {/* Team Broadcast Header */}
       <div
         className={`team-member-list-header ${isHeaderSelected ? 'selected' : ''}`}
         onClick={handleHeaderClick}
         style={{ cursor: 'pointer' }}
       >
+        <span className="header-icon">📢</span>
         <h4>{teamName}</h4>
         <span className="team-member-count">{teamMembers.length}</span>
       </div>
 
+      {/* Team Members */}
       {teamMembers.length === 0 ? (
         <div className="team-member-list-empty">
           <p>No other team members</p>
@@ -68,6 +90,46 @@ const TeamMemberList = () => {
           ))}
         </div>
       )}
+
+      {/* Admin Notifications Section */}
+      <div className="admin-notifications-section">
+        <div
+          className={`admin-notifications-header ${showingAdminNotifications ? 'selected' : ''}`}
+          onClick={selectAdminNotifications}
+          style={{ cursor: 'pointer' }}
+        >
+          <span className="header-icon">👑</span>
+          <h4>Admin Notifications</h4>
+          {unreadCounts.adminNotifications > 0 && (
+            <span className="unread-badge">{unreadCounts.adminNotifications}</span>
+          )}
+          {adminNotifications.length > 0 && unreadCounts.adminNotifications === 0 && (
+            <span className="notification-count">{adminNotifications.length}</span>
+          )}
+        </div>
+
+        {/* Admin Contacts - Admins who have messaged this user */}
+        {adminContactsList.length > 0 && (
+          <div className="admin-contacts-list">
+            {adminContactsList.map(admin => (
+              <div
+                key={admin.id}
+                className={`admin-contact-item ${selectedAdminContact?.id === admin.id ? 'selected' : ''}`}
+                onClick={() => selectAdminContact(admin)}
+              >
+                <div className="admin-contact-info">
+                  <div className="admin-contact-name">{admin.display_name || admin.username}</div>
+                  <div className="admin-contact-username">@{admin.username}</div>
+                </div>
+                <span className="admin-contact-badge">Admin</span>
+                {unreadCounts.private[admin.id] > 0 && (
+                  <span className="unread-badge">{unreadCounts.private[admin.id]}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

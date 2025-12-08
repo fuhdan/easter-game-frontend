@@ -23,6 +23,7 @@ import TeamMemberList from './TeamMemberList';
 import AdminTeamList from './AdminTeamList';
 import PrivateConversation from './PrivateConversation';
 import TeamBroadcast from './TeamBroadcast';
+import AdminNotificationsView from './AdminNotificationsView';
 import './ChatBody.css';
 
 /**
@@ -38,7 +39,7 @@ import './ChatBody.css';
  * <ChatBody user={currentUser} />
  */
 const ChatBody = ({ user }) => {
-  const { messages, chatMode, aiContext, isTyping, connectionStatus, selectedTeamMember, selectTeamMember, selectedTeam } = useChat();
+  const { messages, chatMode, aiContext, isTyping, connectionStatus, selectedTeamMember, selectTeamMember, selectedTeam, showingAdminNotifications, selectedAdminContact } = useChat();
   const messageListRef = useRef(null);
   const shouldAutoScroll = useRef(true);
 
@@ -203,7 +204,11 @@ const ChatBody = ({ user }) => {
           <div className="team-chat-sidebar">
             <TeamMemberList />
           </div>
-          {selectedTeamMember ? (
+          {showingAdminNotifications ? (
+            <AdminNotificationsView />
+          ) : selectedAdminContact ? (
+            <PrivateConversation user={user} conversationWith={selectedAdminContact} />
+          ) : selectedTeamMember ? (
             <PrivateConversation user={user} />
           ) : (
             <TeamBroadcast user={user} />

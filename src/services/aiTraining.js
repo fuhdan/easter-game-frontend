@@ -195,7 +195,7 @@ export const getAdminGuide = () => {
  */
 export const getEvents = () => {
   log.info('Fetching all events');
-  return request('GET', '/admin/ai/events');
+  return request('GET', '/admin/content/events');
 };
 
 /**
@@ -209,7 +209,7 @@ export const getEvents = () => {
  */
 export const getEvent = (eventId) => {
   log.info(`Fetching event ${eventId}`);
-  return request('GET', `/admin/ai/events/${eventId}`);
+  return request('GET', `/admin/content/events/${eventId}`);
 };
 
 /**
@@ -226,7 +226,7 @@ export const getEvent = (eventId) => {
  */
 export const createEvent = (eventData) => {
   log.info('Creating new event', eventData);
-  return request('POST', '/admin/events/', eventData);
+  return request('POST', '/admin/content/events', eventData);
 };
 
 /**
@@ -241,7 +241,7 @@ export const createEvent = (eventData) => {
  */
 export const updateEvent = (eventId, updates) => {
   log.info(`Updating event ${eventId}`, updates);
-  return request('PUT', `/admin/ai/events/${eventId}`, updates);
+  return request('PUT', `/admin/content/events/${eventId}`, updates);
 };
 
 /**
@@ -255,7 +255,7 @@ export const updateEvent = (eventId, updates) => {
  */
 export const deleteEvent = (eventId) => {
   log.info(`Deleting event ${eventId}`);
-  return request('DELETE', `/admin/events/${eventId}`);
+  return request('DELETE', `/admin/content/events/${eventId}`);
 };
 
 /**
@@ -268,7 +268,7 @@ export const deleteEvent = (eventId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getCategories = (activeOnly = false) => {
-  const url = `/admin/ai/categories${activeOnly ? '?active_only=true' : ''}`;
+  const url = `/admin/content/categories${activeOnly ? '?active_only=true' : ''}`;
   log.info('Fetching game categories');
   return request('GET', url);
 };
@@ -286,7 +286,7 @@ export const getCategories = (activeOnly = false) => {
  */
 export const createCategory = (categoryData) => {
   log.info('Creating game category', categoryData);
-  return request('POST', '/admin/ai/categories', categoryData);
+  return request('POST', '/admin/content/categories', categoryData);
 };
 
 /**
@@ -301,7 +301,7 @@ export const createCategory = (categoryData) => {
  */
 export const updateCategory = (categoryId, updates) => {
   log.info(`Updating game category ${categoryId}`, updates);
-  return request('PUT', `/admin/ai/categories/${categoryId}`, updates);
+  return request('PUT', `/admin/content/categories/${categoryId}`, updates);
 };
 
 /**
@@ -315,7 +315,7 @@ export const updateCategory = (categoryId, updates) => {
  */
 export const deleteCategory = (categoryId) => {
   log.info(`Deleting game category ${categoryId}`);
-  return request('DELETE', `/admin/ai/categories/${categoryId}`);
+  return request('DELETE', `/admin/content/categories/${categoryId}`);
 };
 
 /**
@@ -328,7 +328,7 @@ export const deleteCategory = (categoryId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getAllGames = (includeInactive = false) => {
-  const url = `/admin/ai/games${includeInactive ? '?include_inactive=true' : ''}`;
+  const url = `/admin/content/games${includeInactive ? '?include_inactive=true' : ''}`;
   log.info('Fetching all games with full content');
   return request('GET', url);
 };
@@ -344,7 +344,7 @@ export const getAllGames = (includeInactive = false) => {
  */
 export const getGame = (gameId) => {
   log.info(`Fetching game ${gameId} with full content`);
-  return request('GET', `/admin/ai/games/${gameId}`);
+  return request('GET', `/admin/content/games/${gameId}`);
 };
 
 /**
@@ -358,7 +358,7 @@ export const getGame = (gameId) => {
  */
 export const createGame = (gameData) => {
   log.info('Creating new game', gameData);
-  return request('POST', '/admin/ai/games', gameData);
+  return request('POST', '/admin/content/games', gameData);
 };
 
 /**
@@ -373,7 +373,7 @@ export const createGame = (gameData) => {
  */
 export const updateGame = (gameId, updates) => {
   log.info(`Updating game ${gameId}`, updates);
-  return request('PUT', `/admin/ai/games/${gameId}`, updates);
+  return request('PUT', `/admin/content/games/${gameId}`, updates);
 };
 
 /**
@@ -387,5 +387,5 @@ export const updateGame = (gameId, updates) => {
  */
 export const deleteGame = (gameId) => {
   log.info(`Deleting game ${gameId}`);
-  return request('DELETE', `/admin/ai/games/${gameId}`);
+  return request('DELETE', `/admin/content/games/${gameId}`);
 };

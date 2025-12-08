@@ -5,16 +5,17 @@
  *
  * Features:
  * - Role-based tab visibility
- * - System Admin Dashboard (admin only)
+ * - System Admin Dashboard (admin, content_admin, system_admin)
  * - Game Admin Dashboard (game_admin + admin)
  * - Notifications (game_admin + admin)
- * - Team Management (admin + team_captain)
- * - Game Panel (all users)
+ * - Team Management (admin + game_admin + team_captain)
+ * - Game Panel (team_captain + player)
  * - Profile (all users)
  * - Active tab highlighting
  *
  * @since 2025-08-27
  * @updated 2025-11-23 - Renamed Team Creation to Team Management
+ * @updated 2025-12-07 - Added content_admin and system_admin roles
  */
 
 import React from 'react';
@@ -40,8 +41,8 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
     return (
         <nav className="nav-tabs">
 
-            {/* ✅ Only show System Admin Dashboard for admin */}
-            {user.role === 'admin' && (
+            {/* ✅ Show System Admin Dashboard for admin, content_admin, system_admin */}
+            {(user.role === 'admin' || user.role === 'content_admin' || user.role === 'system_admin') && (
                 <button
                     className={`nav-tab ${activeTab === 'system_admin' ? 'active' : ''}`}
                     onClick={() => onTabChange('system_admin')}
@@ -70,8 +71,8 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                 </button>
             )}
 
-            {/* ✅ Only show Team Management for admin and team_captain */}
-            {(user.role === 'admin' || user.role === 'team_captain') && (
+            {/* ✅ Only show Team Management for admin, game_admin, and team_captain */}
+            {(user.role === 'admin' || user.role === 'game_admin' || user.role === 'team_captain') && (
                 <button
                     className={`nav-tab ${activeTab === 'team_management' ? 'active' : ''}`}
                     onClick={() => onTabChange('team_management')}

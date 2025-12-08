@@ -55,6 +55,9 @@ const App = () => {
             // Set default tab based on role
             if (user.role === 'admin') {
                 setActiveTab('system_admin');
+            } else if (user.role === 'content_admin' || user.role === 'system_admin') {
+                // Content admin and system admin go to system admin dashboard
+                setActiveTab('system_admin');
             } else if (user.role === 'game_admin') {
                 setActiveTab('dashboard');
             } else if (user.role === 'team_captain' || user.role === 'player') {
@@ -188,8 +191,8 @@ const App = () => {
                         user={user}
                     />
 
-                {/* System Admin Dashboard - Only admin can see this */}
-                {activeTab === 'system_admin' && user.role === 'admin' && (
+                {/* System Admin Dashboard - admin, content_admin, system_admin can see this */}
+                {activeTab === 'system_admin' && (user.role === 'admin' || user.role === 'content_admin' || user.role === 'system_admin') && (
                     <SystemAdminDashboard user={user} />
                 )}
 
@@ -203,8 +206,8 @@ const App = () => {
                     <NotificationsDashboard user={user} />
                 )}
 
-                {/* Team Management - Admin and team_captain can access */}
-                {activeTab === 'team_management' && (user.role === 'admin' || user.role === 'team_captain') && (
+                {/* Team Management - Admin, game_admin, and team_captain can access */}
+                {activeTab === 'team_management' && (user.role === 'admin' || user.role === 'game_admin' || user.role === 'team_captain') && (
                     <TeamManagement user={user} />
                 )}
 

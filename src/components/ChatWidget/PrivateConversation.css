@@ -231,6 +231,37 @@
   background: #999;
 }
 
+/* Admin Chat Styling */
+.private-conversation-container.admin-chat {
+  border-left: 3px solid #ffc107;
+}
+
+.admin-chat-header {
+  background: linear-gradient(135deg, #fff8e1, #fff);
+  border-bottom-color: #ffe58f;
+}
+
+.admin-chat-header h4 {
+  color: #b8860b;
+}
+
+.admin-badge-small {
+  background: #b8860b;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.admin-avatar {
+  background: linear-gradient(135deg, #ffc107, #ff9800) !important;
+  color: #333 !important;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .private-message {

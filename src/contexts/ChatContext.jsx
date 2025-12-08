@@ -94,7 +94,16 @@ export function ChatProvider({ children, user }) {
   const [selectedTeam, setSelectedTeam] = useState(null); // For team broadcast (admin view)
   const [teamBroadcastMessages, setTeamBroadcastMessages] = useState([]);
   const [privateConversations, setPrivateConversations] = useState({}); // { userId: [messages] }
-  const [unreadCounts, setUnreadCounts] = useState({ broadcast: 0, private: {} }); // Track unread messages
+  const [unreadCounts, setUnreadCounts] = useState({ broadcast: 0, private: {}, adminNotifications: 0 }); // Track unread messages
+
+  // Admin notifications state (one-way admin broadcasts to users)
+  const [adminNotifications, setAdminNotifications] = useState([]);
+  const [showingAdminNotifications, setShowingAdminNotifications] = useState(false);
+
+  // Admin contacts state (admins who have sent private messages to this user)
+  // Format: { [adminUserId]: { id, username, display_name, role } }
+  const [adminContacts, setAdminContacts] = useState({});
+  const [selectedAdminContact, setSelectedAdminContact] = useState(null);
 
   const addMessage = useCallback((message) => { setMessages(prev => [...prev, message]); }, []);
   const clearMessages = useCallback(() => { setMessages([]); }, []);
@@ -161,8 +170,24 @@ export function ChatProvider({ children, user }) {
       [otherUserId]: [...(prev[otherUserId] || []), message]
     }));
 
-    // Increment unread count if not currently viewing this conversation
+    // Check if sender is an admin (and not the current user)
+    // This allows players to see conversations with admins who message them
     if (message.sender_id !== user?.id) {
+      const isAdminSender = message.sender_role === 'admin' || message.sender_role === 'game_admin';
+      if (isAdminSender) {
+        console.log('[ChatContext] Adding admin contact:', message.sender_id, message.sender_username);
+        setAdminContacts(prev => ({
+          ...prev,
+          [message.sender_id]: {
+            id: message.sender_id,
+            username: message.sender_username,
+            display_name: message.sender_display_name || message.sender_username,
+            role: message.sender_role
+          }
+        }));
+      }
+
+      // Increment unread count
       setUnreadCounts(prev => ({
         ...prev,
         private: {
@@ -175,21 +200,60 @@ export function ChatProvider({ children, user }) {
 
   const handleIncomingBroadcast = useCallback((message) => {
     console.log('[ChatContext] Broadcast message:', message);
-    console.log('[ChatContext] Message sender_id:', message.sender_id, 'Current user id:', user?.id);
-    setTeamBroadcastMessages(prev => [...prev, message]);
+    console.log('[ChatContext] Message sender_id:', message.sender_id, 'sender_role:', message.sender_role, 'Current user id:', user?.id);
 
-    // Increment broadcast unread count if message is from someone else
-    if (message.sender_id !== user?.id) {
-      console.log('[ChatContext] Incrementing broadcast unread count');
+    // Check if current user is admin (admins see all broadcasts in teamBroadcastMessages)
+    const isCurrentUserAdmin = user && (user.role === 'admin' || user.role === 'game_admin');
+
+    // Check if this is an admin broadcast (one-way notification)
+    const isAdminBroadcast = message.sender_role === 'admin' || message.sender_role === 'game_admin';
+
+    if (isCurrentUserAdmin) {
+      // Admins see all broadcasts in teamBroadcastMessages
+      console.log('[ChatContext] Admin user - adding to teamBroadcastMessages');
+      setTeamBroadcastMessages(prev => [...prev, message]);
+
+      // Don't increment unread for admins viewing their own broadcasts
+      if (message.sender_id !== user?.id) {
+        setUnreadCounts(prev => ({
+          ...prev,
+          broadcast: prev.broadcast + 1
+        }));
+      }
+    } else if (isAdminBroadcast) {
+      // Regular user receiving admin broadcast - route to admin notifications
+      console.log('[ChatContext] Routing to admin notifications');
+      setAdminNotifications(prev => [...prev, message]);
+
+      // Increment admin notifications unread count
+      console.log('[ChatContext] Incrementing admin notifications unread count');
       setUnreadCounts(prev => ({
         ...prev,
-        broadcast: prev.broadcast + 1
+        adminNotifications: prev.adminNotifications + 1
       }));
     } else {
-      console.log('[ChatContext] Not incrementing - message from self');
+      // Regular team broadcast for regular user
+      setTeamBroadcastMessages(prev => [...prev, message]);
+
+      // Increment broadcast unread count if message is from someone else
+      if (message.sender_id !== user?.id) {
+        console.log('[ChatContext] Incrementing broadcast unread count');
+        setUnreadCounts(prev => ({
+          ...prev,
+          broadcast: prev.broadcast + 1
+        }));
+      } else {
+        console.log('[ChatContext] Not incrementing - message from self');
+      }
     }
   }, [user]);
 
+  // Add admin-sent broadcast to local state (for admin to see their own broadcasts)
+  // Defined here so it's available in the useEffect below
+  const addAdminSentBroadcast = useCallback((message) => {
+    console.log('[ChatContext] Adding admin-sent broadcast to local state:', message);
+    setTeamBroadcastMessages(prev => [...prev, message]);
+  }, []);
 
   useEffect(() => {
     console.log('[ChatContext] Setting up message handler');
@@ -211,7 +275,8 @@ export function ChatProvider({ children, user }) {
         setRateLimitStatus,
         handleIncomingPrivateMessage,
         handleIncomingBroadcast,
-        handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing)
+        handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing),
+        addAdminSentBroadcast
       });
     });
 
@@ -220,7 +285,7 @@ export function ChatProvider({ children, user }) {
       console.log('[ChatContext] Cleaning up message handler');
       unsubscribe();
     };
-  }, [onMessage, addMessage, updateMessage, addOrUpdateMessage, updateLastUserMessage, updateMessagesByNotificationId, handleIncomingPrivateMessage, handleIncomingBroadcast]);
+  }, [onMessage, addMessage, updateMessage, addOrUpdateMessage, updateLastUserMessage, updateMessagesByNotificationId, handleIncomingPrivateMessage, handleIncomingBroadcast, addAdminSentBroadcast]);
 
   const sendMessage = useCallback((content, messageType = null) => {
     if (!content || !content.trim()) return false;
@@ -428,7 +493,30 @@ export function ChatProvider({ children, user }) {
       if (response.ok) {
         const data = await response.json();
         console.log(`[ChatContext] Loaded ${data.messages.length} broadcast messages`);
-        setTeamBroadcastMessages(data.messages || []);
+
+        const allMessages = data.messages || [];
+
+        // Check if current user is admin
+        const isAdmin = user && (user.role === 'admin' || user.role === 'game_admin');
+
+        if (isAdmin) {
+          // Admins see all broadcasts in teamBroadcastMessages (including their own admin broadcasts)
+          console.log(`[ChatContext] Admin user - all ${allMessages.length} broadcasts go to teamBroadcastMessages`);
+          setTeamBroadcastMessages(allMessages);
+          setAdminNotifications([]);
+        } else {
+          // Regular users: Separate admin broadcasts from team broadcasts
+          const adminBroadcasts = allMessages.filter(msg =>
+            msg.sender_role === 'admin' || msg.sender_role === 'game_admin'
+          );
+          const teamBroadcasts = allMessages.filter(msg =>
+            msg.sender_role !== 'admin' && msg.sender_role !== 'game_admin'
+          );
+
+          console.log(`[ChatContext] Regular user - Separated: ${adminBroadcasts.length} admin, ${teamBroadcasts.length} team broadcasts`);
+          setTeamBroadcastMessages(teamBroadcasts);
+          setAdminNotifications(adminBroadcasts);
+        }
       } else {
         console.error('[ChatContext] Failed to load broadcast history:', response.status);
       }
@@ -463,10 +551,47 @@ export function ChatProvider({ children, user }) {
     }
   }, [user]);
 
+  // Load admin contacts (admins who have sent private messages to this user)
+  const loadAdminContacts = useCallback(async () => {
+    if (!user) return;
+
+    // Skip for admins - they don't need to see admin contacts
+    if (user.role === 'admin' || user.role === 'game_admin') {
+      console.log('[ChatContext] Skipping admin contacts load for admin user');
+      return;
+    }
+
+    try {
+      console.log('[ChatContext] Loading admin contacts...');
+      const response = await fetch(buildApiUrl('team-chat/admin-contacts'), {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[ChatContext] Admin contacts loaded:', data.members.length);
+
+        // Convert array to object keyed by admin ID
+        const contactsObj = {};
+        for (const admin of data.members || []) {
+          contactsObj[admin.id] = admin;
+        }
+        setAdminContacts(contactsObj);
+      } else {
+        console.error('[ChatContext] Failed to load admin contacts:', response.status);
+      }
+    } catch (error) {
+      console.error('[ChatContext] Error loading admin contacts:', error);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (chatMode === 'team' && user) {
       loadTeamMembers();
       loadBroadcastHistory();
+      loadAdminContacts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatMode, user]);
@@ -522,8 +647,10 @@ export function ChatProvider({ children, user }) {
 
   const selectTeamMember = useCallback((member) => {
     setSelectedTeamMember(member);
-    // Clear team selection when selecting a member
+    // Clear all other selections when selecting a team member
     setSelectedTeam(null);
+    setShowingAdminNotifications(false);
+    setSelectedAdminContact(null);
 
     // Load conversation history when selecting a member
     if (member) {
@@ -542,8 +669,10 @@ export function ChatProvider({ children, user }) {
 
   const selectTeam = useCallback((team) => {
     setSelectedTeam(team);
-    // Clear member selection when selecting a team
+    // Clear all other selections when selecting a team
     setSelectedTeamMember(null);
+    setShowingAdminNotifications(false);
+    setSelectedAdminContact(null);
 
     // TODO: Load team broadcast history if needed
     console.log('[ChatContext] Selected team for broadcast:', team);
@@ -553,9 +682,48 @@ export function ChatProvider({ children, user }) {
     setUnreadCounts(prev => ({ ...prev, broadcast: 0 }));
   }, []);
 
+  // Select admin notifications view (clears all other selections)
+  const selectAdminNotifications = useCallback(() => {
+    setShowingAdminNotifications(true);
+    setSelectedTeamMember(null);
+    setSelectedTeam(null);
+    setSelectedAdminContact(null);
+    // Clear admin notifications unread count
+    setUnreadCounts(prev => ({ ...prev, adminNotifications: 0 }));
+  }, []);
+
+  // Clear admin notifications selection (go back to team broadcast)
+  const clearAdminNotifications = useCallback(() => {
+    setShowingAdminNotifications(false);
+  }, []);
+
+  // Select an admin contact for private messaging
+  const selectAdminContact = useCallback((admin) => {
+    console.log('[ChatContext] Selecting admin contact:', admin);
+    setSelectedAdminContact(admin);
+    // Clear other selections
+    setSelectedTeamMember(null);
+    setSelectedTeam(null);
+    setShowingAdminNotifications(false);
+
+    if (admin) {
+      // Load conversation history with this admin
+      loadConversationHistory(admin.id);
+
+      // Clear unread count for this admin
+      setUnreadCounts(prev => ({
+        ...prev,
+        private: {
+          ...prev.private,
+          [admin.id]: 0
+        }
+      }));
+    }
+  }, [loadConversationHistory]);
+
   const getTotalUnreadCount = useCallback(() => {
     const privateTotal = Object.values(unreadCounts.private).reduce((sum, count) => sum + count, 0);
-    return unreadCounts.broadcast + privateTotal;
+    return unreadCounts.broadcast + privateTotal + unreadCounts.adminNotifications;
   }, [unreadCounts]);
 
   const value = React.useMemo(() => ({
@@ -591,7 +759,17 @@ export function ChatProvider({ children, user }) {
     sendAdminTeamBroadcast,
     unreadCounts,
     clearBroadcastUnread,
-    getTotalUnreadCount
+    getTotalUnreadCount,
+    // Admin notifications (one-way broadcasts from admins)
+    adminNotifications,
+    showingAdminNotifications,
+    selectAdminNotifications,
+    clearAdminNotifications,
+    addAdminSentBroadcast,
+    // Admin contacts (admins who have messaged this user)
+    adminContacts,
+    selectedAdminContact,
+    selectAdminContact
   }), [
     user,
     connectionStatus,
@@ -625,7 +803,15 @@ export function ChatProvider({ children, user }) {
     sendAdminTeamBroadcast,
     unreadCounts,
     clearBroadcastUnread,
-    getTotalUnreadCount
+    getTotalUnreadCount,
+    adminNotifications,
+    showingAdminNotifications,
+    selectAdminNotifications,
+    clearAdminNotifications,
+    addAdminSentBroadcast,
+    adminContacts,
+    selectedAdminContact,
+    selectAdminContact
   ]);
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

@@ -9,8 +9,17 @@
  * - Consistent styling across all pages
  * - Appears at bottom of all authenticated pages
  *
+ * Supported roles:
+ * - admin: Full system access
+ * - content_admin: Event/game creation (pre-event setup)
+ * - system_admin: System configuration only
+ * - game_admin: Service desk during event
+ * - team_captain: Team management
+ * - player: Game participant
+ *
  * @module components/Footer
  * @since 2025-11-23
+ * @updated 2025-12-07 - Added content_admin and system_admin roles
  */
 
 import React from 'react';
@@ -49,13 +58,17 @@ const Footer = ({ user }) => {
     const getRoleDescription = (role) => {
         switch (role) {
             case 'player':
-                return 'You can change your password.';
+                return 'You can play games and change your password.';
             case 'team_captain':
                 return 'You can manage your team members, change your team name, change your password, and rate games.';
             case 'game_admin':
-                return 'You can monitor game progress, manage teams, and view analytics.';
+                return 'You can monitor game progress, manage teams, handle notifications, and view analytics.';
+            case 'content_admin':
+                return 'You can create and manage events, games, and puzzles during the setup phase.';
+            case 'system_admin':
+                return 'You can configure system settings including AI, rate limits, and system parameters.';
             case 'admin':
-                return 'You have full system access including admin management and system configuration.';
+                return 'You have full system access including all admin functions and system configuration.';
             default:
                 return 'You have basic user permissions.';
         }
@@ -81,7 +94,7 @@ const Footer = ({ user }) => {
  */
 Footer.propTypes = {
     user: PropTypes.shape({
-        role: PropTypes.oneOf(['player', 'team_captain', 'game_admin', 'admin']).isRequired
+        role: PropTypes.oneOf(['player', 'team_captain', 'game_admin', 'content_admin', 'system_admin', 'admin']).isRequired
     }).isRequired
 };
 
