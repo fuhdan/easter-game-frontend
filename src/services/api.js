@@ -345,7 +345,73 @@ export const utils = {
     } catch (error) {
       return false;
     }
-  }
+  },
+
+  // ===================================================================
+  // AI Provider Management API (game_admin only)
+  // ===================================================================
+
+  /**
+   * List all registered AI providers
+   * @returns {Promise<{providers: Array, active_provider: string, active_model: string}>}
+   */
+  listAIProviders: () => request('GET', '/admin/ai-providers'),
+
+  /**
+   * Get currently active AI provider
+   * @returns {Promise<{provider: string, model: string, provider_info: object}>}
+   */
+  getActiveProvider: () => request('GET', '/admin/ai-providers/active'),
+
+  /**
+   * Set active AI provider (hot-swap without restart)
+   * @param {string} provider - Provider name (e.g., 'ollama', 'claude')
+   * @returns {Promise<{success: boolean, provider: string, message: string}>}
+   */
+  setActiveProvider: (provider) => request('PUT', '/admin/ai-providers/active', { provider }),
+
+  /**
+   * Set active model for current provider
+   * @param {string} model - Model name (e.g., 'llama3.2:3b')
+   * @returns {Promise<{success: boolean, model: string, provider: string, message: string}>}
+   */
+  setActiveModel: (model) => request('PUT', '/admin/ai-providers/model', { model }),
+
+  /**
+   * Test AI provider connection
+   * @param {string} providerName - Provider to test
+   * @returns {Promise<{healthy: boolean, provider: string, model: string, message: string}>}
+   */
+  testProvider: (providerName) => request('POST', `/admin/ai-providers/test/${providerName}`),
+
+  /**
+   * List Ollama models (installed + available to pull)
+   * @returns {Promise<{installed: Array, available: Array, ollama_url: string, ollama_reachable: boolean}>}
+   */
+  listOllamaModels: () => request('GET', '/admin/ollama/models'),
+
+  /**
+   * Pull (download) an Ollama model
+   * Progress updates available via SSE: /api/v1/sse/model-downloads/stream
+   * @param {string} modelName - Model to pull (e.g., 'mistral:7b')
+   * @returns {Promise<{success: boolean, task_id: string, model_name: string, message: string}>}
+   */
+  pullOllamaModel: (modelName) => request('POST', '/admin/ollama/models/pull', { model_name: modelName }),
+
+  /**
+   * Get all active model downloads (used for restoring progress on mount)
+   * Real-time updates available via SSE: /api/v1/sse/model-downloads/stream
+   * @returns {Promise<{active_pulls: Array}>}
+   */
+  getActivePulls: () => request('GET', '/admin/ollama/models/pull/active'),
+
+  /**
+   * Delete an Ollama model to free disk space
+   * @param {string} modelName - Model to delete (e.g., 'mistral:7b')
+   * @returns {Promise<{success: boolean, message: string}>}
+   */
+  deleteOllamaModel: (modelName) => request('DELETE', `/admin/ollama/models/${encodeURIComponent(modelName)}`)
 };
 
+export default utils;
 export { log, CONFIG };

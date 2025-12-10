@@ -1,0 +1,84 @@
+/**
+ * Model Selector Styles
+ * File: components/AISettings/ModelSelector.css
+ */
+
+.model-selector {
+  margin-bottom: 1.5rem;
+}
+
+.model-selector-label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.model-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.model-select:hover:not(:disabled) {
+  border-color: #005da0;
+}
+
+.model-select:focus {
+  outline: none;
+  border-color: #005da0;
+  box-shadow: 0 0 0 3px rgba(0,93,160,0.1);
+}
+
+.model-select:disabled {
+  background: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.model-selector-empty {
+  font-size: 0.9rem;
+  color: #999;
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+/* Model Info */
+.model-info {
+  margin-top: 1rem;
+}
+
+.model-details {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 4px solid #005da0;
+}
+
+.model-description {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.model-specs {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.spec {
+  font-size: 0.85rem;
+  color: #666;
+  background: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}

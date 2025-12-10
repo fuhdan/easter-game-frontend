@@ -1,0 +1,55 @@
+/**
+ * Provider Selector Styles
+ * File: components/AISettings/ProviderSelector.css
+ */
+
+.provider-selector {
+  margin-bottom: 1.5rem;
+}
+
+.provider-selector-label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.label-required {
+  color: #c41e3a;
+  margin-left: 0.25rem;
+}
+
+.provider-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.provider-select:hover:not(:disabled) {
+  border-color: #005da0;
+}
+
+.provider-select:focus {
+  outline: none;
+  border-color: #005da0;
+  box-shadow: 0 0 0 3px rgba(0,93,160,0.1);
+}
+
+.provider-select:disabled {
+  background: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.provider-selector-help {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}

@@ -1,0 +1,164 @@
+/**
+ * Model Pull Progress Styles
+ * File: components/AISettings/ModelPullProgress.css
+ */
+
+.model-pull-progress {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.model-pull-progress.downloading {
+  border-color: #005da0;
+  background: linear-gradient(135deg, rgba(0,93,160,0.03), rgba(0,66,113,0.03));
+}
+
+.model-pull-progress.completed {
+  border-color: #28a745;
+  background: linear-gradient(135deg, rgba(40,167,69,0.05), rgba(25,135,84,0.05));
+}
+
+.model-pull-progress.failed {
+  border-color: #c41e3a;
+  background: linear-gradient(135deg, rgba(196,30,58,0.05), rgba(156,24,46,0.05));
+}
+
+/* Header */
+.pull-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.progress-icon {
+  font-size: 1.25rem;
+}
+
+.progress-model-name {
+  flex: 1;
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.progress-percentage {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #005da0;
+}
+
+.model-pull-progress.completed .progress-percentage {
+  color: #28a745;
+}
+
+.model-pull-progress.failed .progress-percentage {
+  color: #c41e3a;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  width: 100%;
+  height: 24px;
+  background: #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #005da0, #004271);
+  border-radius: 12px;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.model-pull-progress.completed .progress-bar-fill {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.model-pull-progress.failed .progress-bar-fill {
+  background: linear-gradient(135deg, #c41e3a, #9c182e);
+}
+
+/* Shimmer animation for active downloads */
+.progress-bar-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.3),
+    transparent
+  );
+}
+
+.model-pull-progress.downloading .progress-bar-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* Progress Details */
+.pull-progress-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.progress-message {
+  font-size: 0.9rem;
+  color: #666;
+  flex: 1;
+}
+
+.progress-complete-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.progress-failed-badge {
+  background: #c41e3a;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pull-progress-header {
+    flex-wrap: wrap;
+  }
+
+  .progress-model-name {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+}
