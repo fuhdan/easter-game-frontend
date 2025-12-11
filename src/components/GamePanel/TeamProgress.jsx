@@ -27,14 +27,19 @@
 import React, { useState, useEffect } from 'react';
 import { getMyTeamProgress } from '../../services/teams';
 
-const TeamProgress = ({ teamId, eventId, currentGameId }) => {
+const TeamProgress = ({ user, teamId, eventId, currentGameId }) => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Skip API call for admin users
+    if (user && user.role === 'admin') {
+      setLoading(false);
+      return;
+    }
     fetchTeamProgress();
-  }, [teamId, eventId]);
+  }, [teamId, eventId, user]);
 
   /**
    * Fetch team progress from API
@@ -221,6 +226,35 @@ const TeamProgress = ({ teamId, eventId, currentGameId }) => {
             <button className="btn btn-primary" onClick={fetchTeamProgress}>
               Retry
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Admin view - show info message instead of team progress
+  if (user && user.role === 'admin') {
+    return (
+      <div className="card team-progress-card">
+        <div className="card-header">
+          <h3 className="card-title">👥 Team Progress</h3>
+        </div>
+        <div className="card-body">
+          <div className="info-state" style={{ padding: '20px', textAlign: 'center' }}>
+            <div style={{
+              backgroundColor: '#d4edda',
+              color: '#155724',
+              padding: '15px',
+              borderRadius: '8px',
+              border: '1px solid #c3e6cb',
+              marginBottom: '10px'
+            }}>
+              <strong>ℹ️ Admin View</strong>
+              <p style={{ margin: '10px 0 0 0' }}>
+                Admins do not have team-specific progress tracking.
+                Use the Game Admin Dashboard to monitor all teams.
+              </p>
+            </div>
           </div>
         </div>
       </div>

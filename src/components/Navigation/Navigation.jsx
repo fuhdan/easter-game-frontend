@@ -81,8 +81,8 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
                 </button>
             )}
 
-            {/* ✅ Only show Game Panel for Team Captain and player (NOT for admins) */}
-            {(user.role === 'team_captain' || user.role === 'player') && (
+            {/* ✅ Only show Game Panel for Team Captain, Player and admin (NOT for other admins) */}
+            {(user.role === 'team_captain' || user.role === 'player' || user.role === 'admin') && (
                 <button
                     className={`nav-tab ${activeTab === 'game' ? 'active' : ''}`}
                     onClick={() => onTabChange('game')}

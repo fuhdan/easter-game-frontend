@@ -215,6 +215,7 @@ const GamePanel = ({ user }) => {
                 <div className="game-panel-right">
                     {/* Team Progress */}
                     <TeamProgress
+                        user={user}
                         teamId={user.team_id}
                         eventId={activeEvent?.id}
                         currentGameId={getCurrentGameId()}

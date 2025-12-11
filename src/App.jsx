@@ -211,8 +211,8 @@ const App = () => {
                     <TeamManagement user={user} />
                 )}
 
-                {/* Game Panel - Only team_captain and player (NOT admin or game_admin) */}
-                {activeTab === 'game' && (user.role === 'team_captain' || user.role === 'player') && (
+                {/* Game Panel - team_captain, player, and admin can access */}
+                {activeTab === 'game' && (user.role === 'team_captain' || user.role === 'player' || user.role === 'admin') && (
                     <GamePanel user={user} />
                 )}
 
