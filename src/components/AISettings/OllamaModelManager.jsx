@@ -181,6 +181,8 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
     try {
       const response = await api.deleteOllamaModel(modelName);
       if (response.success) {
+        // Wait a moment for Ollama to update its internal state
+        await new Promise(resolve => setTimeout(resolve, 500));
         // Reload models list
         await loadModels();
       } else {
