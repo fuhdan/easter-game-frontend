@@ -33,6 +33,7 @@ import GamePackageManagement from '../GamePackageManagement/GamePackageManagemen
 import ConfigCategoryFilter from './ConfigCategoryFilter';
 import ConfigItem from './ConfigItem';
 import ConfirmModal from './ConfirmModal';
+import AISettings from '../AISettings/AISettings';
 
 function SystemAdminDashboard({ user }) {
   /**
@@ -65,7 +66,7 @@ function SystemAdminDashboard({ user }) {
    * Check if user can access a specific tab
    * - admin: All tabs
    * - content_admin: Events only
-   * - system_admin: System Config only
+   * - system_admin: System Config and AI Settings
    *
    * @param {string} tabId - Tab identifier
    * @returns {boolean} Whether user can access the tab
@@ -80,7 +81,7 @@ function SystemAdminDashboard({ user }) {
       return tabId === 'events'; // Content admin only sees Events
     }
     if (role === 'system_admin') {
-      return tabId === 'system-config'; // System admin only sees System Config
+      return tabId === 'system-config' || tabId === 'ai-settings'; // System admin sees System Config and AI Settings
     }
     return false;
   };
@@ -243,7 +244,8 @@ function SystemAdminDashboard({ user }) {
   const renderTabNavigation = () => {
     const allTabs = [
       { id: 'events', label: '🎮 Events' },
-      { id: 'system-config', label: '⚙️ System Config' }
+      { id: 'system-config', label: '⚙️ System Config' },
+      { id: 'ai-settings', label: '🤖 AI Settings' }
     ];
 
     // Filter tabs based on role permissions
@@ -331,6 +333,9 @@ function SystemAdminDashboard({ user }) {
             ))}
           </div>
         );
+
+      case 'ai-settings':
+        return <AISettings />;
 
       default:
         return null;

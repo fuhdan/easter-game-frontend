@@ -10,7 +10,7 @@
  * - Test provider connection
  * - Hot-swap providers without restart
  *
- * Access: game_admin and admin roles only
+ * Access: system_admin and admin roles only
  *
  * @since 2025-12-10
  */
