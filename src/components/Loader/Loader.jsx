@@ -4,7 +4,7 @@
  * Part of: Easter Quest Frontend
  *
  * Features:
- * - Ypsomed logo display
+ * - Logo display
  * - Customizable loading message
  * - Centered overlay display
  * - Used for app initialization and general loading states
@@ -16,7 +16,7 @@ import React from "react";
 import "./Loader.css";
 
 /**
- * Loader component - displays loading state with Ypsomed logo
+ * Loader component - displays loading state with Logo
  *
  * @param {Object} props - Component props
  * @param {string} [props.message="Loading..."] - Loading message to display
@@ -25,8 +25,8 @@ import "./Loader.css";
 const Loader = ({ message = "Loading..." }) => {
   return (
     <div className="loading">
-      <div className="ypsomed-logo">
-        <img src="/assets/ypsomed-logo.png" alt="Ypsomed Logo" />
+      <div className="logo">
+        <img src="/assets/logo.png" alt="Logo" />
       </div>
       <p>{message}</p>
     </div>

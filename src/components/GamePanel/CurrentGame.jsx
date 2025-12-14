@@ -33,7 +33,9 @@ import { getAllGames, submitSolution, startGame } from '../../services';
  *   onSubmitSolution={reloadData}
  * />
  */
-const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
+const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolution }) => {
+  // Admin users can view games but not play them
+  const isAdmin = user && user.role === 'admin';
   const [selectedGame, setSelectedGame] = useState(null);
   const [solution, setSolution] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -298,7 +300,10 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
 
           <div style={{ marginTop: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '4px' }}>
             <p><small><strong>Game Info:</strong></small></p>
-            <p><small>Points: {selectedGame.points_value} | Max Hints: {selectedGame.max_hints}</small></p>
+            <p><small>
+              {showPoints && <>Points: {selectedGame.points_value} | </>}
+              Max Hints: {selectedGame.max_hints}
+            </small></p>
             {selectedGame.difficulty_level && <p><small>Difficulty: {selectedGame.difficulty_level}</small></p>}
           </div>
         </div>
@@ -313,9 +318,22 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
         🎮 Games ({games.length})
       </div>
       <div className="card-body">
-        <p style={{ marginBottom: '15px' }}>
-          Select a game to answer:
-        </p>
+        {isAdmin ? (
+          <div style={{
+            marginBottom: '15px',
+            padding: '10px 15px',
+            background: '#d4edda',
+            border: '1px solid #c3e6cb',
+            borderRadius: '6px',
+            color: '#155724'
+          }}>
+            <strong>Admin View:</strong> You can preview all game questions below. Admins cannot play games.
+          </div>
+        ) : (
+          <p style={{ marginBottom: '15px' }}>
+            Select a game to answer:
+          </p>
+        )}
 
         <div className="games-list">
           {games.map((game) => {
@@ -326,28 +344,32 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
             const isLocked = isGameLocked(game);
             const isStartingThisGame = startingGameId === game.id;
 
+            // Admin view: all games appear locked (not clickable) but show real content
+            const isAdminLocked = isAdmin;
+            const effectivelyLocked = isAdmin ? true : isLocked;
+
             return (
               <div
                 key={game.id}
-                onClick={() => !isLocked && isStarted && setSelectedGame(game)}
+                onClick={() => !isAdmin && !isLocked && isStarted && setSelectedGame(game)}
                 style={{
                   padding: '15px',
                   marginBottom: '10px',
                   border: `2px solid ${category?.color || '#005da0'}`,
                   borderRadius: '8px',
-                  cursor: isLocked ? 'not-allowed' : (isStarted ? 'pointer' : 'default'),
+                  cursor: effectivelyLocked ? 'not-allowed' : (isStarted ? 'pointer' : 'default'),
                   transition: 'all 0.2s',
-                  background: isLocked ? '#f8f9fa' : (isCompleted ? '#f0f8f0' : '#fff'),
-                  opacity: isLocked ? 0.5 : (isCompleted ? 0.8 : 1)
+                  background: effectivelyLocked ? '#f8f9fa' : (isCompleted ? '#f0f8f0' : '#fff'),
+                  opacity: isAdminLocked ? 0.7 : (isLocked ? 0.5 : (isCompleted ? 0.8 : 1))
                 }}
                 onMouseEnter={(e) => {
-                  if (!isLocked && isStarted) {
+                  if (!effectivelyLocked && isStarted) {
                     e.currentTarget.style.background = isCompleted ? '#e0f0e0' : '#e8f4f8';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isLocked && isStarted) {
+                  if (!effectivelyLocked && isStarted) {
                     e.currentTarget.style.background = isCompleted ? '#f0f8f0' : '#fff';
                     e.currentTarget.style.transform = 'translateY(0)';
                   }
@@ -378,8 +400,27 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                       {isCompleted && '✅ '}Game {game.order_index}
                     </h4>
 
-                    {/* Locked game message or challenge text */}
-                    {isLocked ? (
+                    {/* Admin view: show all questions with lock icon */}
+                    {isAdmin ? (
+                      <>
+                        <p style={{
+                          margin: '0',
+                          fontSize: '15px',
+                          color: '#333'
+                        }}>
+                          {game.challenge_text || game.description}
+                        </p>
+                        <p style={{
+                          margin: '8px 0 0 0',
+                          fontSize: '12px',
+                          fontStyle: 'italic',
+                          color: '#6c757d'
+                        }}>
+                          🔒 Admin preview only
+                        </p>
+                      </>
+                    ) : isLocked ? (
+                      /* Regular user: locked game message */
                       <p style={{
                         margin: '0',
                         fontSize: '15px',
@@ -389,6 +430,7 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                         🔒 Complete previous games to unlock
                       </p>
                     ) : (
+                      /* Regular user: unlocked game */
                       <>
                         <p style={{
                           margin: '0 0 12px 0',
@@ -462,17 +504,19 @@ const CurrentGame = ({ games, activeEvent, onSubmitSolution }) => {
                         {game.difficulty_level}
                       </div>
                     )}
-                    <div style={{ fontSize: '16px', fontWeight: 'bold', color: category?.color || '#005da0' }}>
-                      {game.points_value} pts
-                    </div>
-                    {isCompleted && (
+                    {showPoints && (
+                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: category?.color || '#005da0' }}>
+                        {game.points_value} pts
+                      </div>
+                    )}
+                    {!isAdmin && isCompleted && (
                       <div style={{ fontSize: '12px', color: '#28a745', marginTop: '4px', fontWeight: '600' }}>
                         COMPLETED
                       </div>
                     )}
-                    {isLocked && (
-                      <div style={{ fontSize: '12px', color: '#721c24', marginTop: '4px', fontWeight: '600' }}>
-                        LOCKED
+                    {(isAdmin || isLocked) && (
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px', fontWeight: '600' }}>
+                        🔒 {isAdmin ? 'PREVIEW' : 'LOCKED'}
                       </div>
                     )}
                   </div>

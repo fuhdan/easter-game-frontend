@@ -208,6 +208,8 @@ const GamePanel = ({ user }) => {
                     <CurrentGame
                         games={games}
                         activeEvent={activeEvent}
+                        showPoints={activeEvent?.show_points !== false}
+                        user={user}
                         onSubmitSolution={loadEventAndGames}
                     />
                 </div>
@@ -219,6 +221,7 @@ const GamePanel = ({ user }) => {
                         teamId={user.team_id}
                         eventId={activeEvent?.id}
                         currentGameId={getCurrentGameId()}
+                        showPoints={activeEvent?.show_points !== false}
                         onRefresh={loadEventAndGames}
                     />
                 </div>

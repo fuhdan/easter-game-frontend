@@ -164,8 +164,8 @@ const Login = ({ onLogin, loading = false, error = null }) => {
           <div className={`login-logo ${logoError ? 'fallback' : ''}`}>
             {!logoError ? (
               <img 
-                src="/assets/ypsomed-logo.png" 
-                alt="Ypsomed Logo" 
+                src="/assets/logo.png" 
+                alt="Logo" 
                 onError={handleLogoError}
               />
             ) : (

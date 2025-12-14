@@ -118,6 +118,20 @@ function CreatePackageModal({
               Active (visible to users)
             </label>
           </div>
+
+          <div className="form-group checkbox">
+            <label>
+              <input
+                type="checkbox"
+                checked={formData.show_points !== false}
+                onChange={(e) => onFormChange({ ...formData, show_points: e.target.checked })}
+              />
+              Show Points (display scores and leaderboards to users)
+            </label>
+            <small className="checkbox-hint">
+              When disabled, points are still calculated but hidden from users.
+            </small>
+          </div>
         </div>
         <div className="modal-actions">
           <button className="btn btn-success" onClick={onSave}>

@@ -110,6 +110,20 @@ function EventStoryTab({
         </label>
       </div>
 
+      <div className="form-group checkbox">
+        <label>
+          <input
+            type="checkbox"
+            checked={packageFormData.show_points !== false}
+            onChange={(e) => onFormChange({ ...packageFormData, show_points: e.target.checked })}
+          />
+          Show Points (display scores and leaderboards to users)
+        </label>
+        <small className="checkbox-hint">
+          When disabled, points are still calculated but hidden from users. Useful for relaxed team-building events.
+        </small>
+      </div>
+
       <div className="form-actions">
         <button className="btn btn-success" onClick={onSave}>
           ✓ Save Changes

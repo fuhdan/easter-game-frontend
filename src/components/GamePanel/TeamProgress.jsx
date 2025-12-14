@@ -27,7 +27,7 @@
 import React, { useState, useEffect } from 'react';
 import { getMyTeamProgress } from '../../services/teams';
 
-const TeamProgress = ({ user, teamId, eventId, currentGameId }) => {
+const TeamProgress = ({ user, teamId, eventId, currentGameId, showPoints = true }) => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -106,7 +106,7 @@ const TeamProgress = ({ user, teamId, eventId, currentGameId }) => {
           <tr>
             <th>Game</th>
             <th>Status</th>
-            <th>Score</th>
+            {showPoints && <th>Score</th>}
             <th>Hints</th>
           </tr>
         </thead>
@@ -134,15 +134,17 @@ const TeamProgress = ({ user, teamId, eventId, currentGameId }) => {
                   </div>
                 </td>
                 <td>{getStatusBadge(game.status)}</td>
-                <td>
-                  {game.status === 'completed' ? (
-                    <strong>{game.best_score} pts</strong>
-                  ) : game.status === 'in_progress' ? (
-                    <span className="text-muted">{game.best_score} pts</span>
-                  ) : (
-                    <span className="text-muted">-</span>
-                  )}
-                </td>
+                {showPoints && (
+                  <td>
+                    {game.status === 'completed' ? (
+                      <strong>{game.best_score} pts</strong>
+                    ) : game.status === 'in_progress' ? (
+                      <span className="text-muted">{game.best_score} pts</span>
+                    ) : (
+                      <span className="text-muted">-</span>
+                    )}
+                  </td>
+                )}
                 <td>
                   {game.total_hints_used > 0 ? (
                     <span className="hints-used">{game.total_hints_used}</span>
@@ -171,10 +173,12 @@ const TeamProgress = ({ user, teamId, eventId, currentGameId }) => {
 
     return (
       <div className="team-progress-summary">
-        <div className="total-score">
-          <div className="score-value">{total_score} pts</div>
-          <div className="score-label">Total Score</div>
-        </div>
+        {showPoints && (
+          <div className="total-score">
+            <div className="score-value">{total_score} pts</div>
+            <div className="score-label">Total Score</div>
+          </div>
+        )}
 
         <div className="progress-bar-container">
           <div className="progress-bar">

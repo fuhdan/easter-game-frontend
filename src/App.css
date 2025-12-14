@@ -29,7 +29,7 @@
   text-align: center;
 }
 
-.loading .ypsomed-logo {
+.loading .logo {
   width: 80px;
   height: 80px;
   background: white;
@@ -41,7 +41,7 @@
   overflow: hidden;
 }
 
-.loading .ypsomed-logo img {
+.loading .logo img {
   width: 60px;
   height: 60px;
   object-fit: contain;

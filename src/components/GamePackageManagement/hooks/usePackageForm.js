@@ -44,6 +44,7 @@ export function usePackageForm(loadAllData, imageData = {}) {
     description: '',
     author: '',
     is_active: true,
+    show_points: true,
     image_path: imageData.image_path || '',
     image_data: imageData.image_data || ''
   });
@@ -63,6 +64,7 @@ export function usePackageForm(loadAllData, imageData = {}) {
       description: '',
       author: '',
       is_active: true,
+      show_points: true,
       image_path: imageData.image_path || '',
       image_data: imageData.image_data || ''
     });

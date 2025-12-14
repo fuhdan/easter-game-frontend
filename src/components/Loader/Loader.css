@@ -19,7 +19,7 @@
   text-align: center;
 }
 
-.loading .ypsomed-logo {
+.loading .logo {
   width: 80px;
   height: 80px;
   background: white;
@@ -32,7 +32,7 @@
   box-shadow: 0 8px 20px rgba(0, 93, 160, 0.3);
 }
 
-.loading .ypsomed-logo img {
+.loading .logo img {
   width: 60px;
   height: 60px;
   object-fit: contain;
@@ -46,7 +46,7 @@
 }
 
 /* Spinning animation for logo */
-.loading .ypsomed-logo {
+.loading .logo {
   animation: pulse 2s ease-in-out infinite;
 }
 

@@ -50,6 +50,7 @@ export function useEventOperations(loadAllData) {
     description: '',
     author: '',
     is_active: true,
+    show_points: true,
     image_path: '',
     image_data: ''
   });
@@ -82,6 +83,7 @@ export function useEventOperations(loadAllData) {
         description: fullEventData.description || '',
         author: fullEventData.author || '',
         is_active: fullEventData.is_active,
+        show_points: fullEventData.show_points !== false,
         image_path: fullEventData.image_path || '',
         image_data: fullEventData.image_data || ''
       });
@@ -110,6 +112,7 @@ export function useEventOperations(loadAllData) {
       description: event.description || '',
       author: event.author || '',
       is_active: event.is_active,
+      show_points: event.show_points !== false,
       image_path: event.image_path || '',
       image_data: event.image_data || ''
     });
@@ -156,6 +159,7 @@ export function useEventOperations(loadAllData) {
           description: fullEventData.description || '',
           author: fullEventData.author || '',
           is_active: fullEventData.is_active,
+          show_points: fullEventData.show_points !== false,
           image_path: fullEventData.image_path || '',
           image_data: fullEventData.image_data || ''
         });

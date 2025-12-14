@@ -5,7 +5,7 @@
  * 
  * Notes:
  * - Separate from main Loader to avoid affecting login/app loading states
- * - Uses rotating Ypsomed logo animation
+ * - Uses rotating logo animation
  * - Only used during team processing operations
  * 
  * @since 2025-09-04
@@ -20,7 +20,7 @@ const TeamLoader = ({ message = "Processing...", progress = 0 }) => {
     <div className="loading-overlay">
       <div className="loading-content">
         <div className="loading-logo">
-          <img src="/assets/ypsomed-logo.png" alt="Ypsomed Logo" />
+          <img src="/assets/logo.png" alt="Logo" />
         </div>
         <p>
           {message} {progress > 0 ? `${progress}%` : ""}

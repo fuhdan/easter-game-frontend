@@ -55,9 +55,9 @@ const ChatToggleButton = ({ isOpen, onClick }) => {
       title="Smart Help Center"
     >
       <img
-        src="/assets/ypsomed-logo.png"
-        alt="Ypsomed Logo"
-        className="ypsomed-logo-img"
+        src="/assets/logo.png"
+        alt="Logo"
+        className="logo-img"
       />
 
       {!isOpen && unreadCount > 0 && (

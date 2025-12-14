@@ -4,7 +4,7 @@
  * Part of: Easter Quest Frontend
  *
  * Features:
- * - Ypsomed logo display
+ * - Logo display
  * - Easter Quest branding
  * - User info display (username, team, role)
  * - Logout button
@@ -28,8 +28,8 @@ const Header = ({ user, onLogout }) => {
     return (
         <div className="dashboard-header">
             <div className="dashboard-logo">
-                <div className="ypsomed-logo">
-                    <img src="/assets/ypsomed-logo.png" alt="Ypsomed Logo" />
+                <div className="logo">
+                    <img src="/assets/logo.png" alt="Logo" />
                 </div>
                 <div className="dashboard-title">
                     <h1>Easter Quest 2026</h1>
