@@ -1,0 +1,702 @@
+/**
+ * SecurityDashboard Styles
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * Styling for the security analytics dashboard with:
+ * - Summary statistics grid
+ * - Attack category breakdown
+ * - Language distribution
+ * - Recent events table
+ * - Daily trend visualization
+ * - Top users list
+ *
+ * @since 2025-12-17
+ */
+
+/* Main Container */
+.security-dashboard {
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Loading & Error States */
+.loading-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #005da0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.retry-button {
+    padding: 0.5rem 1.5rem;
+    background: #005da0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.retry-button:hover {
+    background: #004271;
+}
+
+/* Summary Statistics Grid */
+.security-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.security-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.security-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.security-stat-card.highlight {
+    background: linear-gradient(135deg, #005da0, #004271);
+    color: white;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.security-stat-card.highlight .stat-label {
+    color: rgba(255,255,255,0.9);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #005da0;
+    line-height: 1.2;
+}
+
+.security-stat-card.highlight .stat-value {
+    color: white;
+}
+
+.stat-value-small {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #005da0;
+    margin-bottom: 0.25rem;
+}
+
+.security-stat-card.highlight .stat-value-small {
+    color: white;
+}
+
+.stat-detail {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.security-stat-card.highlight .stat-detail {
+    color: rgba(255,255,255,0.8);
+}
+
+.stat-detail .blocked {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.stat-detail .passed {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.security-stat-card.highlight .stat-detail .blocked,
+.security-stat-card.highlight .stat-detail .passed {
+    color: rgba(255,255,255,0.95);
+}
+
+/* Main Grid Layout */
+.security-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .security-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.security-col-main,
+.security-col-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Security Section Card */
+.security-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.security-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: #005da0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    margin: 0;
+}
+
+/* Period Selector */
+.period-selector {
+    display: flex;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    padding: 0.25rem;
+    border-radius: 8px;
+}
+
+.period-selector button {
+    padding: 0.4rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.period-selector button:hover {
+    background: white;
+    color: #005da0;
+}
+
+.period-selector button.active {
+    background: #005da0;
+    color: white;
+}
+
+/* Category List */
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.category-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: background 0.2s;
+}
+
+.category-item:hover {
+    background: #e9ecef;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.category-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.category-label {
+    flex: 1;
+    font-weight: 600;
+    color: #212529;
+    font-size: 0.95rem;
+}
+
+.category-count {
+    font-weight: 700;
+    color: #005da0;
+    font-size: 1.1rem;
+}
+
+.category-percentage {
+    color: #6c757d;
+    font-size: 0.9rem;
+    min-width: 50px;
+    text-align: right;
+}
+
+.category-bar-container {
+    position: relative;
+    height: 24px;
+    background: #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.category-bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.bar-label {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Language Grid */
+.language-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.language-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.language-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.language-flag {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.language-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.language-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #212529;
+    margin-bottom: 0.25rem;
+}
+
+.language-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.language-count {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.language-percentage {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #005da0;
+}
+
+/* Events Table */
+.events-table-container {
+    overflow-x: auto;
+}
+
+/* Full-width events section (when outside grid) */
+.security-dashboard > .security-section {
+    margin-top: 1.5rem;
+}
+
+.events-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    table-layout: fixed;
+    min-width: 530px;
+}
+
+.events-table thead {
+    background: #f8f9fa;
+}
+
+.events-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.85rem;
+}
+
+/* Set specific column widths */
+.events-table th:nth-child(1) { width: 70px; }   /* Time */
+.events-table th:nth-child(2) { width: 70px; }   /* Category (icon only) */
+.events-table th:nth-child(3) { width: 50px; }   /* Language */
+.events-table th:nth-child(4) { width: 60px; }   /* Score */
+.events-table th:nth-child(5) { width: 180px; max-width: 180px; }   /* Preview */
+.events-table th:nth-child(6) { width: 100px; }  /* User */
+
+.events-table td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.events-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.event-time {
+    color: #6c757d;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.event-category {
+    text-align: center;
+}
+
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: white;
+    border: 2px solid;
+    font-size: 1.2rem;
+    cursor: help;
+    transition: transform 0.2s;
+}
+
+.category-badge:hover {
+    transform: scale(1.15);
+}
+
+.event-language {
+    font-size: 1.5rem;
+    text-align: center;
+    line-height: 1;
+}
+
+.score-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.score-badge.critical {
+    background: #dc3545;
+}
+
+.score-badge.high {
+    background: #fd7e14;
+}
+
+.score-badge.medium {
+    background: #ffc107;
+    color: #212529;
+}
+
+.score-badge.low {
+    background: #28a745;
+}
+
+.event-preview {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #495057;
+    font-size: 0.85rem;
+}
+
+.obfuscation-badge {
+    margin-left: 0.5rem;
+    font-size: 1rem;
+}
+
+.event-user {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Daily Trend Chart */
+.trend-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    height: 200px;
+    padding: 1rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+}
+
+.trend-bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 40px;
+    flex-shrink: 0;
+}
+
+.trend-bars {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 150px;
+}
+
+.trend-bar {
+    width: 20px;
+    min-height: 2px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+}
+
+.trend-bar.blocked {
+    background: #dc3545;
+}
+
+.trend-bar.passed {
+    background: #28a745;
+}
+
+.trend-label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+.trend-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.trend-legend {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+}
+
+.legend-color.blocked {
+    background: #dc3545;
+}
+
+.legend-color.passed {
+    background: #28a745;
+}
+
+/* Users List */
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.user-item:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+.user-rank {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #005da0;
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #212529;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.user-details {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.user-stats {
+    text-align: right;
+}
+
+.user-blocked-count {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 1rem;
+}
+
+.user-avg-score {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* No Data State */
+.no-data {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .security-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .security-section {
+        padding: 1rem;
+    }
+
+    .events-table {
+        font-size: 0.8rem;
+    }
+
+    .events-table th,
+    .events-table td {
+        padding: 0.5rem;
+    }
+
+    .event-preview {
+        max-width: 150px;
+    }
+
+    .trend-chart {
+        height: 150px;
+    }
+
+    .trend-bars {
+        height: 100px;
+    }
+}

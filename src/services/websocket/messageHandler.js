@@ -68,11 +68,11 @@ const handleAIResponse = (message, context) => {
   if (addMessage) {
     console.log('[MessageHandler] Adding AI message to chat:', message.content.substring(0, 50) + '...');
     addMessage({
-      id: message.conversation_id || generateMessageId(),
+      id: generateMessageId(),  // BUGFIX: Always generate unique ID (conversation_id is session ID, not message ID)
       type: 'ai',
       sender_type: 'ai',
       content: message.content,
-      timestamp: new Date().toISOString(),
+      timestamp: message.timestamp || new Date().toISOString(),
       metadata: {
         conversation_id: message.conversation_id,
         processing_time_ms: message.processing_time_ms

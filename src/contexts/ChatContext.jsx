@@ -255,6 +255,42 @@ export function ChatProvider({ children, user }) {
     setTeamBroadcastMessages(prev => [...prev, message]);
   }, []);
 
+  // BUGFIX: Use ref to store latest handler functions to avoid re-registering listener
+  // This prevents race conditions where messages arrive between unsubscribe/resubscribe
+  const handlersRef = useRef({
+    addMessage,
+    updateMessage,
+    addOrUpdateMessage,
+    updateLastUserMessage,
+    updateMessagesByNotificationId,
+    setIsTyping,
+    setLastError,
+    setRateLimitStatus,
+    handleIncomingPrivateMessage,
+    handleIncomingBroadcast,
+    handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing),
+    addAdminSentBroadcast
+  });
+
+  // Update ref whenever handlers change (but don't re-register listener)
+  useEffect(() => {
+    handlersRef.current = {
+      addMessage,
+      updateMessage,
+      addOrUpdateMessage,
+      updateLastUserMessage,
+      updateMessagesByNotificationId,
+      setIsTyping,
+      setLastError,
+      setRateLimitStatus,
+      handleIncomingPrivateMessage,
+      handleIncomingBroadcast,
+      handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing),
+      addAdminSentBroadcast
+    };
+  }, [addMessage, updateMessage, addOrUpdateMessage, updateLastUserMessage, updateMessagesByNotificationId, setIsTyping, setLastError, setRateLimitStatus, handleIncomingPrivateMessage, handleIncomingBroadcast, addAdminSentBroadcast]);
+
+  // Register message listener ONCE with stable callback that reads from ref
   useEffect(() => {
     console.log('[ChatContext] Setting up message handler');
     if (!onMessage) {
@@ -262,30 +298,20 @@ export function ChatProvider({ children, user }) {
       return;
     }
 
-    const unsubscribe = onMessage((data) => {
+    // Stable callback that always uses latest handlers from ref
+    const handleMessage = (data) => {
       console.log('[ChatContext] Message received in listener:', data.type);
-      handleWebSocketMessage(data, {
-        addMessage,
-        updateMessage,
-        addOrUpdateMessage,
-        updateLastUserMessage,
-        updateMessagesByNotificationId,
-        setIsTyping,
-        setLastError,
-        setRateLimitStatus,
-        handleIncomingPrivateMessage,
-        handleIncomingBroadcast,
-        handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing),
-        addAdminSentBroadcast
-      });
-    });
+      handleWebSocketMessage(data, handlersRef.current);
+    };
+
+    const unsubscribe = onMessage(handleMessage);
 
     console.log('[ChatContext] Message handler registered');
     return () => {
       console.log('[ChatContext] Cleaning up message handler');
       unsubscribe();
     };
-  }, [onMessage, addMessage, updateMessage, addOrUpdateMessage, updateLastUserMessage, updateMessagesByNotificationId, handleIncomingPrivateMessage, handleIncomingBroadcast, addAdminSentBroadcast]);
+  }, [onMessage]); // Only re-register if onMessage itself changes (which should be never)
 
   const sendMessage = useCallback((content, messageType = null) => {
     if (!content || !content.trim()) return false;

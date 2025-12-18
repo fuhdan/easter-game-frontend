@@ -28,6 +28,7 @@ import StatsGrid from './StatsGrid';
 import TeamProgressTable from './TeamProgressTable.jsx';
 import RateLimitCard from './RateLimitCard.jsx';
 import GamesAnalyticsTab from './GamesAnalyticsTab.jsx';
+import SecurityDashboard from './SecurityDashboard.jsx';
 import GenericSSEClient from '../../services/GenericSSEClient';
 import './GameAdminDashboard.css';
 
@@ -105,8 +106,8 @@ const GameAdminDashboard = ({ user }) => {
     // Set up SSE connection for real-time updates
     useEffect(() => {
         // Only connect SSE for Overview and Games Analytics tabs
-        // Rate Limits tab doesn't need SSE
-        if (activeTab === 'rate-limits') {
+        // Security and Rate Limits tabs don't need SSE
+        if (activeTab === 'security' || activeTab === 'rate-limits') {
             return;
         }
 
@@ -196,8 +197,8 @@ const GameAdminDashboard = ({ user }) => {
      * @returns {JSX.Element}
      */
     const renderConnectionStatus = () => {
-        // Don't show status on Rate Limits tab
-        if (activeTab === 'rate-limits') {
+        // Don't show status on Security and Rate Limits tabs
+        if (activeTab === 'security' || activeTab === 'rate-limits') {
             return null;
         }
 
@@ -217,6 +218,7 @@ const GameAdminDashboard = ({ user }) => {
         const tabs = [
             { id: 'overview', label: '📊 Overview' },
             { id: 'games-analytics', label: '🎯 Games Analytics' },
+            { id: 'security', label: '🛡️ Security' },
             { id: 'rate-limits', label: '⚡ Rate Limits' }
         ];
 
@@ -254,6 +256,9 @@ const GameAdminDashboard = ({ user }) => {
 
             case 'games-analytics':
                 return <GamesAnalyticsTab />;
+
+            case 'security':
+                return <SecurityDashboard />;
 
             case 'rate-limits':
                 return <RateLimitCard user={user} />;
