@@ -30,8 +30,14 @@ import { request, log } from './api';
  * @throws {APIError} 401 if credentials invalid, 429 if rate limited
  */
 export const login = (credentials) => {
-  log.info('Attempting login for:', credentials.username);
-  return request('POST', '/auth/login', credentials);
+  // Trim username to prevent whitespace issues
+  const sanitizedCredentials = {
+    ...credentials,
+    username: credentials.username?.trim() || credentials.username
+  };
+
+  log.info('Attempting login for:', sanitizedCredentials.username);
+  return request('POST', '/auth/login', sanitizedCredentials);
 };
 
 /**

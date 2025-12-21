@@ -40,7 +40,6 @@ export const {
   logout,
   refresh,
   verify,
-  reset,
   activateAccount
 } = auth;
 

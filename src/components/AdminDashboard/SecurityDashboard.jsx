@@ -441,16 +441,6 @@ const SecurityDashboard = () => {
         return 'low';
     };
 
-    /**
-     * Format date for display
-     * @param {string} dateStr - Date string
-     * @returns {string} Formatted date
-     */
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return `${date.getMonth() + 1}/${date.getDate()}`;
-    };
-
     // Loading state
     if (loading) {
         return (

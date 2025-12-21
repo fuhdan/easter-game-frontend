@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Header Component matches snapshot 1`] = `
+<div
+  class="dashboard-header"
+>
+  <div
+    class="dashboard-logo"
+  >
+    <div
+      class="logo"
+    >
+      <img
+        alt="Logo"
+        src="/assets/logo.png"
+      />
+    </div>
+    <div
+      class="dashboard-title"
+    >
+      <h1>
+        Easter Quest 2026
+      </h1>
+      <p>
+        Ypsomed Easter Challenge 2026
+      </p>
+    </div>
+  </div>
+  <div
+    class="header-actions"
+  >
+    <div
+      class="user-info"
+    >
+      <div
+        class="user-avatar"
+      >
+        TE
+      </div>
+      <div>
+        <div
+          class="user-name"
+        >
+          Test User
+        </div>
+        <div
+          class="user-role"
+        >
+          Player
+        </div>
+      </div>
+    </div>
+    <button
+      class="logout-btn"
+    >
+      Logout
+    </button>
+  </div>
+</div>
+`;

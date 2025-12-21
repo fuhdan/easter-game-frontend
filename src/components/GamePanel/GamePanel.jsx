@@ -49,42 +49,40 @@ const GamePanel = ({ user }) => {
         console.log('[GamePanel] Setting up SSE for team game updates');
 
         // Create SSE client if not exists
-        if (!sseClient.current) {
-            sseClient.current = new TeamGameUpdatesSSE();
+        sseClient.current = new TeamGameUpdatesSSE();
 
-            // Handle game_started event
-            sseClient.current.on('game_started', (data) => {
-                console.log('[GamePanel] Team member started game:', data);
-                // Refresh games list to show updated progress
-                loadEventAndGames();
-            });
+        // Handle game_started event
+        sseClient.current.on('game_started', (data) => {
+            console.log('[GamePanel] Team member started game:', data);
+            // Refresh games list to show updated progress
+            loadEventAndGames();
+        });
 
-            // Handle game_completed event
-            sseClient.current.on('game_completed', (data) => {
-                console.log('[GamePanel] Team member completed game:', data);
-                // Refresh games list to show completion
-                loadEventAndGames();
-            });
+        // Handle game_completed event
+        sseClient.current.on('game_completed', (data) => {
+            console.log('[GamePanel] Team member completed game:', data);
+            // Refresh games list to show completion
+            loadEventAndGames();
+        });
 
-            // Handle hint_used event (optional)
-            sseClient.current.on('hint_used', (data) => {
-                console.log('[GamePanel] Team member used hint:', data);
-                // Optionally refresh to show updated hint count
-            });
+        // Handle hint_used event (optional)
+        sseClient.current.on('hint_used', (data) => {
+            console.log('[GamePanel] Team member used hint:', data);
+            // Optionally refresh to show updated hint count
+        });
 
-            // Handle connection status
-            sseClient.current.on('connected', () => {
-                console.log('[GamePanel] SSE connected');
-            });
+        // Handle connection status
+        sseClient.current.on('connected', () => {
+            console.log('[GamePanel] SSE connected');
+        });
 
-            sseClient.current.on('disconnected', () => {
-                console.log('[GamePanel] SSE disconnected');
-            });
+        sseClient.current.on('disconnected', () => {
+            console.log('[GamePanel] SSE disconnected');
+        });
 
-            sseClient.current.on('error', (errorData) => {
-                console.error('[GamePanel] SSE error:', errorData);
-            });
-        }
+        sseClient.current.on('error', (errorData) => {
+            console.error('[GamePanel] SSE error:', errorData);
+        });
 
         // Connect to SSE
         sseClient.current.connect();
@@ -92,10 +90,10 @@ const GamePanel = ({ user }) => {
         // Cleanup on unmount
         return () => {
             if (sseClient.current) {
-                console.log('[GamePanel] Disconnecting SSE');
-                sseClient.current.disconnect();
-                sseClient.current = null;
-            }
+              console.log('[GamePanel] Disconnecting SSE');
+              sseClient.current.disconnect();
+              sseClient.current = null;
+          }
         };
     }, []); // Empty deps = only runs on mount/unmount
 

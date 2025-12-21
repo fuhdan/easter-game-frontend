@@ -211,12 +211,12 @@ const Login = ({ onLogin, loading = false, error = null }) => {
             />
           </div>
           
-          <button 
-            type="submit" 
-            className="btn btn-primary login-btn" 
+          <button
+            type="submit"
+            className="btn btn-primary login-btn"
             disabled={isLoading || !credentials.username.trim() || !credentials.password.trim()}
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            Sign In
           </button>
         </form>
 
