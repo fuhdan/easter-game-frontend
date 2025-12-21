@@ -43,6 +43,10 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   const [gameProgress, setGameProgress] = useState({});
   const [startingGameId, setStartingGameId] = useState(null);
 
+  // BUGFIX: Store full games data with dependency_status from API
+  // We need to use API data (with dependency_status) instead of the games prop
+  const [gamesWithDependencies, setGamesWithDependencies] = useState([]);
+
   useEffect(() => {
     loadGameProgress();
   }, []);
@@ -71,11 +75,24 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
       const response = await getAllGames();
       const progressMap = {};
       if (response && response.games) {
+        // DEBUG: Log all games with their dependency status
+        console.log('=== FRONTEND DEBUG: Games received from API ===');
         response.games.forEach(game => {
+          console.log(`Game ${game.id}: ${game.title}`);
+          console.log('  dependency_status:', JSON.stringify(game.dependency_status, null, 2));
+          console.log('  is_available:', game.dependency_status?.is_available);
+          console.log('  total_dependencies:', game.dependency_status?.total_dependencies);
+          console.log('  completed_dependencies:', game.dependency_status?.completed_dependencies);
+          console.log('---');
+
           if (game.progress) {
             progressMap[game.id] = game.progress;
           }
         });
+        console.log('==============================================');
+
+        // BUGFIX: Store full games data with dependency_status
+        setGamesWithDependencies(response.games);
       }
       setGameProgress(progressMap);
     } catch (err) {
@@ -84,26 +101,58 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   }
 
   /**
-   * Check if a game is locked based on sequential progression
+   * Check if a game is locked based on dependency system
    *
-   * Games must be completed in order. A game is locked if any
-   * previous game (lower order_index) is not completed.
+   * Uses the dependency_status from the backend API which checks
+   * if all prerequisite games have been completed by the team.
    *
    * @param {Object} game - Game to check
-   * @param {number} game.order_index - Game's position in sequence
+   * @param {Object} game.dependency_status - Dependency info from backend
+   * @param {boolean} game.dependency_status.is_available - Whether game is unlocked
    * @returns {boolean} True if game is locked
    */
   function isGameLocked(game) {
-    if (!games || !gameProgress) return false;
+    // If no dependency_status, game is available (backwards compatibility)
+    if (!game.dependency_status) {
+      console.log(`🔓 Game ${game.id} (${game.title}): NO dependency_status - UNLOCKED`);
+      return false;
+    }
 
-    // Find all games with lower order_index
-    const previousGames = games.filter(g => g.order_index < game.order_index);
+    // Use backend's availability check (respects event toggle and dependencies)
+    const locked = !game.dependency_status.is_available;
+    console.log(`${locked ? '🔒' : '🔓'} Game ${game.id} (${game.title}): is_available=${game.dependency_status.is_available} - ${locked ? 'LOCKED' : 'UNLOCKED'}`);
+    return locked;
+  }
 
-    // Game is locked if any previous game is not completed
-    return previousGames.some(prevGame => {
-      const progress = gameProgress[prevGame.id];
-      return !progress || progress.status !== 'completed';
-    });
+  /**
+   * Get dependency info text for a locked game
+   *
+   * @param {Object} game - Game to check
+   * @returns {string} Dependency info message
+   */
+  function getDependencyInfo(game) {
+    // Only show dependency info if the event has show_dependency_info enabled
+    if (!game.dependency_status || !game.dependency_status.show_dependency_info) {
+      return '';
+    }
+
+    const { total_dependencies, completed_dependencies, missing_dependencies } = game.dependency_status;
+
+    if (total_dependencies === 0) {
+      return '';
+    }
+
+    if (completed_dependencies === total_dependencies) {
+      return `✅ All ${total_dependencies} prerequisites completed`;
+    }
+
+    // Find the order_index for each missing game from the main games list
+    const missingGames = missing_dependencies?.map(dep => {
+      const foundGame = gamesToRender.find(g => g.id === dep.id);
+      const orderIndex = foundGame?.order_index || dep.order_index || dep.id;
+      return `Game ${orderIndex}`;
+    }).join(', ') || '';
+    return `🔒 Complete: ${missingGames}`;
   }
 
   /**
@@ -126,8 +175,16 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
    * // Returns: { name: 'Puzzle', icon: '🧩', color: '#FF5733' }
    */
   function getCategoryForGame(game) {
-    // Games have embedded category info - use it directly
-    if (game.category_name) {
+    // BUGFIX: API returns nested category object, handle both formats
+    if (game.category && typeof game.category === 'object') {
+      // API format: { category: { name, icon, color } }
+      return {
+        name: game.category.name,
+        icon: game.category.icon || '🎮',
+        color: game.category.color || '#005da0'
+      };
+    } else if (game.category_name) {
+      // Legacy format: { category_name, category_icon, category_color }
       return {
         name: game.category_name,
         icon: game.category_icon || '🎮',
@@ -151,8 +208,23 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   const handleStartGame = async (gameId, e) => {
     e.stopPropagation(); // Prevent clicking the game card
 
+    // SECURITY: Check if any game is already in progress
+    const hasActiveGame = Object.values(gameProgress).some(
+      progress => progress.status === 'in_progress'
+    );
+
+    if (hasActiveGame) {
+      setMessage({
+        type: 'error',
+        text: 'You already have an active game! Complete it first.'
+      });
+      setTimeout(() => setMessage(null), 5000);
+      return;
+    }
+
     try {
       setStartingGameId(gameId);
+      setMessage(null); // Clear any previous messages
 
       const result = await startGame(gameId);
 
@@ -166,6 +238,22 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
       }
     } catch (err) {
       console.error('Failed to start game:', err);
+
+      // Show dependency error message if game is locked
+      if (err.message && err.message.includes('locked')) {
+        setMessage({
+          type: 'error',
+          text: err.message
+        });
+      } else {
+        setMessage({
+          type: 'error',
+          text: 'Failed to start game. Please try again.'
+        });
+      }
+
+      // Clear message after 5 seconds
+      setTimeout(() => setMessage(null), 5000);
     } finally {
       setStartingGameId(null);
     }
@@ -209,7 +297,10 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
     }
   };
 
-  if (!games || games.length === 0) {
+  // BUGFIX: Use games from API (with dependency_status) when available, otherwise use prop
+  const gamesToRender = gamesWithDependencies.length > 0 ? gamesWithDependencies : games;
+
+  if (!gamesToRender || gamesToRender.length === 0) {
     return (
       <div className="profile-card">
         <div className="card-header">
@@ -315,7 +406,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   return (
     <div className="profile-card">
       <div className="card-header">
-        🎮 Games ({games.length})
+        🎮 Games ({gamesToRender.length})
       </div>
       <div className="card-body">
         {isAdmin ? (
@@ -335,8 +426,25 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
           </p>
         )}
 
+        {/* Error message display */}
+        {message && (
+          <div
+            style={{
+              marginBottom: '15px',
+              padding: '12px 15px',
+              borderRadius: '6px',
+              background: message.type === 'success' ? '#d4edda' : '#f8d7da',
+              border: `1px solid ${message.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
+              color: message.type === 'success' ? '#155724' : '#721c24'
+            }}
+          >
+            {message.text}
+          </div>
+        )}
+
         <div className="games-list">
-          {games.map((game) => {
+          {/* BUGFIX: Use games from API (with dependency_status) */}
+          {gamesToRender.map((game) => {
             const category = getCategoryForGame(game);
             const progress = gameProgress[game.id];
             const isCompleted = progress && progress.status === 'completed';
@@ -420,15 +528,30 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
                         </p>
                       </>
                     ) : isLocked ? (
-                      /* Regular user: locked game message */
-                      <p style={{
-                        margin: '0',
-                        fontSize: '15px',
-                        fontStyle: 'italic',
-                        color: '#6c757d'
-                      }}>
-                        🔒 Complete previous games to unlock
-                      </p>
+                      /* Regular user: locked game with dependency info */
+                      <>
+                        <p style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '15px',
+                          fontStyle: 'italic',
+                          color: '#6c757d'
+                        }}>
+                          {getDependencyInfo(game) || '🔒 Locked - complete prerequisites first'}
+                        </p>
+                        {/* Only show progress details if show_dependency_info is enabled */}
+                        {game.dependency_status && game.dependency_status.show_dependency_info && game.dependency_status.total_dependencies > 0 && (
+                          <div style={{
+                            marginTop: '8px',
+                            padding: '8px 12px',
+                            background: '#fff3cd',
+                            borderLeft: '3px solid #ffc107',
+                            borderRadius: '4px',
+                            fontSize: '13px'
+                          }}>
+                            <strong>Progress:</strong> {game.dependency_status.completed_dependencies} / {game.dependency_status.total_dependencies} prerequisites completed
+                          </div>
+                        )}
+                      </>
                     ) : (
                       /* Regular user: unlocked game */
                       <>

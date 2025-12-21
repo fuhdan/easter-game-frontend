@@ -27,7 +27,7 @@
 import React, { useState, useEffect } from 'react';
 import { getMyTeamProgress } from '../../services/teams';
 
-const TeamProgress = ({ user, teamId, eventId, currentGameId, showPoints = true }) => {
+const TeamProgress = ({ user, teamId, eventId, currentGameId, showPoints = true, refreshKey }) => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,7 +39,7 @@ const TeamProgress = ({ user, teamId, eventId, currentGameId, showPoints = true 
       return;
     }
     fetchTeamProgress();
-  }, [teamId, eventId, user]);
+  }, [teamId, eventId, user, refreshKey]);
 
   /**
    * Fetch team progress from API

@@ -8,13 +8,105 @@
  * - Select event and category
  * - Configure difficulty, points, order
  * - Set story and challenge text
+ * - Manage game dependencies (prerequisites)
  *
  * @since 2025-11-20
+ * @updated 2025-12-21 - Added dependency management
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-function GameModal({ game, gameForm, events, categories, onFormChange, onSave, onClose }) {
+function GameModal({ game, gameForm, events, categories, games, onFormChange, onSave, onClose }) {
+  const [dependencies, setDependencies] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load existing dependencies when editing a game
+  useEffect(() => {
+    if (game && game.id) {
+      loadDependencies();
+    }
+  }, [game]);
+
+  /**
+   * Load dependencies for the current game
+   */
+  async function loadDependencies() {
+    try {
+      setLoading(true);
+      const response = await fetch(`/v1/admin/content/games/${game.id}/dependencies`, {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDependencies(data.dependencies || []);
+      }
+    } catch (error) {
+      console.error('Error loading dependencies:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * Add a dependency
+   */
+  async function handleAddDependency(prereqId) {
+    if (!game || !game.id) return;
+
+    try {
+      const response = await fetch(`/v1/admin/content/games/${game.id}/dependencies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ depends_on_game_id: parseInt(prereqId) })
+      });
+
+      if (response.ok) {
+        await loadDependencies();
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Failed to add dependency');
+      }
+    } catch (error) {
+      console.error('Error adding dependency:', error);
+      alert('Failed to add dependency');
+    }
+  }
+
+  /**
+   * Remove a dependency
+   */
+  async function handleRemoveDependency(prereqId) {
+    if (!game || !game.id) return;
+    if (!window.confirm('Remove this prerequisite?')) return;
+
+    try {
+      const response = await fetch(`/v1/admin/content/games/${game.id}/dependencies/${prereqId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        await loadDependencies();
+      }
+    } catch (error) {
+      console.error('Error removing dependency:', error);
+      alert('Failed to remove dependency');
+    }
+  }
+
+  /**
+   * Get available games for prerequisites (same event, excluding self)
+   */
+  function getAvailablePrerequisites() {
+    if (!gameForm.event_id || !games) return [];
+    return games.filter(g =>
+      g.event_id === gameForm.event_id &&
+      g.id !== game?.id &&
+      !dependencies.some(dep => dep.id === g.id)
+    );
+  }
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
@@ -193,6 +285,100 @@ function GameModal({ game, gameForm, events, categories, onFormChange, onSave, o
               />
             </div>
           </div>
+
+          {/* Prerequisites Section */}
+          {game && game.id && (
+            <div className="form-group" style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
+              <label style={{ fontWeight: 'bold', marginBottom: '10px', display: 'block' }}>
+                🔗 Prerequisites (Games that must be completed first)
+              </label>
+
+              {loading ? (
+                <p style={{ color: '#666', fontSize: '14px' }}>Loading dependencies...</p>
+              ) : (
+                <>
+                  {/* Current Dependencies */}
+                  {dependencies.length > 0 && (
+                    <div style={{ marginBottom: '15px' }}>
+                      <p style={{ fontSize: '13px', color: '#666', marginBottom: '8px' }}>
+                        This game requires:
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {dependencies.map(dep => (
+                          <div key={dep.id} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '8px 12px',
+                            background: 'white',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px'
+                          }}>
+                            <span style={{ fontSize: '14px' }}>🔒 {dep.title}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDependency(dep.id)}
+                              style={{
+                                background: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add New Dependency */}
+                  {getAvailablePrerequisites().length > 0 ? (
+                    <div>
+                      <p style={{ fontSize: '13px', color: '#666', marginBottom: '8px' }}>
+                        Add prerequisite:
+                      </p>
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddDependency(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        className="form-control"
+                        style={{ fontSize: '14px' }}
+                      >
+                        <option value="">Select a game...</option>
+                        {getAvailablePrerequisites().map(g => (
+                          <option key={g.id} value={g.id}>
+                            {g.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : dependencies.length === 0 ? (
+                    <p style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                      No other games in this event to use as prerequisites.
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                      All available games are already prerequisites.
+                    </p>
+                  )}
+                </>
+              )}
+
+              <small style={{ display: 'block', marginTop: '10px', fontSize: '12px', color: '#6c757d' }}>
+                Players must complete all prerequisites before this game becomes available.
+                Dependencies are enforced per team.
+              </small>
+            </div>
+          )}
         </div>
         <div className="modal-actions">
           <button className="btn btn-success" onClick={onSave}>

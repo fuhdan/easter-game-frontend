@@ -36,6 +36,7 @@ const GamePanel = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [storyCollapsed, setStoryCollapsed] = useState(false);
+    const [teamProgressRefreshKey, setTeamProgressRefreshKey] = useState(0);
 
     // SSE client reference for real-time team game updates
     const sseClient = useRef(null);
@@ -61,8 +62,14 @@ const GamePanel = ({ user }) => {
         // Handle game_completed event
         sseClient.current.on('game_completed', (data) => {
             console.log('[GamePanel] Team member completed game:', data);
-            // Refresh games list to show completion
-            loadEventAndGames();
+            // Only refresh if another team member completed (not current user)
+            // Current user's completion already refreshes via onSubmitSolution
+            if (data.completed_by_user_id !== user.id) {
+                console.log('[GamePanel] Refreshing for teammate completion');
+                loadEventAndGames();
+            } else {
+                console.log('[GamePanel] Skipping refresh - current user already refreshed');
+            }
         });
 
         // Handle hint_used event (optional)
@@ -120,6 +127,8 @@ const GamePanel = ({ user }) => {
             setError(err.message || 'Failed to load games');
         } finally {
             setLoading(false);
+            // Increment refresh key to trigger TeamProgress refresh
+            setTeamProgressRefreshKey(prev => prev + 1);
         }
     }
 
@@ -220,7 +229,7 @@ const GamePanel = ({ user }) => {
                         eventId={activeEvent?.id}
                         currentGameId={getCurrentGameId()}
                         showPoints={activeEvent?.show_points !== false}
-                        onRefresh={loadEventAndGames}
+                        refreshKey={teamProgressRefreshKey}
                     />
                 </div>
             </div>

@@ -351,7 +351,7 @@ const GamesAnalyticsTab = () => {
             <div className="details-section">
               <h4>Game Information</h4>
               <p><strong>Description:</strong> {game.description}</p>
-              <p><strong>Difficulty:</strong> {game.difficulty_level}/5</p>
+              <p><strong>Difficulty:</strong> {game.difficulty_level || 'Not set'}</p>
               <p><strong>Points:</strong> {game.points_value}</p>
               <p><strong>Max Hints:</strong> {game.max_hints}</p>
             </div>
@@ -363,6 +363,8 @@ const GamesAnalyticsTab = () => {
                 {team_breakdown.map((team) => {
                   const isExpanded = expandedTeams.has(team.team_id);
                   const hasCompletions = team.completions && team.completions.length > 0;
+                  // Get the first completion (the person who actually submitted the answer)
+                  const submitter = hasCompletions ? team.completions[0] : null;
 
                   return (
                     <div key={team.team_id} className="team-breakdown-wrapper">
@@ -377,45 +379,29 @@ const GamesAnalyticsTab = () => {
                           )}
                           {team.team_name}
                         </span>
-                        <span className="team-completion">
-                          {team.completed}/{team.total_members} members ({team.completion_rate}%)
-                        </span>
                         <span className={`team-status status-${team.status}`}>
                           {team.status === 'completed' ? '✓ Complete' : '○ Not Started'}
                         </span>
                       </div>
 
                       {/* Expanded Details */}
-                      {isExpanded && hasCompletions && (
+                      {isExpanded && hasCompletions && submitter && (
                         <div className="team-details-expanded">
-                          <div className="team-stats">
-                            <div className="stat-item">
-                              <span className="stat-label">Avg Hints Used:</span>
-                              <span className="stat-value">{team.avg_hints_used}</span>
-                            </div>
-                            <div className="stat-item">
-                              <span className="stat-label">Avg Time:</span>
-                              <span className="stat-value">{team.avg_time_minutes} min</span>
-                            </div>
-                          </div>
-
                           <div className="completions-list">
-                            <h5>Team Members Who Completed:</h5>
-                            {team.completions.map((completion, idx) => (
-                              <div key={idx} className="completion-item">
-                                <div className="completion-header">
-                                  <strong>{completion.username}</strong>
-                                  <span className="completion-date">
-                                    {new Date(completion.completed_at).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <div className="completion-details">
-                                  <span>⏱️ {completion.time_spent_minutes} min</span>
-                                  <span>💡 {completion.hints_used} hints</span>
-                                  <span>⭐ {completion.score} pts</span>
-                                </div>
+                            <h5>Submitted by:</h5>
+                            <div className="completion-item">
+                              <div className="completion-header">
+                                <strong>{submitter.username}</strong>
+                                <span className="completion-date">
+                                  {new Date(submitter.completed_at).toLocaleDateString()}
+                                </span>
                               </div>
-                            ))}
+                              <div className="completion-details">
+                                <span>⏱️ {submitter.time_spent_minutes} min</span>
+                                <span>💡 {submitter.hints_used} hints</span>
+                                <span>⭐ {submitter.score} pts</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}

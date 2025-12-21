@@ -224,6 +224,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
           gameForm={gameForm}
           events={events}
           categories={categories}
+          games={games}
           onFormChange={setGameForm}
           onSave={_handleSaveGame}
           onClose={_handleCloseGameModal}

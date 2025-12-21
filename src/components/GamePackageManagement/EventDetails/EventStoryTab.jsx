@@ -124,6 +124,20 @@ function EventStoryTab({
         </small>
       </div>
 
+      <div className="form-group checkbox">
+        <label>
+          <input
+            type="checkbox"
+            checked={packageFormData.show_dependencies !== false}
+            onChange={(e) => onFormChange({ ...packageFormData, show_dependencies: e.target.checked })}
+          />
+          Show Dependencies (display prerequisite info to users)
+        </label>
+        <small className="checkbox-hint">
+          When enabled, shows which games must be completed first (e.g., "Depends on Game X"). When disabled, dependency info is hidden but games remain LOCKED until prerequisites are completed.
+        </small>
+      </div>
+
       <div className="form-actions">
         <button className="btn btn-success" onClick={onSave}>
           ✓ Save Changes
