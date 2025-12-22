@@ -1,20 +1,23 @@
 /**
  * Module: hooks/useWebSocket.js
- * Purpose: React hook for WebSocket connection management
+ * Purpose: React hook for WebSocket connection management (functional, no classes)
  * Part of: Easter Quest Frontend - Chat System
  *
  * Features:
  * - Connection lifecycle management
+ * - Auto-reconnection with exponential backoff
+ * - Message queuing during disconnection
+ * - Heartbeat/ping mechanism
  * - Token refresh integration (auto-reconnect on token refresh)
  * - Status tracking (connected, connecting, disconnected)
  * - Message sending with validation
  * - Event subscription management
  *
  * @since 2025-11-09
+ * @updated 2025-12-22 - Refactored to remove class dependencies
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import ChatWebSocket from '../services/websocket/chatWebSocket';
 import { onTokenRefresh } from '../services';
 
 /**
@@ -23,9 +26,10 @@ import { onTokenRefresh } from '../services';
  * @param {string} url - WebSocket URL (optional, auto-detected if not provided)
  * @param {object} options - Configuration options
  * @param {boolean} options.autoConnect - Auto-connect on mount (default: true)
- * @param {number} options.reconnectInterval - Reconnect delay (ms)
- * @param {number} options.maxReconnectInterval - Max reconnect delay (ms)
- * @param {number} options.heartbeatInterval - Heartbeat interval (ms)
+ * @param {number} options.reconnectInterval - Initial reconnect delay (ms, default: 1000)
+ * @param {number} options.maxReconnectInterval - Max reconnect delay (ms, default: 30000)
+ * @param {number} options.heartbeatInterval - Heartbeat interval (ms, default: 30000)
+ * @param {number} options.maxQueueSize - Max queued messages (default: 100)
  * @returns {object} WebSocket hook interface
  *
  * @example
@@ -41,34 +45,342 @@ import { onTokenRefresh } from '../services';
  * sendMessage('user_message', { content: 'Hello!' });
  */
 const useWebSocket = (url = null, options = {}) => {
-  // WebSocket instance (persistent across renders)
-  const wsRef = useRef(null);
-
-  // Track if component is mounted (prevents cleanup issues in StrictMode)
-  const isMountedRef = useRef(false);
-
-  // Track cleanup timeout to cancel it if needed
-  const cleanupTimeoutRef = useRef(null);
-
-  // Connection status state
-  const [connectionStatus, setConnectionStatus] = useState('disconnected');
-
-  // Error state
-  const [lastError, setLastError] = useState(null);
-
-  // Message listeners
-  const messageListenersRef = useRef(new Set());
-
   // Configuration
   const config = {
     autoConnect: options.autoConnect !== undefined ? options.autoConnect : true,
     reconnectInterval: options.reconnectInterval || 1000,
     maxReconnectInterval: options.maxReconnectInterval || 30000,
-    heartbeatInterval: options.heartbeatInterval || 30000
+    heartbeatInterval: options.heartbeatInterval || 30000,
+    maxQueueSize: options.maxQueueSize || 100
   };
 
+  // Compute WebSocket URL
+  const wsUrl = url || (() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}/ws/chat`;
+  })();
+
+  // State
+  const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [lastError, setLastError] = useState(null);
+
+  // Refs
+  const wsRef = useRef(null);
+  const messageListenersRef = useRef(new Set());
+  const messageQueueRef = useRef([]);
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimerRef = useRef(null);
+  const heartbeatTimerRef = useRef(null);
+  const manualCloseRef = useRef(false);
+  const isMountedRef = useRef(false);
+  const cleanupTimeoutRef = useRef(null);
+
   /**
-   * Initialize WebSocket instance
+   * Update connection status
+   */
+  const updateStatus = useCallback((newStatus) => {
+    setConnectionStatus(prevStatus => {
+      if (prevStatus !== newStatus) {
+        console.log(`[useWebSocket] Status: ${prevStatus} -> ${newStatus}`);
+        return newStatus;
+      }
+      return prevStatus;
+    });
+  }, []);
+
+  /**
+   * Add message to queue
+   */
+  const enqueueMessage = useCallback((message) => {
+    if (messageQueueRef.current.length >= config.maxQueueSize) {
+      console.warn('[useWebSocket] Queue full, dropping oldest message');
+      messageQueueRef.current.shift();
+    }
+    messageQueueRef.current.push(message);
+    console.log('[useWebSocket] Message queued, queue size:', messageQueueRef.current.length);
+  }, [config.maxQueueSize]);
+
+  /**
+   * Flush message queue
+   */
+  const flushMessageQueue = useCallback(() => {
+    if (messageQueueRef.current.length === 0) return;
+
+    console.log('[useWebSocket] Flushing message queue:', messageQueueRef.current.length);
+
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    let sent = 0;
+    while (messageQueueRef.current.length > 0) {
+      const message = messageQueueRef.current.shift();
+      try {
+        ws.send(JSON.stringify(message));
+        sent++;
+        console.log('[useWebSocket] Queued message sent:', message.type);
+      } catch (error) {
+        console.error('[useWebSocket] Failed to send queued message:', error);
+        messageQueueRef.current.unshift(message);
+        break;
+      }
+    }
+
+    console.log(`[useWebSocket] Flushed ${sent} messages, ${messageQueueRef.current.length} remaining`);
+  }, []);
+
+  /**
+   * Start heartbeat
+   */
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatTimerRef.current) {
+      clearInterval(heartbeatTimerRef.current);
+    }
+
+    heartbeatTimerRef.current = setInterval(() => {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: 'ping' }));
+          console.log('[useWebSocket] Ping sent');
+        } catch (error) {
+          console.error('[useWebSocket] Failed to send ping:', error);
+        }
+      }
+    }, config.heartbeatInterval);
+
+    console.log('[useWebSocket] Heartbeat started');
+  }, [config.heartbeatInterval]);
+
+  /**
+   * Stop heartbeat
+   */
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatTimerRef.current) {
+      clearInterval(heartbeatTimerRef.current);
+      heartbeatTimerRef.current = null;
+      console.log('[useWebSocket] Heartbeat stopped');
+    }
+  }, []);
+
+  /**
+   * Clear reconnect timer
+   */
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Schedule reconnection with exponential backoff
+   */
+  const scheduleReconnect = useCallback(() => {
+    if (manualCloseRef.current) {
+      console.log('[useWebSocket] Not reconnecting (manual close)');
+      return;
+    }
+
+    clearReconnectTimer();
+
+    // Calculate exponential backoff delay
+    const delay = Math.min(
+      config.reconnectInterval * Math.pow(2, reconnectAttemptsRef.current),
+      config.maxReconnectInterval
+    );
+
+    console.log(`[useWebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1})`);
+
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectAttemptsRef.current++;
+      connect();
+    }, delay);
+  }, [config.reconnectInterval, config.maxReconnectInterval]);
+
+  /**
+   * Handle incoming message
+   */
+  const handleMessage = useCallback((data) => {
+    // Handle pong (heartbeat response)
+    if (data.type === 'pong') {
+      console.log('[useWebSocket] Pong received');
+      return;
+    }
+
+    // Notify all message listeners
+    messageListenersRef.current.forEach(listener => {
+      try {
+        listener(data);
+      } catch (error) {
+        console.error('[useWebSocket] Error in message listener:', error);
+      }
+    });
+  }, []);
+
+  /**
+   * Connect to WebSocket
+   */
+  const connect = useCallback(() => {
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.CONNECTING || wsRef.current.readyState === WebSocket.OPEN)) {
+      console.log('[useWebSocket] Already connected or connecting');
+      return Promise.resolve();
+    }
+
+    manualCloseRef.current = false;
+    updateStatus('connecting');
+
+    return new Promise((resolve, reject) => {
+      try {
+        console.log('[useWebSocket] Connecting to:', wsUrl);
+
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          console.log('[useWebSocket] Connected successfully');
+          reconnectAttemptsRef.current = 0;
+          updateStatus('connected');
+          startHeartbeat();
+          flushMessageQueue();
+          resolve();
+        };
+
+        ws.onclose = (event) => {
+          console.log('[useWebSocket] Connection closed:', event.code, event.reason);
+          stopHeartbeat();
+          updateStatus('disconnected');
+
+          // Don't reconnect if server closed due to logout
+          if (event.code === 1000 && event.reason === 'Logout') {
+            console.log('[useWebSocket] Server closed connection due to logout, not reconnecting');
+            manualCloseRef.current = true;
+            return;
+          }
+
+          // Auto-reconnect if not manually closed
+          if (!manualCloseRef.current) {
+            scheduleReconnect();
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('[useWebSocket] WebSocket error:', error);
+          setLastError(error);
+          reject(error);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('[useWebSocket] Message received:', data.type);
+            handleMessage(data);
+          } catch (error) {
+            console.error('[useWebSocket] Failed to parse message:', error);
+          }
+        };
+      } catch (error) {
+        console.error('[useWebSocket] Failed to create WebSocket:', error);
+        updateStatus('disconnected');
+        reject(error);
+      }
+    });
+  }, [wsUrl, updateStatus, startHeartbeat, stopHeartbeat, flushMessageQueue, scheduleReconnect, handleMessage]);
+
+  /**
+   * Disconnect from WebSocket
+   */
+  const disconnect = useCallback((code = 1000, reason = 'Manual disconnect') => {
+    console.log('[useWebSocket] Disconnecting:', reason);
+    manualCloseRef.current = true;
+    stopHeartbeat();
+    clearReconnectTimer();
+
+    if (wsRef.current) {
+      wsRef.current.close(code, reason);
+      wsRef.current = null;
+    }
+
+    updateStatus('disconnected');
+  }, [stopHeartbeat, clearReconnectTimer, updateStatus]);
+
+  /**
+   * Send message via WebSocket
+   */
+  const sendMessage = useCallback((type, data = {}) => {
+    if (!type || typeof type !== 'string') {
+      console.error('[useWebSocket] Invalid message type:', type);
+      return false;
+    }
+
+    const message = { type, ...data };
+    const ws = wsRef.current;
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify(message));
+        console.log('[useWebSocket] Message sent:', type);
+        return true;
+      } catch (error) {
+        console.error('[useWebSocket] Failed to send message:', error);
+        enqueueMessage(message);
+        return false;
+      }
+    } else {
+      console.log('[useWebSocket] Not connected, queueing message:', type);
+      enqueueMessage(message);
+      return false;
+    }
+  }, [enqueueMessage]);
+
+  /**
+   * Subscribe to incoming messages
+   */
+  const onMessage = useCallback((callback) => {
+    if (typeof callback !== 'function') {
+      console.error('[useWebSocket] onMessage callback must be a function');
+      return () => {};
+    }
+
+    messageListenersRef.current.add(callback);
+
+    // Return unsubscribe function
+    return () => {
+      messageListenersRef.current.delete(callback);
+    };
+  }, []);
+
+  /**
+   * Reconnect WebSocket
+   */
+  const reconnect = useCallback(() => {
+    console.log('[useWebSocket] Manual reconnect requested');
+    reconnectAttemptsRef.current = 0;
+    disconnect();
+
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        connect().then(resolve).catch(reject);
+      }, 100);
+    });
+  }, [disconnect, connect]);
+
+  /**
+   * Get current queue size
+   */
+  const getQueueSize = useCallback(() => {
+    return messageQueueRef.current.length;
+  }, []);
+
+  /**
+   * Check if connected
+   */
+  const isConnected = useCallback(() => {
+    return connectionStatus === 'connected' && wsRef.current?.readyState === WebSocket.OPEN;
+  }, [connectionStatus]);
+
+  /**
+   * Initialize WebSocket on mount
    */
   useEffect(() => {
     // Cancel any pending cleanup from previous mount cycle
@@ -87,42 +399,10 @@ const useWebSocket = (url = null, options = {}) => {
     console.log('[useWebSocket] Initializing WebSocket');
     isMountedRef.current = true;
 
-    // Create WebSocket instance
-    wsRef.current = new ChatWebSocket(url, {
-      reconnectInterval: config.reconnectInterval,
-      maxReconnectInterval: config.maxReconnectInterval,
-      heartbeatInterval: config.heartbeatInterval
-    });
-
-    // Subscribe to status changes
-    const unsubscribeStatus = wsRef.current.on('status', (status) => {
-      console.log('[useWebSocket] Status changed:', status);
-      setConnectionStatus(status);
-    });
-
-    // Subscribe to errors
-    const unsubscribeError = wsRef.current.on('error', (error) => {
-      console.error('[useWebSocket] Error:', error);
-      setLastError(error);
-    });
-
-    // Subscribe to messages
-    const unsubscribeMessage = wsRef.current.on('message', (data) => {
-      console.log('[useWebSocket] Message received:', data.type, data);
-      // Notify all message listeners
-      messageListenersRef.current.forEach(listener => {
-        try {
-          listener(data);
-        } catch (error) {
-          console.error('[useWebSocket] Error in message listener:', error);
-        }
-      });
-    });
-
     // Auto-connect if enabled
     if (config.autoConnect) {
       console.log('[useWebSocket] Auto-connecting...');
-      wsRef.current.connect().catch(error => {
+      connect().catch(error => {
         console.error('[useWebSocket] Auto-connect failed:', error);
         setLastError(error);
       });
@@ -132,28 +412,25 @@ const useWebSocket = (url = null, options = {}) => {
     return () => {
       console.log('[useWebSocket] Cleanup called');
 
-      // Only disconnect if this is a real unmount (not StrictMode remount)
-      // In development, React StrictMode intentionally double-mounts components
-      // We use a short timeout to differentiate between StrictMode remount and real unmount
+      // Use timeout to differentiate between StrictMode remount and real unmount
       cleanupTimeoutRef.current = setTimeout(() => {
         console.log('[useWebSocket] Performing actual cleanup');
-        unsubscribeStatus();
-        unsubscribeError();
-        unsubscribeMessage();
+        stopHeartbeat();
+        clearReconnectTimer();
 
         if (wsRef.current) {
-          wsRef.current.disconnect();
+          wsRef.current.close();
           wsRef.current = null;
         }
+
         isMountedRef.current = false;
         cleanupTimeoutRef.current = null;
       }, 100);
     };
-  }, [url]); // Only recreate if URL changes
+  }, [wsUrl, config.autoConnect]);
 
   /**
    * Token refresh integration
-   * Pattern from existing RateLimitCard SSE implementation
    */
   useEffect(() => {
     console.log('[useWebSocket] Setting up token refresh listener');
@@ -162,13 +439,12 @@ const useWebSocket = (url = null, options = {}) => {
       console.log('[useWebSocket] Token refreshed - reconnecting WebSocket');
 
       if (wsRef.current) {
-        // Close existing connection
-        wsRef.current.disconnect();
+        disconnect();
 
         // Wait 100ms for new cookies to be set
         setTimeout(() => {
           console.log('[useWebSocket] Reconnecting with new tokens...');
-          wsRef.current.connect().catch(error => {
+          connect().catch(error => {
             console.error('[useWebSocket] Reconnection after token refresh failed:', error);
             setLastError(error);
           });
@@ -180,121 +456,7 @@ const useWebSocket = (url = null, options = {}) => {
       console.log('[useWebSocket] Cleaning up token refresh listener');
       unsubscribe();
     };
-  }, []);
-
-  /**
-   * Connect to WebSocket
-   *
-   * @returns {Promise<void>}
-   */
-  const connect = useCallback(() => {
-    if (!wsRef.current) {
-      console.error('[useWebSocket] WebSocket instance not initialized');
-      return Promise.reject(new Error('WebSocket not initialized'));
-    }
-
-    return wsRef.current.connect();
-  }, []);
-
-  /**
-   * Disconnect from WebSocket
-   */
-  const disconnect = useCallback(() => {
-    if (!wsRef.current) {
-      console.warn('[useWebSocket] WebSocket instance not initialized');
-      return;
-    }
-
-    wsRef.current.disconnect();
-  }, []);
-
-  /**
-   * Send message via WebSocket
-   *
-   * @param {string} type - Message type
-   * @param {object} data - Message payload
-   * @returns {boolean} Success status
-   */
-  const sendMessage = useCallback((type, data = {}) => {
-    if (!wsRef.current) {
-      console.error('[useWebSocket] WebSocket instance not initialized');
-      return false;
-    }
-
-    if (!type || typeof type !== 'string') {
-      console.error('[useWebSocket] Invalid message type:', type);
-      return false;
-    }
-
-    return wsRef.current.send(type, data);
-  }, []);
-
-  /**
-   * Subscribe to incoming messages
-   *
-   * @param {Function} callback - Message handler
-   * @returns {Function} Unsubscribe function
-   */
-  const onMessage = useCallback((callback) => {
-    if (typeof callback !== 'function') {
-      console.error('[useWebSocket] onMessage callback must be a function');
-      return () => {};
-    }
-
-    messageListenersRef.current.add(callback);
-
-    // Return unsubscribe function
-    return () => {
-      messageListenersRef.current.delete(callback);
-    };
-  }, []);
-
-  /**
-   * Reconnect WebSocket
-   * Useful for manual reconnection after auth errors
-   *
-   * @returns {Promise<void>}
-   */
-  const reconnect = useCallback(() => {
-    console.log('[useWebSocket] Manual reconnect requested');
-
-    if (!wsRef.current) {
-      console.error('[useWebSocket] WebSocket instance not initialized');
-      return Promise.reject(new Error('WebSocket not initialized'));
-    }
-
-    // Disconnect first
-    wsRef.current.disconnect();
-
-    // Wait a bit, then reconnect
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        wsRef.current.connect()
-          .then(resolve)
-          .catch(reject);
-      }, 100);
-    });
-  }, []);
-
-  /**
-   * Get current queue size
-   *
-   * @returns {number} Number of queued messages
-   */
-  const getQueueSize = useCallback(() => {
-    if (!wsRef.current) return 0;
-    return wsRef.current.getQueueSize();
-  }, []);
-
-  /**
-   * Check if connected
-   *
-   * @returns {boolean}
-   */
-  const isConnected = useCallback(() => {
-    if (!wsRef.current) return false;
-    return wsRef.current.isConnected();
-  }, []);
+  }, [disconnect, connect]);
 
   // Return hook interface
   return {

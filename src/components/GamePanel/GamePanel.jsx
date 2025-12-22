@@ -14,14 +14,14 @@
  * @since 2025-08-27
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import CurrentGame from './CurrentGame';
 import TeamProgress from './TeamProgress';
 import { getActive, getGames } from '../../services';
 import { replaceImagePlaceholder } from '../../utils/imageUtils';
-import TeamGameUpdatesSSE from '../../services/TeamGameUpdatesSSE';
+import { useTeamGameUpdates } from '../../hooks/useTeamGameUpdates';
 import './GamePanel.css';
 
 /**
@@ -38,29 +38,14 @@ const GamePanel = ({ user }) => {
     const [storyCollapsed, setStoryCollapsed] = useState(false);
     const [teamProgressRefreshKey, setTeamProgressRefreshKey] = useState(0);
 
-    // SSE client reference for real-time team game updates
-    const sseClient = useRef(null);
-
-    useEffect(() => {
-        loadEventAndGames();
-    }, []);
-
-    // SSE: Set up real-time team game updates
-    useEffect(() => {
-        console.log('[GamePanel] Setting up SSE for team game updates');
-
-        // Create SSE client if not exists
-        sseClient.current = new TeamGameUpdatesSSE();
-
-        // Handle game_started event
-        sseClient.current.on('game_started', (data) => {
+    // SSE: Set up real-time team game updates using hook
+    useTeamGameUpdates({
+        onGameStarted: (data) => {
             console.log('[GamePanel] Team member started game:', data);
             // Refresh games list to show updated progress
             loadEventAndGames();
-        });
-
-        // Handle game_completed event
-        sseClient.current.on('game_completed', (data) => {
+        },
+        onGameCompleted: (data) => {
             console.log('[GamePanel] Team member completed game:', data);
             // Only refresh if another team member completed (not current user)
             // Current user's completion already refreshes via onSubmitSolution
@@ -70,39 +55,25 @@ const GamePanel = ({ user }) => {
             } else {
                 console.log('[GamePanel] Skipping refresh - current user already refreshed');
             }
-        });
-
-        // Handle hint_used event (optional)
-        sseClient.current.on('hint_used', (data) => {
+        },
+        onHintUsed: (data) => {
             console.log('[GamePanel] Team member used hint:', data);
             // Optionally refresh to show updated hint count
-        });
-
-        // Handle connection status
-        sseClient.current.on('connected', () => {
+        },
+        onConnect: () => {
             console.log('[GamePanel] SSE connected');
-        });
-
-        sseClient.current.on('disconnected', () => {
+        },
+        onDisconnect: () => {
             console.log('[GamePanel] SSE disconnected');
-        });
-
-        sseClient.current.on('error', (errorData) => {
+        },
+        onError: (errorData) => {
             console.error('[GamePanel] SSE error:', errorData);
-        });
+        }
+    });
 
-        // Connect to SSE
-        sseClient.current.connect();
-
-        // Cleanup on unmount
-        return () => {
-            if (sseClient.current) {
-              console.log('[GamePanel] Disconnecting SSE');
-              sseClient.current.disconnect();
-              sseClient.current = null;
-          }
-        };
-    }, []); // Empty deps = only runs on mount/unmount
+    useEffect(() => {
+        loadEventAndGames();
+    }, []);
 
     /**
      * Load active event and its games.

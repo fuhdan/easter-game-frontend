@@ -19,7 +19,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { buildApiUrl } from '../../config/apiConfig';
 import NotificationCard from './NotificationCard';
 import NotificationFilters from './NotificationFilters';
-import NotificationsSSE from '../../services/notificationsSSE';
+import { useNotifications } from '../../hooks/useNotifications';
 import './NotificationsDashboard.css';
 
 /**
@@ -41,109 +41,88 @@ const NotificationsDashboard = ({ user }) => {
     const [typeFilter, setTypeFilter] = useState(null);
     const [teamFilter, setTeamFilter] = useState(null);
 
-    // SSE client reference
-    const sseClient = useRef(null);
+    // Reference to track if SSE is enabled
+    const sseEnabledRef = useRef(false);
 
-    // Initialize SSE connection for 'open' tab only
+    // SSE: Set up real-time notifications using hook (only for 'open' tab)
+    const { isConnected: sseConnected, disconnect: sseDisconnect } = useNotifications({
+        // Only connect when activeTab is 'open'
+        onNotification: activeTab === 'open' ? (notificationData) => {
+            console.log('[NotificationsDashboard] Received notification:', notificationData);
+
+            // Apply filters
+            if (!matchesFilters(notificationData)) {
+                console.log('[NotificationsDashboard] Notification filtered out');
+                return;
+            }
+
+            // Update or add notification with proper priority ordering
+            setNotifications(prevNotifications => {
+                const existingIndex = prevNotifications.findIndex(n => n.id === notificationData.id);
+
+                if (existingIndex >= 0) {
+                    // Update existing notification and re-sort
+                    const updated = [...prevNotifications];
+                    updated[existingIndex] = notificationData;
+                    return sortNotificationsByPriority(updated);
+                } else {
+                    // Add new notification and sort
+                    const updated = [...prevNotifications, notificationData];
+                    return sortNotificationsByPriority(updated);
+                }
+            });
+        } : undefined,
+        onConnect: () => {
+            console.log('[NotificationsDashboard] SSE connected');
+            setConnectionStatus('connected');
+            setError(null);
+            setLoading(false);
+            sseEnabledRef.current = true;
+        },
+        onDisconnect: () => {
+            console.log('[NotificationsDashboard] SSE disconnected');
+            setConnectionStatus('disconnected');
+            sseEnabledRef.current = false;
+        },
+        onError: (errorData) => {
+            console.error('[NotificationsDashboard] SSE error:', errorData);
+            setError(errorData.message || 'Connection error');
+            setLoading(false);
+        }
+    });
+
+    // Update connection status based on SSE state
     useEffect(() => {
-        // Only use SSE for 'open' notifications (real-time updates)
-        // For 'acknowledged' and 'resolved', use traditional API calls
+        if (activeTab === 'open') {
+            setConnectionStatus(sseConnected ? 'connected' : 'connecting');
+        } else {
+            setConnectionStatus('disconnected');
+        }
+    }, [sseConnected, activeTab]);
+
+    // Handle tab changes and SSE connection
+    useEffect(() => {
         if (activeTab === 'open') {
             console.log('[NotificationsDashboard] Setting up SSE connection for open notifications');
             setConnectionStatus('connecting');
 
-            // BUGFIX: Load initial data before connecting to SSE
+            // BUGFIX: Load initial data before SSE connects
             // This ensures we start with a clean slate when switching tabs
             loadNotifications().then(() => {
-                console.log('[NotificationsDashboard] Initial notifications loaded, connecting to SSE');
+                console.log('[NotificationsDashboard] Initial notifications loaded');
             });
-
-            // Create SSE client if not exists
-            if (!sseClient.current) {
-                sseClient.current = new NotificationsSSE();
-
-                // Handle notification events
-                sseClient.current.on('notification', (notificationData) => {
-                    console.log('[NotificationsDashboard] Received notification:', notificationData);
-
-                    // Apply filters
-                    if (!matchesFilters(notificationData)) {
-                        console.log('[NotificationsDashboard] Notification filtered out');
-                        return;
-                    }
-
-                    // Update or add notification with proper priority ordering
-                    setNotifications(prevNotifications => {
-                        const existingIndex = prevNotifications.findIndex(n => n.id === notificationData.id);
-
-                        if (existingIndex >= 0) {
-                            // Update existing notification and re-sort
-                            const updated = [...prevNotifications];
-                            updated[existingIndex] = notificationData;
-                            return sortNotificationsByPriority(updated);
-                        } else {
-                            // Add new notification and sort
-                            const updated = [...prevNotifications, notificationData];
-                            return sortNotificationsByPriority(updated);
-                        }
-                    });
-                });
-
-                // Handle connection status
-                sseClient.current.on('connected', () => {
-                    console.log('[NotificationsDashboard] SSE connected');
-                    setConnectionStatus('connected');
-                    setError(null);
-                    setLoading(false);
-                });
-
-                sseClient.current.on('disconnected', () => {
-                    console.log('[NotificationsDashboard] SSE disconnected');
-                    setConnectionStatus('disconnected');
-                });
-
-                sseClient.current.on('error', (errorData) => {
-                    console.error('[NotificationsDashboard] SSE error:', errorData);
-                    setError(errorData.message || 'Connection error');
-                    setLoading(false);
-                });
-            }
-
-            // Connect to SSE
-            sseClient.current.connect();
         } else {
             // Disconnect SSE for non-open tabs and use traditional API
-            if (sseClient.current) {
+            if (sseEnabledRef.current) {
                 console.log('[NotificationsDashboard] Disconnecting SSE for non-open tab');
-                sseClient.current.disconnect();
+                sseDisconnect();
             }
 
             // Load notifications via API for acknowledged/resolved tabs
             loadNotifications();
         }
-
-        // Cleanup on unmount or tab change
-        return () => {
-            // SECURITY: Always disconnect when component unmounts (e.g., on logout)
-            // Only skip disconnect if staying on 'open' tab
-            if (sseClient.current && activeTab !== 'open') {
-                console.log('[NotificationsDashboard] Cleaning up SSE connection (tab change)');
-                sseClient.current.disconnect();
-            }
-        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
-
-    // SECURITY: Cleanup SSE connection on component unmount (e.g., logout)
-    useEffect(() => {
-        return () => {
-            if (sseClient.current) {
-                console.log('[NotificationsDashboard] Component unmounting - disconnecting SSE');
-                sseClient.current.disconnect();
-                sseClient.current = null;
-            }
-        };
-    }, []); // Empty deps = only runs on mount/unmount
 
     // Reload when filters change (for non-SSE tabs)
     useEffect(() => {
