@@ -29,6 +29,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import useWebSocket from '../hooks/useWebSocket';
 import { handleWebSocketMessage } from '../services/websocket/messageHandler';
 import { buildApiUrl } from '../config/apiConfig';
+import { logger } from '../utils/logger';
 
 const ChatContext = createContext();
 
@@ -162,7 +163,12 @@ export function ChatProvider({ children, user }) {
 
   // Team chat handlers
   const handleIncomingPrivateMessage = useCallback((message) => {
-    console.log('[ChatContext] Private message:', message);
+    logger.debug('chat_private_message_received', {
+      senderId: message.sender_id,
+      recipientId: message.recipient_id,
+      isFromSelf: message.sender_id === user?.id,
+      module: 'ChatContext'
+    });
     // Add to private conversation
     const otherUserId = message.sender_id === user?.id ? message.recipient_id : message.sender_id;
     setPrivateConversations(prev => ({
@@ -175,7 +181,11 @@ export function ChatProvider({ children, user }) {
     if (message.sender_id !== user?.id) {
       const isAdminSender = message.sender_role === 'admin' || message.sender_role === 'game_admin';
       if (isAdminSender) {
-        console.log('[ChatContext] Adding admin contact:', message.sender_id, message.sender_username);
+        logger.debug('chat_admin_contact_added', {
+          adminId: message.sender_id,
+          adminUsername: message.sender_username,
+          module: 'ChatContext'
+        });
         setAdminContacts(prev => ({
           ...prev,
           [message.sender_id]: {
@@ -199,18 +209,24 @@ export function ChatProvider({ children, user }) {
   }, [user]);
 
   const handleIncomingBroadcast = useCallback((message) => {
-    console.log('[ChatContext] Broadcast message:', message);
-    console.log('[ChatContext] Message sender_id:', message.sender_id, 'sender_role:', message.sender_role, 'Current user id:', user?.id);
-
-    // Check if current user is admin (admins see all broadcasts in teamBroadcastMessages)
     const isCurrentUserAdmin = user && (user.role === 'admin' || user.role === 'game_admin');
-
-    // Check if this is an admin broadcast (one-way notification)
     const isAdminBroadcast = message.sender_role === 'admin' || message.sender_role === 'game_admin';
+
+    logger.debug('chat_broadcast_received', {
+      senderId: message.sender_id,
+      senderRole: message.sender_role,
+      currentUserId: user?.id,
+      isCurrentUserAdmin,
+      isAdminBroadcast,
+      module: 'ChatContext'
+    });
 
     if (isCurrentUserAdmin) {
       // Admins see all broadcasts in teamBroadcastMessages
-      console.log('[ChatContext] Admin user - adding to teamBroadcastMessages');
+      logger.debug('chat_admin_viewing_broadcast', {
+        addingToTeamBroadcasts: true,
+        module: 'ChatContext'
+      });
       setTeamBroadcastMessages(prev => [...prev, message]);
 
       // Don't increment unread for admins viewing their own broadcasts
@@ -222,11 +238,15 @@ export function ChatProvider({ children, user }) {
       }
     } else if (isAdminBroadcast) {
       // Regular user receiving admin broadcast - route to admin notifications
-      console.log('[ChatContext] Routing to admin notifications');
+      logger.debug('chat_routing_to_admin_notifications', {
+        senderId: message.sender_id,
+        module: 'ChatContext'
+      });
       setAdminNotifications(prev => [...prev, message]);
 
-      // Increment admin notifications unread count
-      console.log('[ChatContext] Incrementing admin notifications unread count');
+      logger.debug('chat_increment_admin_notification_unread', {
+        module: 'ChatContext'
+      });
       setUnreadCounts(prev => ({
         ...prev,
         adminNotifications: prev.adminNotifications + 1
@@ -237,13 +257,17 @@ export function ChatProvider({ children, user }) {
 
       // Increment broadcast unread count if message is from someone else
       if (message.sender_id !== user?.id) {
-        console.log('[ChatContext] Incrementing broadcast unread count');
+        logger.debug('chat_increment_broadcast_unread', {
+          module: 'ChatContext'
+        });
         setUnreadCounts(prev => ({
           ...prev,
           broadcast: prev.broadcast + 1
         }));
       } else {
-        console.log('[ChatContext] Not incrementing - message from self');
+        logger.debug('chat_skip_unread_own_message', {
+          module: 'ChatContext'
+        });
       }
     }
   }, [user]);
@@ -251,7 +275,11 @@ export function ChatProvider({ children, user }) {
   // Add admin-sent broadcast to local state (for admin to see their own broadcasts)
   // Defined here so it's available in the useEffect below
   const addAdminSentBroadcast = useCallback((message) => {
-    console.log('[ChatContext] Adding admin-sent broadcast to local state:', message);
+    logger.debug('chat_admin_sent_broadcast_added', {
+      messageId: message.id,
+      teamId: message.team_id,
+      module: 'ChatContext'
+    });
     setTeamBroadcastMessages(prev => [...prev, message]);
   }, []);
 
@@ -268,7 +296,7 @@ export function ChatProvider({ children, user }) {
     setRateLimitStatus,
     handleIncomingPrivateMessage,
     handleIncomingBroadcast,
-    handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing),
+    handleTypingIndicator: (userId, typing) => logger.debug('chat_typing_indicator', { userId, typing, module: 'ChatContext' }),
     addAdminSentBroadcast
   });
 
@@ -285,30 +313,43 @@ export function ChatProvider({ children, user }) {
       setRateLimitStatus,
       handleIncomingPrivateMessage,
       handleIncomingBroadcast,
-      handleTypingIndicator: (userId, typing) => console.log('[Typing]:', userId, typing),
+      handleTypingIndicator: (userId, typing) => logger.debug('chat_typing_indicator', { userId, typing, module: 'ChatContext' }),
       addAdminSentBroadcast
     };
   }, [addMessage, updateMessage, addOrUpdateMessage, updateLastUserMessage, updateMessagesByNotificationId, setIsTyping, setLastError, setRateLimitStatus, handleIncomingPrivateMessage, handleIncomingBroadcast, addAdminSentBroadcast]);
 
   // Register message listener ONCE with stable callback that reads from ref
   useEffect(() => {
-    console.log('[ChatContext] Setting up message handler');
+    logger.debug('chat_message_handler_setup', {
+      hasOnMessage: !!onMessage,
+      module: 'ChatContext'
+    });
     if (!onMessage) {
-      console.log('[ChatContext] onMessage not available, skipping handler setup');
+      logger.warn('chat_onmessage_unavailable', {
+        skipSetup: true,
+        module: 'ChatContext'
+      });
       return;
     }
 
     // Stable callback that always uses latest handlers from ref
     const handleMessage = (data) => {
-      console.log('[ChatContext] Message received in listener:', data.type);
+      logger.debug('chat_message_received_listener', {
+        messageType: data.type,
+        module: 'ChatContext'
+      });
       handleWebSocketMessage(data, handlersRef.current);
     };
 
     const unsubscribe = onMessage(handleMessage);
 
-    console.log('[ChatContext] Message handler registered');
+    logger.debug('chat_message_handler_registered', {
+      module: 'ChatContext'
+    });
     return () => {
-      console.log('[ChatContext] Cleaning up message handler');
+      logger.debug('chat_message_handler_cleanup', {
+        module: 'ChatContext'
+      });
       unsubscribe();
     };
   }, [onMessage]); // Only re-register if onMessage itself changes (which should be never)
@@ -340,7 +381,11 @@ export function ChatProvider({ children, user }) {
     if (!user || sessionType === 'team') return;
 
     try {
-      console.log(`[ChatContext] Loading ${sessionType} chat history...`);
+      logger.debug('chat_history_loading', {
+        sessionType,
+        userId: user.id,
+        module: 'ChatContext'
+      });
       const response = await fetch(`${buildApiUrl('chat/messages')}?session_type=${sessionType}&limit=50`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -349,7 +394,11 @@ export function ChatProvider({ children, user }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`[ChatContext] Loaded ${data.count} messages from ${sessionType} session`);
+        logger.info('chat_history_loaded', {
+          sessionType,
+          messageCount: data.count,
+          module: 'ChatContext'
+        });
 
         // Convert to UI message format
         // Note: The messages endpoint now includes notification_id, status, and escalation_type
@@ -358,7 +407,8 @@ export function ChatProvider({ children, user }) {
           id: msg.id.toString(),
           type: msg.sender_type,
           sender_type: msg.sender_type,
-          sender_name: msg.sender_type === 'ai' ? 'AI' : 'Admin',
+          // TEAM-BASED AI CHAT: Use actual sender_name from backend (e.g., "Clark Kent")
+          sender_name: msg.sender_name,
           content: msg.content,
           timestamp: msg.created_at,
           metadata: {
@@ -373,10 +423,18 @@ export function ChatProvider({ children, user }) {
 
         setMessages(uiMessages);
       } else {
-        console.error(`[ChatContext] Failed to load ${sessionType} history:`, response.status);
+        logger.error('chat_history_load_failed', {
+          sessionType,
+          status: response.status,
+          module: 'ChatContext'
+        });
       }
     } catch (error) {
-      console.error(`[ChatContext] Error loading ${sessionType} history:`, error);
+      logger.error('chat_history_load_error', {
+        sessionType,
+        errorMessage: error.message,
+        module: 'ChatContext'
+      }, error);
     }
   }, [user]);
 
@@ -403,89 +461,142 @@ export function ChatProvider({ children, user }) {
   }, [chatMode, wsSend, addMessage, clearMessages, loadChatHistory]);
 
   const loadAIContext = useCallback(async () => {
-    if (!user) return;
+    logger.debug('🎯 [ChatContext] loadAIContext called', {
+      hasUser: !!user,
+      userId: user?.id,
+      module: 'ChatContext'
+    });
+
+    if (!user) {
+      logger.warn('🎯 [ChatContext] loadAIContext aborted - no user', {
+        module: 'ChatContext'
+      });
+      return;
+    }
+
+    // SECURITY: Admin users don't belong to teams, skip AI context loading
+    if (user.role === 'admin' || user.role === 'game_admin' || user.role === 'system_admin' || user.role === 'content_admin') {
+      logger.debug('🎯 [ChatContext] loadAIContext skipped - admin user without team', {
+        role: user.role,
+        module: 'ChatContext'
+      });
+      setAIContext({
+        game: null,
+        team: 'Admin',
+        progress: 0,
+        hints_used: 0,
+        hasActiveGame: false
+      });
+      return;
+    }
 
     try {
-      // Fetch active event
-      const eventResponse = await fetch(buildApiUrl('events/active'), {
+      logger.debug('🎯 [ChatContext] Fetching team progress for AI context', {
+        module: 'ChatContext'
+      });
+
+      // BUGFIX: Use the team progress endpoint which already includes game progress
+      const progressResponse = await fetch(buildApiUrl('teams/me/progress'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (!eventResponse.ok) {
-        console.error('[ChatContext] Failed to fetch active event');
+      if (!progressResponse.ok) {
+        logger.error('chat_ai_context_progress_fetch_failed', {
+          status: progressResponse.status,
+          module: 'ChatContext'
+        });
         setAIContext({ game: null, team: user.team_name || 'Unknown', progress: 0, hints_used: 0, hasActiveGame: false });
         return;
       }
 
-      const event = await eventResponse.json();
+      const progressData = await progressResponse.json();
 
-      // Fetch games with progress for this event
-      const gamesResponse = await fetch(buildApiUrl(`events/${event.id}/games`), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      logger.debug('🎯 [ChatContext] Team progress data received for AI context', {
+        teamName: progressData.team?.name,
+        totalGames: progressData.summary?.total_games,
+        completedGames: progressData.summary?.completed_games,
+        progressPercentage: progressData.summary?.progress_percentage,
+        gamesCount: progressData.games?.length,
+        module: 'ChatContext'
       });
 
-      if (!gamesResponse.ok) {
-        console.error('[ChatContext] Failed to fetch games');
-        setAIContext({ game: null, team: user.team_name || 'Unknown', progress: 0, hints_used: 0, hasActiveGame: false });
-        return;
-      }
-
-      const games = await gamesResponse.json();
-
-      // Calculate overall progress
-      const completedGames = games.filter(g => g.progress && g.progress.status === 'completed').length;
-      const totalGames = games.length;
-      const progressPercentage = totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0;
+      // Extract data from team progress response
+      const games = progressData.games || [];
+      const progressPercentage = Math.round(progressData.summary?.progress_percentage || 0);
+      const teamName = progressData.team?.name || user.team_name || 'Unknown';
 
       // Find current game with priority:
-      // 1. Game with "in_progress" status
-      // 2. Most recently active game (not_started or in_progress)
-      // SECURITY: Only show game info if user has actually started a game
-      let currentGame = games.find(g => g.progress && g.progress.status === 'in_progress');
+      // 1. Game with user_status === 'in_progress'
+      // 2. Most recently active game (not completed)
+      let currentGame = games.find(g => g.user_status === 'in_progress');
 
       if (!currentGame) {
-        // Find most recently active game (any with progress that's not completed)
-        currentGame = games.find(g => g.progress && g.progress.status !== 'completed');
+        // Find first game that's not completed
+        currentGame = games.find(g => g.user_status && g.user_status !== 'completed');
       }
 
-      // Get hints used and game name (using order_index like TeamProgress does)
+      // Get hints used and game name
       let hintsUsed = 0;
       let gameName = null;  // null means no active game
       let hasActiveGame = false;
 
-      if (currentGame && currentGame.progress) {
-        // Only set game info if there's actual progress
-        hintsUsed = currentGame.progress.hints_used || 0;
-        // Use "Game X" format like in TeamProgress component
-        gameName = currentGame.order_index ? `Game ${currentGame.order_index}` : 'Game';
+      if (currentGame && currentGame.user_status && currentGame.user_status !== 'not_started') {
+        // Only set game info if user has started the game
+        hintsUsed = currentGame.total_hints_used || 0;
+        // Use "Game X" format
+        gameName = currentGame.order_index ? `Game ${currentGame.order_index}` : currentGame.game_title;
         hasActiveGame = true;
       }
 
-      setAIContext({
+      const newContext = {
         game: gameName,
-        team: user.team_name || 'Unknown',
+        team: teamName,
         progress: progressPercentage,
         hints_used: hintsUsed,
         hasActiveGame: hasActiveGame  // Add flag to indicate if game is active
+      };
+
+      logger.debug('🎯 [ChatContext] Setting AI context', {
+        aiContext: newContext,
+        module: 'ChatContext'
+      });
+
+      setAIContext(newContext);
+
+      logger.info('🎯 [ChatContext] AI context updated successfully', {
+        gameName,
+        progressPercentage,
+        hasActiveGame,
+        module: 'ChatContext'
       });
 
     } catch (error) {
-      console.error('[ChatContext] Error loading AI context:', error);
+      logger.error('chat_ai_context_load_error', {
+        errorMessage: error.message,
+        module: 'ChatContext'
+      }, error);
       setAIContext({ game: null, team: user.team_name || 'Unknown', progress: 0, hints_used: 0, hasActiveGame: false });
     }
   }, [user]);
 
   useEffect(() => { if (chatMode === 'ai' && user) loadAIContext(); }, [chatMode, user, loadAIContext]);
 
+  // BUGFIX: Add loadAIContext to handlers after it's defined
+  useEffect(() => {
+    handlersRef.current.loadAIContext = loadAIContext;
+  }, [loadAIContext]);
+
   // Load initial history when component mounts (AI mode is default)
   const hasLoadedInitialHistory = useRef(false);
   useEffect(() => {
     if (user && chatMode === 'ai' && !hasLoadedInitialHistory.current) {
-      console.log('[ChatContext] Loading initial AI history on mount');
+      logger.debug('chat_initial_history_loading', {
+        chatMode,
+        userId: user.id,
+        module: 'ChatContext'
+      });
       loadChatHistory('ai');
       hasLoadedInitialHistory.current = true;
     }
@@ -496,7 +607,10 @@ export function ChatProvider({ children, user }) {
   useEffect(() => {
     // If user was previously logged in and is now null (logged out)
     if (prevUserRef.current && !user && disconnect) {
-      console.log('[ChatContext] User logged out, permanently disconnecting WebSocket');
+      logger.info('chat_websocket_disconnect_logout', {
+        previousUserId: prevUserRef.current.id,
+        module: 'ChatContext'
+      });
       disconnect();
       // The WebSocket will not auto-reconnect because autoConnect is based on !!user
     }
@@ -509,7 +623,10 @@ export function ChatProvider({ children, user }) {
     if (!user) return;
 
     try {
-      console.log('[ChatContext] Loading team broadcast history...');
+      logger.debug('chat_broadcast_history_loading', {
+        userId: user.id,
+        module: 'ChatContext'
+      });
       const response = await fetch(buildApiUrl('team-chat/broadcast/history'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -518,7 +635,10 @@ export function ChatProvider({ children, user }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`[ChatContext] Loaded ${data.messages.length} broadcast messages`);
+        logger.info('chat_broadcast_history_loaded', {
+          messageCount: data.messages.length,
+          module: 'ChatContext'
+        });
 
         const allMessages = data.messages || [];
 
@@ -527,7 +647,10 @@ export function ChatProvider({ children, user }) {
 
         if (isAdmin) {
           // Admins see all broadcasts in teamBroadcastMessages (including their own admin broadcasts)
-          console.log(`[ChatContext] Admin user - all ${allMessages.length} broadcasts go to teamBroadcastMessages`);
+          logger.debug('chat_broadcast_admin_view', {
+            totalMessages: allMessages.length,
+            module: 'ChatContext'
+          });
           setTeamBroadcastMessages(allMessages);
           setAdminNotifications([]);
         } else {
@@ -539,15 +662,25 @@ export function ChatProvider({ children, user }) {
             msg.sender_role !== 'admin' && msg.sender_role !== 'game_admin'
           );
 
-          console.log(`[ChatContext] Regular user - Separated: ${adminBroadcasts.length} admin, ${teamBroadcasts.length} team broadcasts`);
+          logger.debug('chat_broadcast_user_view_separated', {
+            adminBroadcastCount: adminBroadcasts.length,
+            teamBroadcastCount: teamBroadcasts.length,
+            module: 'ChatContext'
+          });
           setTeamBroadcastMessages(teamBroadcasts);
           setAdminNotifications(adminBroadcasts);
         }
       } else {
-        console.error('[ChatContext] Failed to load broadcast history:', response.status);
+        logger.error('chat_broadcast_history_load_failed', {
+          status: response.status,
+          module: 'ChatContext'
+        });
       }
     } catch (error) {
-      console.error('[ChatContext] Error loading broadcast history:', error);
+      logger.error('chat_broadcast_history_load_error', {
+        errorMessage: error.message,
+        module: 'ChatContext'
+      }, error);
     }
   }, [user]);
 
@@ -556,7 +689,11 @@ export function ChatProvider({ children, user }) {
     if (!user) return;
 
     try {
-      console.log('[ChatContext] Loading team members...');
+      logger.debug('chat_team_members_loading', {
+        userId: user.id,
+        teamId: user.team_id,
+        module: 'ChatContext'
+      });
       const response = await fetch(buildApiUrl('team-chat/members'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -565,14 +702,23 @@ export function ChatProvider({ children, user }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[ChatContext] Team members loaded:', data.members.length);
+        logger.info('chat_team_members_loaded', {
+          memberCount: data.members.length,
+          module: 'ChatContext'
+        });
         setTeamMembers(data.members || []);
       } else {
-        console.error('[ChatContext] Failed to load team members:', response.status);
+        logger.error('chat_team_members_load_failed', {
+          status: response.status,
+          module: 'ChatContext'
+        });
         setTeamMembers([]);
       }
     } catch (error) {
-      console.error('[ChatContext] Error loading team members:', error);
+      logger.error('chat_team_members_load_error', {
+        errorMessage: error.message,
+        module: 'ChatContext'
+      }, error);
       setTeamMembers([]);
     }
   }, [user]);
@@ -583,12 +729,19 @@ export function ChatProvider({ children, user }) {
 
     // Skip for admins - they don't need to see admin contacts
     if (user.role === 'admin' || user.role === 'game_admin') {
-      console.log('[ChatContext] Skipping admin contacts load for admin user');
+      logger.debug('chat_admin_contacts_skip', {
+        userRole: user.role,
+        reason: 'Admin user does not need admin contacts',
+        module: 'ChatContext'
+      });
       return;
     }
 
     try {
-      console.log('[ChatContext] Loading admin contacts...');
+      logger.debug('chat_admin_contacts_loading', {
+        userId: user.id,
+        module: 'ChatContext'
+      });
       const response = await fetch(buildApiUrl('team-chat/admin-contacts'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -597,7 +750,10 @@ export function ChatProvider({ children, user }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[ChatContext] Admin contacts loaded:', data.members.length);
+        logger.info('chat_admin_contacts_loaded', {
+          contactCount: data.members.length,
+          module: 'ChatContext'
+        });
 
         // Convert array to object keyed by admin ID
         const contactsObj = {};
@@ -606,10 +762,16 @@ export function ChatProvider({ children, user }) {
         }
         setAdminContacts(contactsObj);
       } else {
-        console.error('[ChatContext] Failed to load admin contacts:', response.status);
+        logger.error('chat_admin_contacts_load_failed', {
+          status: response.status,
+          module: 'ChatContext'
+        });
       }
     } catch (error) {
-      console.error('[ChatContext] Error loading admin contacts:', error);
+      logger.error('chat_admin_contacts_load_error', {
+        errorMessage: error.message,
+        module: 'ChatContext'
+      }, error);
     }
   }, [user]);
 
@@ -635,7 +797,11 @@ export function ChatProvider({ children, user }) {
 
   const sendAdminTeamBroadcast = useCallback((teamId, content) => {
     if (!content || !content.trim() || !teamId) return false;
-    console.log('[ChatContext] Sending admin broadcast to team:', teamId);
+    logger.info('chat_admin_broadcast_sending', {
+      teamId,
+      contentLength: content.trim().length,
+      module: 'ChatContext'
+    });
     return wsSend('admin_team_broadcast', {
       team_id: teamId,
       content: content.trim()
@@ -647,7 +813,11 @@ export function ChatProvider({ children, user }) {
     if (!user || !otherUserId) return;
 
     try {
-      console.log(`[ChatContext] Loading conversation history with user ${otherUserId}...`);
+      logger.debug('chat_conversation_history_loading', {
+        userId: user.id,
+        otherUserId,
+        module: 'ChatContext'
+      });
       const response = await fetch(buildApiUrl(`team-chat/conversation/${otherUserId}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -656,7 +826,11 @@ export function ChatProvider({ children, user }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`[ChatContext] Loaded ${data.messages.length} messages from history`);
+        logger.info('chat_conversation_history_loaded', {
+          otherUserId,
+          messageCount: data.messages.length,
+          module: 'ChatContext'
+        });
 
         // Set the conversation history
         setPrivateConversations(prev => ({
@@ -664,10 +838,18 @@ export function ChatProvider({ children, user }) {
           [otherUserId]: data.messages || []
         }));
       } else {
-        console.error('[ChatContext] Failed to load conversation history:', response.status);
+        logger.error('chat_conversation_history_load_failed', {
+          otherUserId,
+          status: response.status,
+          module: 'ChatContext'
+        });
       }
     } catch (error) {
-      console.error('[ChatContext] Error loading conversation history:', error);
+      logger.error('chat_conversation_history_load_error', {
+        otherUserId,
+        errorMessage: error.message,
+        module: 'ChatContext'
+      }, error);
     }
   }, [user]);
 
@@ -701,7 +883,11 @@ export function ChatProvider({ children, user }) {
     setSelectedAdminContact(null);
 
     // TODO: Load team broadcast history if needed
-    console.log('[ChatContext] Selected team for broadcast:', team);
+    logger.debug('chat_team_selected_for_broadcast', {
+      teamId: team?.id,
+      teamName: team?.name,
+      module: 'ChatContext'
+    });
   }, []);
 
   const clearBroadcastUnread = useCallback(() => {
@@ -725,7 +911,11 @@ export function ChatProvider({ children, user }) {
 
   // Select an admin contact for private messaging
   const selectAdminContact = useCallback((admin) => {
-    console.log('[ChatContext] Selecting admin contact:', admin);
+    logger.debug('chat_admin_contact_selected', {
+      adminId: admin?.id,
+      adminUsername: admin?.username,
+      module: 'ChatContext'
+    });
     setSelectedAdminContact(admin);
     // Clear other selections
     setSelectedTeamMember(null);

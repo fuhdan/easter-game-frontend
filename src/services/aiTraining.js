@@ -13,7 +13,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Get all training hints (with optional filters)
@@ -34,7 +35,7 @@ export const getHints = (filters = {}) => {
   if (filters.hint_level) params.append('hint_level', filters.hint_level);
 
   const url = `/admin/ai/training-hints${params.toString() ? '?' + params.toString() : ''}`;
-  log.info('Fetching AI training hints', filters);
+  logger.info('Fetching AI training hints', filters);
   return request('GET', url);
 };
 
@@ -47,7 +48,7 @@ export const getHints = (filters = {}) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getHintsByGame = () => {
-  log.info('Fetching AI training hints by game');
+  logger.info('Fetching AI training hints by game');
   return request('GET', '/admin/ai/training-hints/by-game');
 };
 
@@ -65,7 +66,7 @@ export const getHintsByGame = () => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin
  */
 export const createHint = (hintData) => {
-  log.info('Creating AI training hint', hintData);
+  logger.info('Creating AI training hint', hintData);
   return request('POST', '/admin/ai/training-hints', hintData);
 };
 
@@ -80,7 +81,7 @@ export const createHint = (hintData) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin, 404 if not found
  */
 export const updateHint = (hintId, updates) => {
-  log.info(`Updating AI training hint ${hintId}`, updates);
+  logger.info(`Updating AI training hint ${hintId}`, updates);
   return request('PUT', `/admin/ai/training-hints/${hintId}`, updates);
 };
 
@@ -94,7 +95,7 @@ export const updateHint = (hintId, updates) => {
  * @throws {APIError} 403 if not super_admin, 404 if hint not found
  */
 export const deleteHint = (hintId) => {
-  log.info(`Deleting AI training hint ${hintId}`);
+  logger.info(`Deleting AI training hint ${hintId}`);
   return request('DELETE', `/admin/ai/training-hints/${hintId}`);
 };
 
@@ -108,7 +109,7 @@ export const deleteHint = (hintId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const bulkDeleteHints = (gameId) => {
-  log.info(`Bulk deleting AI training hints for game ${gameId}`);
+  logger.info(`Bulk deleting AI training hints for game ${gameId}`);
   return request('POST', '/admin/ai/training-hints/bulk-delete', { game_id: gameId });
 };
 
@@ -121,7 +122,7 @@ export const bulkDeleteHints = (gameId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getSystemPrompts = () => {
-  log.info('Fetching AI system prompts');
+  logger.info('Fetching AI system prompts');
   return request('GET', '/admin/ai/system-prompts');
 };
 
@@ -138,7 +139,7 @@ export const getSystemPrompts = () => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin
  */
 export const createSystemPrompt = (promptData) => {
-  log.info('Creating AI system prompt', promptData);
+  logger.info('Creating AI system prompt', promptData);
   return request('POST', '/admin/ai/system-prompts', promptData);
 };
 
@@ -153,7 +154,7 @@ export const createSystemPrompt = (promptData) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin, 404 if not found
  */
 export const updateSystemPrompt = (promptId, updates) => {
-  log.info(`Updating AI system prompt ${promptId}`, updates);
+  logger.info(`Updating AI system prompt ${promptId}`, updates);
   return request('PUT', `/admin/ai/system-prompts/${promptId}`, updates);
 };
 
@@ -167,7 +168,7 @@ export const updateSystemPrompt = (promptId, updates) => {
  * @throws {APIError} 403 if not super_admin, 404 if prompt not found
  */
 export const deleteSystemPrompt = (promptId) => {
-  log.info(`Deleting AI system prompt ${promptId}`);
+  logger.info(`Deleting AI system prompt ${promptId}`);
   return request('DELETE', `/admin/ai/system-prompts/${promptId}`);
 };
 
@@ -181,7 +182,7 @@ export const deleteSystemPrompt = (promptId) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getAdminGuide = () => {
-  log.info('Fetching AI training admin guide');
+  logger.info('Fetching AI training admin guide');
   return request('GET', '/admin/ai/admin-guide');
 };
 
@@ -194,7 +195,7 @@ export const getAdminGuide = () => {
  * @throws {APIError} 403 if not super_admin
  */
 export const getEvents = () => {
-  log.info('Fetching all events');
+  logger.info('Fetching all events');
   return request('GET', '/admin/content/events');
 };
 
@@ -208,7 +209,7 @@ export const getEvents = () => {
  * @throws {APIError} 403 if not super_admin, 404 if not found
  */
 export const getEvent = (eventId) => {
-  log.info(`Fetching event ${eventId}`);
+  logger.info(`Fetching event ${eventId}`);
   return request('GET', `/admin/content/events/${eventId}`);
 };
 
@@ -225,7 +226,7 @@ export const getEvent = (eventId) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin
  */
 export const createEvent = (eventData) => {
-  log.info('Creating new event', eventData);
+  logger.info('Creating new event', eventData);
   return request('POST', '/admin/content/events', eventData);
 };
 
@@ -240,7 +241,7 @@ export const createEvent = (eventData) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin, 404 if not found
  */
 export const updateEvent = (eventId, updates) => {
-  log.info(`Updating event ${eventId}`, updates);
+  logger.info(`Updating event ${eventId}`, updates);
   return request('PUT', `/admin/content/events/${eventId}`, updates);
 };
 
@@ -254,7 +255,7 @@ export const updateEvent = (eventId, updates) => {
  * @throws {APIError} 403 if not super_admin, 404 if event not found
  */
 export const deleteEvent = (eventId) => {
-  log.info(`Deleting event ${eventId}`);
+  logger.info(`Deleting event ${eventId}`);
   return request('DELETE', `/admin/content/events/${eventId}`);
 };
 
@@ -269,7 +270,7 @@ export const deleteEvent = (eventId) => {
  */
 export const getCategories = (activeOnly = false) => {
   const url = `/admin/content/categories${activeOnly ? '?active_only=true' : ''}`;
-  log.info('Fetching game categories');
+  logger.info('Fetching game categories');
   return request('GET', url);
 };
 
@@ -285,7 +286,7 @@ export const getCategories = (activeOnly = false) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin
  */
 export const createCategory = (categoryData) => {
-  log.info('Creating game category', categoryData);
+  logger.info('Creating game category', categoryData);
   return request('POST', '/admin/content/categories', categoryData);
 };
 
@@ -300,7 +301,7 @@ export const createCategory = (categoryData) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin, 404 if not found
  */
 export const updateCategory = (categoryId, updates) => {
-  log.info(`Updating game category ${categoryId}`, updates);
+  logger.info(`Updating game category ${categoryId}`, updates);
   return request('PUT', `/admin/content/categories/${categoryId}`, updates);
 };
 
@@ -314,7 +315,7 @@ export const updateCategory = (categoryId, updates) => {
  * @throws {APIError} 403 if not super_admin, 404 if category not found
  */
 export const deleteCategory = (categoryId) => {
-  log.info(`Deleting game category ${categoryId}`);
+  logger.info(`Deleting game category ${categoryId}`);
   return request('DELETE', `/admin/content/categories/${categoryId}`);
 };
 
@@ -329,7 +330,7 @@ export const deleteCategory = (categoryId) => {
  */
 export const getAllGames = (includeInactive = false) => {
   const url = `/admin/content/games${includeInactive ? '?include_inactive=true' : ''}`;
-  log.info('Fetching all games with full content');
+  logger.info('Fetching all games with full content');
   return request('GET', url);
 };
 
@@ -343,7 +344,7 @@ export const getAllGames = (includeInactive = false) => {
  * @throws {APIError} 403 if not super_admin, 404 if not found
  */
 export const getGame = (gameId) => {
-  log.info(`Fetching game ${gameId} with full content`);
+  logger.info(`Fetching game ${gameId} with full content`);
   return request('GET', `/admin/content/games/${gameId}`);
 };
 
@@ -357,7 +358,7 @@ export const getGame = (gameId) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin
  */
 export const createGame = (gameData) => {
-  log.info('Creating new game', gameData);
+  logger.info('Creating new game', gameData);
   return request('POST', '/admin/content/games', gameData);
 };
 
@@ -372,7 +373,7 @@ export const createGame = (gameData) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin, 404 if not found
  */
 export const updateGame = (gameId, updates) => {
-  log.info(`Updating game ${gameId}`, updates);
+  logger.info(`Updating game ${gameId}`, updates);
   return request('PUT', `/admin/content/games/${gameId}`, updates);
 };
 
@@ -386,6 +387,6 @@ export const updateGame = (gameId, updates) => {
  * @throws {APIError} 403 if not super_admin, 404 if game not found
  */
 export const deleteGame = (gameId) => {
-  log.info(`Deleting game ${gameId}`);
+  logger.info(`Deleting game ${gameId}`);
   return request('DELETE', `/admin/content/games/${gameId}`);
 };

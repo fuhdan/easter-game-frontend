@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import { getAllPlayers } from '../../services';
 import './PlayerManagement.css';
 
@@ -68,7 +69,7 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
           setPlayers(normalizedPlayers); // even if empty
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
+        logger.error('Error fetching users:', error);
       } finally {
         setLoading(false);
       }

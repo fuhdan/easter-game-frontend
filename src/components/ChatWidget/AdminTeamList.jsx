@@ -16,6 +16,7 @@
 import React, { useState, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { buildApiUrl } from '../../config/apiConfig';
+import { logger } from '../../utils/logger';
 import './AdminTeamList.css';
 
 /**
@@ -46,11 +47,17 @@ const AdminTeamList = ({ onSelectMember, onSelectTeam }) => {
           const data = await response.json();
           setTeams(data.teams || []);
         } else {
-          console.error('[AdminTeamList] Failed to load teams:', response.status);
+          logger.error('admin_team_list_load_failed', {
+            status: response.status,
+            module: 'AdminTeamList'
+          });
           setTeams([]);
         }
       } catch (error) {
-        console.error('[AdminTeamList] Error loading teams:', error);
+        logger.error('admin_team_list_load_error', {
+          errorMessage: error.message,
+          module: 'AdminTeamList'
+        }, error);
         setTeams([]);
       } finally {
         setLoading(false);

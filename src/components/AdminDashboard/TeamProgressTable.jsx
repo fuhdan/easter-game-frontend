@@ -10,7 +10,8 @@
  * - Shows default data immediately, updates when API responds
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import './TeamProgressTable.css';
 
 /**
@@ -60,6 +61,17 @@ const TeamProgressTable = ({ data }) => {
         team.team_name !== 'System Admins' &&
         team.team_name !== 'system_admins'
     );
+
+    // Log when component renders with data
+    useEffect(() => {
+        logger.debug('team_progress_table_rendered', {
+            usingDefaultData: !data,
+            totalTeams: allTeams.length,
+            displayedTeams: teams.length,
+            filteredCount: allTeams.length - teams.length,
+            module: 'TeamProgressTable'
+        });
+    }, [data, allTeams.length, teams.length]);
 
     /**
      * Get appropriate CSS class for status badge.

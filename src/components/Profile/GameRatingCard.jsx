@@ -12,6 +12,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../utils/logger';
 
 const GameRatingCard = () => {
     // Mock data for game rating - TODO: Replace with API calls
@@ -34,7 +35,7 @@ const GameRatingCard = () => {
 
     /**
      * Handle rating form submission
-     * 
+     *
      * @param {Event} e - Form submit event
      */
     const handleSubmitRating = (e) => {
@@ -42,7 +43,8 @@ const GameRatingCard = () => {
         if (!selectedGame || currentRating === 0) return;
 
         const gameId = parseInt(selectedGame);
-        
+        const gameName = mockCompletedGames.find(g => g.id === gameId)?.name;
+
         // Create new rating object
         const newRating = {
             game_id: gameId,
@@ -50,6 +52,15 @@ const GameRatingCard = () => {
             comment: ratingComment || null,
             created_at: new Date().toISOString()
         };
+
+        logger.info('game_rating_submitted', {
+            gameId,
+            gameName,
+            rating: currentRating,
+            hasComment: !!ratingComment,
+            isUpdate: userRatings.some(r => r.game_id === gameId),
+            module: 'GameRatingCard'
+        });
 
         // Update ratings state - replace existing rating for same game or add new
         setUserRatings(prevRatings => {

@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import { getAllTeams, getMyTeamPlayers } from '../../services';
 import './TeamsTab.css';
@@ -79,7 +80,7 @@ function TeamsTab({ user }) {
         }
       }
     } catch (err) {
-      console.error('Failed to load teams:', err);
+      logger.error('Failed to load teams:', err);
       setError('Failed to load teams. Please try again.');
     } finally {
       setLoading(false);

@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import TeamConfiguration from './TeamConfiguration';
 import { getAllTeams, getAllPlayers } from '../../services';
@@ -83,7 +84,7 @@ function TeamCreationTab({ user }) {
         setPlayers(normalizedPlayers);
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onTokenRefresh } from '../services';
+import { logger } from '../utils/logger';
 
 /**
  * useWebSocket - React hook for managing WebSocket connection
@@ -82,7 +83,11 @@ const useWebSocket = (url = null, options = {}) => {
   const updateStatus = useCallback((newStatus) => {
     setConnectionStatus(prevStatus => {
       if (prevStatus !== newStatus) {
-        console.log(`[useWebSocket] Status: ${prevStatus} -> ${newStatus}`);
+        logger.debug('websocket_status_changed', {
+          prevStatus,
+          newStatus,
+          module: 'useWebSocket'
+        });
         return newStatus;
       }
       return prevStatus;
@@ -94,11 +99,19 @@ const useWebSocket = (url = null, options = {}) => {
    */
   const enqueueMessage = useCallback((message) => {
     if (messageQueueRef.current.length >= config.maxQueueSize) {
-      console.warn('[useWebSocket] Queue full, dropping oldest message');
+      logger.warn('websocket_queue_full', {
+        maxQueueSize: config.maxQueueSize,
+        droppedMessageType: messageQueueRef.current[0]?.type,
+        module: 'useWebSocket'
+      });
       messageQueueRef.current.shift();
     }
     messageQueueRef.current.push(message);
-    console.log('[useWebSocket] Message queued, queue size:', messageQueueRef.current.length);
+    logger.debug('websocket_message_queued', {
+      queueSize: messageQueueRef.current.length,
+      messageType: message.type,
+      module: 'useWebSocket'
+    });
   }, [config.maxQueueSize]);
 
   /**
@@ -107,7 +120,10 @@ const useWebSocket = (url = null, options = {}) => {
   const flushMessageQueue = useCallback(() => {
     if (messageQueueRef.current.length === 0) return;
 
-    console.log('[useWebSocket] Flushing message queue:', messageQueueRef.current.length);
+    logger.debug('websocket_flushing_queue', {
+      queueSize: messageQueueRef.current.length,
+      module: 'useWebSocket'
+    });
 
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -118,15 +134,26 @@ const useWebSocket = (url = null, options = {}) => {
       try {
         ws.send(JSON.stringify(message));
         sent++;
-        console.log('[useWebSocket] Queued message sent:', message.type);
+        logger.debug('websocket_queued_message_sent', {
+          messageType: message.type,
+          module: 'useWebSocket'
+        });
       } catch (error) {
-        console.error('[useWebSocket] Failed to send queued message:', error);
+        logger.error('websocket_failed_send_queued_message', {
+          messageType: message.type,
+          error: error.message,
+          module: 'useWebSocket'
+        }, error);
         messageQueueRef.current.unshift(message);
         break;
       }
     }
 
-    console.log(`[useWebSocket] Flushed ${sent} messages, ${messageQueueRef.current.length} remaining`);
+    logger.debug('websocket_queue_flushed', {
+      sent,
+      remaining: messageQueueRef.current.length,
+      module: 'useWebSocket'
+    });
   }, []);
 
   /**
@@ -142,14 +169,20 @@ const useWebSocket = (url = null, options = {}) => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         try {
           ws.send(JSON.stringify({ type: 'ping' }));
-          console.log('[useWebSocket] Ping sent');
+          logger.debug('websocket_ping_sent', { module: 'useWebSocket' });
         } catch (error) {
-          console.error('[useWebSocket] Failed to send ping:', error);
+          logger.error('websocket_ping_failed', {
+            error: error.message,
+            module: 'useWebSocket'
+          }, error);
         }
       }
     }, config.heartbeatInterval);
 
-    console.log('[useWebSocket] Heartbeat started');
+    logger.debug('websocket_heartbeat_started', {
+      interval: config.heartbeatInterval,
+      module: 'useWebSocket'
+    });
   }, [config.heartbeatInterval]);
 
   /**
@@ -159,7 +192,7 @@ const useWebSocket = (url = null, options = {}) => {
     if (heartbeatTimerRef.current) {
       clearInterval(heartbeatTimerRef.current);
       heartbeatTimerRef.current = null;
-      console.log('[useWebSocket] Heartbeat stopped');
+      logger.debug('websocket_heartbeat_stopped', { module: 'useWebSocket' });
     }
   }, []);
 
@@ -178,7 +211,10 @@ const useWebSocket = (url = null, options = {}) => {
    */
   const scheduleReconnect = useCallback(() => {
     if (manualCloseRef.current) {
-      console.log('[useWebSocket] Not reconnecting (manual close)');
+      logger.debug('websocket_skip_reconnect', {
+        reason: 'Manual close',
+        module: 'useWebSocket'
+      });
       return;
     }
 
@@ -190,7 +226,11 @@ const useWebSocket = (url = null, options = {}) => {
       config.maxReconnectInterval
     );
 
-    console.log(`[useWebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1})`);
+    logger.info('websocket_reconnect_scheduled', {
+      delay,
+      attempt: reconnectAttemptsRef.current + 1,
+      module: 'useWebSocket'
+    });
 
     reconnectTimerRef.current = setTimeout(() => {
       reconnectAttemptsRef.current++;
@@ -204,7 +244,7 @@ const useWebSocket = (url = null, options = {}) => {
   const handleMessage = useCallback((data) => {
     // Handle pong (heartbeat response)
     if (data.type === 'pong') {
-      console.log('[useWebSocket] Pong received');
+      logger.debug('websocket_pong_received', { module: 'useWebSocket' });
       return;
     }
 
@@ -213,7 +253,11 @@ const useWebSocket = (url = null, options = {}) => {
       try {
         listener(data);
       } catch (error) {
-        console.error('[useWebSocket] Error in message listener:', error);
+        logger.error('websocket_message_listener_error', {
+          messageType: data.type,
+          error: error.message,
+          module: 'useWebSocket'
+        }, error);
       }
     });
   }, []);
@@ -223,7 +267,10 @@ const useWebSocket = (url = null, options = {}) => {
    */
   const connect = useCallback(() => {
     if (wsRef.current && (wsRef.current.readyState === WebSocket.CONNECTING || wsRef.current.readyState === WebSocket.OPEN)) {
-      console.log('[useWebSocket] Already connected or connecting');
+      logger.debug('websocket_already_connected', {
+        readyState: wsRef.current.readyState,
+        module: 'useWebSocket'
+      });
       return Promise.resolve();
     }
 
@@ -232,13 +279,19 @@ const useWebSocket = (url = null, options = {}) => {
 
     return new Promise((resolve, reject) => {
       try {
-        console.log('[useWebSocket] Connecting to:', wsUrl);
+        logger.info('websocket_connecting', {
+          url: wsUrl,
+          module: 'useWebSocket'
+        });
 
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('[useWebSocket] Connected successfully');
+          logger.info('websocket_connected', {
+            url: wsUrl,
+            module: 'useWebSocket'
+          });
           reconnectAttemptsRef.current = 0;
           updateStatus('connected');
           startHeartbeat();
@@ -247,13 +300,20 @@ const useWebSocket = (url = null, options = {}) => {
         };
 
         ws.onclose = (event) => {
-          console.log('[useWebSocket] Connection closed:', event.code, event.reason);
+          logger.info('websocket_closed', {
+            code: event.code,
+            reason: event.reason,
+            module: 'useWebSocket'
+          });
           stopHeartbeat();
           updateStatus('disconnected');
 
           // Don't reconnect if server closed due to logout
           if (event.code === 1000 && event.reason === 'Logout') {
-            console.log('[useWebSocket] Server closed connection due to logout, not reconnecting');
+            logger.info('websocket_logout_close', {
+              reason: 'Server closed due to logout',
+              module: 'useWebSocket'
+            });
             manualCloseRef.current = true;
             return;
           }
@@ -265,7 +325,11 @@ const useWebSocket = (url = null, options = {}) => {
         };
 
         ws.onerror = (error) => {
-          console.error('[useWebSocket] WebSocket error:', error);
+          logger.error('websocket_error', {
+            url: wsUrl,
+            error: error.message,
+            module: 'useWebSocket'
+          }, error);
           setLastError(error);
           reject(error);
         };
@@ -273,14 +337,24 @@ const useWebSocket = (url = null, options = {}) => {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log('[useWebSocket] Message received:', data.type);
+            logger.debug('websocket_message_received', {
+              messageType: data.type,
+              module: 'useWebSocket'
+            });
             handleMessage(data);
           } catch (error) {
-            console.error('[useWebSocket] Failed to parse message:', error);
+            logger.error('websocket_parse_error', {
+              error: error.message,
+              module: 'useWebSocket'
+            }, error);
           }
         };
       } catch (error) {
-        console.error('[useWebSocket] Failed to create WebSocket:', error);
+        logger.error('websocket_create_failed', {
+          url: wsUrl,
+          error: error.message,
+          module: 'useWebSocket'
+        }, error);
         updateStatus('disconnected');
         reject(error);
       }
@@ -291,7 +365,11 @@ const useWebSocket = (url = null, options = {}) => {
    * Disconnect from WebSocket
    */
   const disconnect = useCallback((code = 1000, reason = 'Manual disconnect') => {
-    console.log('[useWebSocket] Disconnecting:', reason);
+    logger.info('websocket_disconnecting', {
+      code,
+      reason,
+      module: 'useWebSocket'
+    });
     manualCloseRef.current = true;
     stopHeartbeat();
     clearReconnectTimer();
@@ -309,7 +387,11 @@ const useWebSocket = (url = null, options = {}) => {
    */
   const sendMessage = useCallback((type, data = {}) => {
     if (!type || typeof type !== 'string') {
-      console.error('[useWebSocket] Invalid message type:', type);
+      logger.error('websocket_invalid_message_type', {
+        type: typeof type,
+        value: type,
+        module: 'useWebSocket'
+      });
       return false;
     }
 
@@ -319,15 +401,26 @@ const useWebSocket = (url = null, options = {}) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       try {
         ws.send(JSON.stringify(message));
-        console.log('[useWebSocket] Message sent:', type);
+        logger.debug('websocket_message_sent', {
+          messageType: type,
+          module: 'useWebSocket'
+        });
         return true;
       } catch (error) {
-        console.error('[useWebSocket] Failed to send message:', error);
+        logger.error('websocket_send_failed', {
+          messageType: type,
+          error: error.message,
+          module: 'useWebSocket'
+        }, error);
         enqueueMessage(message);
         return false;
       }
     } else {
-      console.log('[useWebSocket] Not connected, queueing message:', type);
+      logger.debug('websocket_message_queued_not_connected', {
+        messageType: type,
+        readyState: ws?.readyState,
+        module: 'useWebSocket'
+      });
       enqueueMessage(message);
       return false;
     }
@@ -338,7 +431,10 @@ const useWebSocket = (url = null, options = {}) => {
    */
   const onMessage = useCallback((callback) => {
     if (typeof callback !== 'function') {
-      console.error('[useWebSocket] onMessage callback must be a function');
+      logger.error('websocket_invalid_callback', {
+        callbackType: typeof callback,
+        module: 'useWebSocket'
+      });
       return () => {};
     }
 
@@ -354,7 +450,9 @@ const useWebSocket = (url = null, options = {}) => {
    * Reconnect WebSocket
    */
   const reconnect = useCallback(() => {
-    console.log('[useWebSocket] Manual reconnect requested');
+    logger.info('websocket_manual_reconnect', {
+      module: 'useWebSocket'
+    });
     reconnectAttemptsRef.current = 0;
     disconnect();
 
@@ -385,36 +483,57 @@ const useWebSocket = (url = null, options = {}) => {
   useEffect(() => {
     // Cancel any pending cleanup from previous mount cycle
     if (cleanupTimeoutRef.current) {
-      console.log('[useWebSocket] Canceling pending cleanup from previous mount');
+      logger.debug('websocket_cancel_cleanup', {
+        reason: 'previous_mount',
+        module: 'useWebSocket'
+      });
       clearTimeout(cleanupTimeoutRef.current);
       cleanupTimeoutRef.current = null;
     }
 
     // Skip if already initialized (handles React StrictMode double-mount)
     if (isMountedRef.current && wsRef.current) {
-      console.log('[useWebSocket] Already initialized, skipping');
+      logger.debug('websocket_already_initialized', {
+        strictMode: true,
+        module: 'useWebSocket'
+      });
       return;
     }
 
-    console.log('[useWebSocket] Initializing WebSocket');
+    logger.info('websocket_initializing', {
+      url: wsUrl,
+      autoConnect: config.autoConnect,
+      module: 'useWebSocket'
+    });
     isMountedRef.current = true;
 
     // Auto-connect if enabled
     if (config.autoConnect) {
-      console.log('[useWebSocket] Auto-connecting...');
+      logger.info('websocket_auto_connecting', {
+        url: wsUrl,
+        module: 'useWebSocket'
+      });
       connect().catch(error => {
-        console.error('[useWebSocket] Auto-connect failed:', error);
+        logger.error('websocket_auto_connect_failed', {
+          url: wsUrl,
+          errorMessage: error.message,
+          module: 'useWebSocket'
+        }, error);
         setLastError(error);
       });
     }
 
     // Cleanup on unmount (only on real unmount, not StrictMode double-mount)
     return () => {
-      console.log('[useWebSocket] Cleanup called');
+      logger.debug('websocket_cleanup_called', {
+        module: 'useWebSocket'
+      });
 
       // Use timeout to differentiate between StrictMode remount and real unmount
       cleanupTimeoutRef.current = setTimeout(() => {
-        console.log('[useWebSocket] Performing actual cleanup');
+        logger.info('websocket_cleanup_executing', {
+          module: 'useWebSocket'
+        });
         stopHeartbeat();
         clearReconnectTimer();
 
@@ -433,19 +552,31 @@ const useWebSocket = (url = null, options = {}) => {
    * Token refresh integration
    */
   useEffect(() => {
-    console.log('[useWebSocket] Setting up token refresh listener');
+    logger.debug('websocket_token_listener_setup', {
+      module: 'useWebSocket'
+    });
 
     const unsubscribe = onTokenRefresh(() => {
-      console.log('[useWebSocket] Token refreshed - reconnecting WebSocket');
+      logger.info('websocket_token_refreshed', {
+        willReconnect: !!wsRef.current,
+        module: 'useWebSocket'
+      });
 
       if (wsRef.current) {
         disconnect();
 
         // Wait 100ms for new cookies to be set
         setTimeout(() => {
-          console.log('[useWebSocket] Reconnecting with new tokens...');
+          logger.info('websocket_reconnecting_after_token_refresh', {
+            url: wsUrl,
+            module: 'useWebSocket'
+          });
           connect().catch(error => {
-            console.error('[useWebSocket] Reconnection after token refresh failed:', error);
+            logger.error('websocket_reconnect_after_token_failed', {
+              url: wsUrl,
+              errorMessage: error.message,
+              module: 'useWebSocket'
+            }, error);
             setLastError(error);
           });
         }, 100);
@@ -453,10 +584,12 @@ const useWebSocket = (url = null, options = {}) => {
     });
 
     return () => {
-      console.log('[useWebSocket] Cleaning up token refresh listener');
+      logger.debug('websocket_token_listener_cleanup', {
+        module: 'useWebSocket'
+      });
       unsubscribe();
     };
-  }, [disconnect, connect]);
+  }, [disconnect, connect, wsUrl]);
 
   // Return hook interface
   return {

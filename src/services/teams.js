@@ -13,7 +13,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Get all teams
@@ -58,7 +59,7 @@ export const getMyTeamPlayers = () => request('GET', '/teams/my');
  * @throws {APIError} 400 if validation fails, 403 if not admin
  */
 export const create = (players, config) => {
-  log.info(`Creating teams for ${players.length} players`);
+  logger.info(`Creating teams for ${players.length} players`);
   return request('POST', '/teams/create', { players, config });
 };
 
@@ -98,7 +99,7 @@ export const deleteTeam = (id) => request('DELETE', `/teams/${id}`);
  * @throws {APIError} 403 if not admin
  */
 export const reset = () => {
-  log.info('Resetting all teams');
+  logger.info('Resetting all teams');
   return request('DELETE', '/teams/reset');
 };
 
@@ -162,7 +163,7 @@ export const setCaptain = (teamId, userId) => request('PUT', `/teams/${teamId}/c
  * @throws {APIError} 400 if validation fails, 403 if not team leader, 409 if name exists
  */
 export const updateMyTeamName = (name) => {
-  log.info('Updating team name to:', name);
+  logger.info('Updating team name to:', name);
   return request('PUT', '/teams/my-team/name', { name });
 };
 
@@ -196,6 +197,6 @@ export const updateMyTeamName = (name) => {
  * @since 2025-11-21
  */
 export const getMyTeamProgress = () => {
-  log.info('Fetching team progress');
+  logger.info('Fetching team progress');
   return request('GET', '/teams/me/progress');
 };

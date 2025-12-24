@@ -15,8 +15,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { getConfig, resetRateLimitBulk, utils, getCurrentUser } from '../../services';
-import GenericSSEClient from '../../services/GenericSSEClient';
+import { useSSE } from '../../hooks/useSSE';
 import { buildApiUrl } from '../../config/apiConfig';
+import { logger } from '../../utils/logger';
 import './RateLimitCard.css';
 
 /**
@@ -30,9 +31,7 @@ const RateLimitCard = ({ user }) => {
     // Blocked IP list state
     const [blockedIPs, setBlockedIPs] = useState([]);
     const [selectedIPs, setSelectedIPs] = useState(new Set());
-    const [connectionStatus, setConnectionStatus] = useState('disconnected');
     const [lastUpdated, setLastUpdated] = useState(null);
-    const [sseClient, setSseClient] = useState(null);
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null);
     const [rateLimitConfig, setRateLimitConfig] = useState(null);
@@ -69,7 +68,10 @@ const RateLimitCard = ({ user }) => {
 
             setRateLimitConfig(config);
         } catch (error) {
-            console.error('Failed to load rate limit config:', error);
+            logger.error('rate_limit_config_load_failed', {
+                errorMessage: error.message,
+                module: 'RateLimitCard'
+            }, error);
             // Use default values if fetch fails
             setRateLimitConfig({
                 login: {
@@ -140,7 +142,11 @@ const RateLimitCard = ({ user }) => {
                 setSelectedIPs(new Set(failedIPs));
             }
         } catch (error) {
-            console.error('Error resetting IPs:', error);
+            logger.error('rate_limit_reset_ips_failed', {
+                errorMessage: error.message,
+                selectedCount: selectedIPs.size,
+                module: 'RateLimitCard'
+            }, error);
             // Handle API error response
             utils.handleError(error, showNotification);
         } finally {
@@ -174,80 +180,94 @@ const RateLimitCard = ({ user }) => {
     };
 
     /**
+     * Handle SSE message events
+     */
+    const handleSSEMessage = useCallback((eventType, data) => {
+        switch (eventType) {
+            case 'blocked_ips_update':
+                logger.debug('rate_limit_blocked_ips_update', {
+                    blockedIPsCount: data.blocked_ips.length,
+                    module: 'RateLimitCard'
+                });
+                setBlockedIPs(data.blocked_ips);
+                setLastUpdated(new Date(data.timestamp));
+                break;
+
+            case 'heartbeat':
+                // PERF: Don't log heartbeats - they happen frequently
+                break;
+
+            default:
+                logger.warn('rate_limit_unknown_sse_event', {
+                    eventType,
+                    module: 'RateLimitCard'
+                });
+        }
+    }, []);
+
+    /**
+     * Handle SSE connection established
+     */
+    const handleSSEConnect = useCallback(() => {
+        logger.info('rate_limit_sse_connected', {
+            module: 'RateLimitCard'
+        });
+    }, []);
+
+    /**
+     * Handle SSE disconnection
+     */
+    const handleSSEDisconnect = useCallback(() => {
+        logger.info('rate_limit_sse_disconnected', {
+            module: 'RateLimitCard'
+        });
+    }, []);
+
+    /**
+     * Handle SSE errors
+     */
+    const handleSSEError = useCallback((errorData) => {
+        logger.error('rate_limit_sse_error', {
+            errorMessage: errorData.message,
+            module: 'RateLimitCard'
+        });
+        if (errorData.message && errorData.message !== 'Connection lost') {
+            showNotification('Failed to retrieve blocked IPs', 'error');
+        }
+    }, []);
+
+    // Load rate limit config on mount
+    useEffect(() => {
+        loadRateLimitConfig();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Connect to SSE for real-time blocked IPs updates
+    const { isConnected, reconnect } = useSSE({
+        endpoint: buildApiUrl('admin/blocked-ips/stream'),
+        eventTypes: ['blocked_ips_update', 'heartbeat', 'error'],
+        onMessage: handleSSEMessage,
+        onConnect: handleSSEConnect,
+        onDisconnect: handleSSEDisconnect,
+        onError: handleSSEError,
+        maxReconnectAttempts: 5,
+        reconnectDelay: 1000,
+        maxReconnectDelay: 30000,
+        name: 'RateLimitSSE'
+    });
+
+    /**
      * Handle manual reconnect
      *
-     * Disconnects and reconnects the SSE client.
+     * Triggers manual reconnection of the SSE stream.
      * Useful when connection is lost and automatic reconnection failed.
      */
     const handleManualReconnect = () => {
-        if (sseClient) {
-            console.log('[RateLimitCard] Manual reconnect requested');
-            setConnectionStatus('connecting');
-
-            // Disconnect and reconnect
-            sseClient.disconnect();
-            setTimeout(() => {
-                sseClient.connect();
-            }, 100);
-        }
+        logger.info('rate_limit_manual_reconnect', {
+            module: 'RateLimitCard'
+        });
+        reconnect();
     };
-
-    // Connect to SSE when component mounts, disconnect on unmount
-    useEffect(() => {
-        // Load rate limit configuration
-        loadRateLimitConfig();
-
-        // Create SSE client for blocked IPs
-        const client = new GenericSSEClient({
-            endpoint: buildApiUrl('admin/blocked-ips/stream'),
-            eventTypes: ['blocked_ips_update', 'heartbeat', 'error'],
-            maxReconnectAttempts: 5,
-            reconnectDelay: 1000,
-            maxReconnectDelay: 30000,
-            name: 'RateLimitSSE'
-        });
-
-        // Setup event listeners
-        client.on('connected', () => {
-            console.log('[RateLimitCard] SSE connected');
-            setConnectionStatus('connected');
-        });
-
-        client.on('disconnected', () => {
-            console.log('[RateLimitCard] SSE disconnected');
-            setConnectionStatus('disconnected');
-        });
-
-        client.on('blocked_ips_update', (data) => {
-            console.log('[RateLimitCard] Blocked IPs update:', data.blocked_ips.length, 'IPs');
-            setBlockedIPs(data.blocked_ips);
-            setLastUpdated(new Date(data.timestamp));
-            setConnectionStatus('connected');
-        });
-
-        client.on('heartbeat', () => {
-            console.log('[RateLimitCard] Heartbeat received');
-        });
-
-        client.on('error', (error) => {
-            console.error('[RateLimitCard] SSE error:', error);
-            setConnectionStatus('disconnected');
-            if (error.message && error.message !== 'Connection lost') {
-                showNotification('Failed to retrieve blocked IPs', 'error');
-            }
-        });
-
-        // Connect
-        client.connect();
-        setSseClient(client);
-
-        // Cleanup on unmount
-        return () => {
-            console.log('[RateLimitCard] Component unmounting - disconnecting SSE');
-            client.disconnect();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Empty dependency array - only run once
 
     // Client-side countdown for ban TTL (updates every second between SSE updates)
     useEffect(() => {
@@ -291,14 +311,12 @@ const RateLimitCard = ({ user }) => {
                         </span>
 
                         {/* Connection Status */}
-                        <div className={`connection-status status-${connectionStatus}`}>
-                            {connectionStatus === 'connected' && '🟢 Live'}
-                            {connectionStatus === 'connecting' && '🟡 Connecting...'}
-                            {connectionStatus === 'disconnected' && '🔴 Disconnected'}
+                        <div className={`connection-status status-${isConnected ? 'connected' : 'disconnected'}`}>
+                            {isConnected ? '🟢 Live' : '🔴 Disconnected'}
                         </div>
 
                         {/* Manual reconnect button (only show if disconnected) */}
-                        {connectionStatus === 'disconnected' && (
+                        {!isConnected && (
                             <button
                                 className="btn-reconnect"
                                 onClick={handleManualReconnect}

@@ -15,6 +15,7 @@
 
 import React from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { logger } from '../../utils/logger';
 import './ChatToggleButton.css';
 
 /**
@@ -28,6 +29,20 @@ import './ChatToggleButton.css';
 const ChatToggleButton = ({ isOpen, onClick }) => {
   const { connectionStatus, getTotalUnreadCount } = useChat();
   const unreadCount = isOpen ? 0 : getTotalUnreadCount();
+
+  /**
+   * Handle toggle click with logging
+   */
+  const handleToggle = () => {
+    const action = isOpen ? 'closed' : 'opened';
+    logger.info('chat_widget_toggled', {
+      action,
+      connectionStatus,
+      unreadCount: getTotalUnreadCount(),
+      module: 'ChatToggleButton'
+    });
+    onClick();
+  };
 
   const getStatusColor = () => {
     switch (connectionStatus) {
@@ -50,7 +65,7 @@ const ChatToggleButton = ({ isOpen, onClick }) => {
   return (
     <button
       className={`chat-toggle-button ${isOpen ? 'open' : ''}`}
-      onClick={onClick}
+      onClick={handleToggle}
       aria-label={isOpen ? 'Close chat' : 'Open chat'}
       title="Smart Help Center"
     >

@@ -15,11 +15,12 @@
  * @since 2025-11-12
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { buildApiUrl } from '../../config/apiConfig';
 import NotificationCard from './NotificationCard';
 import NotificationFilters from './NotificationFilters';
 import { useNotifications } from '../../hooks/useNotifications';
+import { logger } from '../../utils/logger';
 import './NotificationsDashboard.css';
 
 /**
@@ -44,94 +45,6 @@ const NotificationsDashboard = ({ user }) => {
     // Reference to track if SSE is enabled
     const sseEnabledRef = useRef(false);
 
-    // SSE: Set up real-time notifications using hook (only for 'open' tab)
-    const { isConnected: sseConnected, disconnect: sseDisconnect } = useNotifications({
-        // Only connect when activeTab is 'open'
-        onNotification: activeTab === 'open' ? (notificationData) => {
-            console.log('[NotificationsDashboard] Received notification:', notificationData);
-
-            // Apply filters
-            if (!matchesFilters(notificationData)) {
-                console.log('[NotificationsDashboard] Notification filtered out');
-                return;
-            }
-
-            // Update or add notification with proper priority ordering
-            setNotifications(prevNotifications => {
-                const existingIndex = prevNotifications.findIndex(n => n.id === notificationData.id);
-
-                if (existingIndex >= 0) {
-                    // Update existing notification and re-sort
-                    const updated = [...prevNotifications];
-                    updated[existingIndex] = notificationData;
-                    return sortNotificationsByPriority(updated);
-                } else {
-                    // Add new notification and sort
-                    const updated = [...prevNotifications, notificationData];
-                    return sortNotificationsByPriority(updated);
-                }
-            });
-        } : undefined,
-        onConnect: () => {
-            console.log('[NotificationsDashboard] SSE connected');
-            setConnectionStatus('connected');
-            setError(null);
-            setLoading(false);
-            sseEnabledRef.current = true;
-        },
-        onDisconnect: () => {
-            console.log('[NotificationsDashboard] SSE disconnected');
-            setConnectionStatus('disconnected');
-            sseEnabledRef.current = false;
-        },
-        onError: (errorData) => {
-            console.error('[NotificationsDashboard] SSE error:', errorData);
-            setError(errorData.message || 'Connection error');
-            setLoading(false);
-        }
-    });
-
-    // Update connection status based on SSE state
-    useEffect(() => {
-        if (activeTab === 'open') {
-            setConnectionStatus(sseConnected ? 'connected' : 'connecting');
-        } else {
-            setConnectionStatus('disconnected');
-        }
-    }, [sseConnected, activeTab]);
-
-    // Handle tab changes and SSE connection
-    useEffect(() => {
-        if (activeTab === 'open') {
-            console.log('[NotificationsDashboard] Setting up SSE connection for open notifications');
-            setConnectionStatus('connecting');
-
-            // BUGFIX: Load initial data before SSE connects
-            // This ensures we start with a clean slate when switching tabs
-            loadNotifications().then(() => {
-                console.log('[NotificationsDashboard] Initial notifications loaded');
-            });
-        } else {
-            // Disconnect SSE for non-open tabs and use traditional API
-            if (sseEnabledRef.current) {
-                console.log('[NotificationsDashboard] Disconnecting SSE for non-open tab');
-                sseDisconnect();
-            }
-
-            // Load notifications via API for acknowledged/resolved tabs
-            loadNotifications();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab]);
-
-    // Reload when filters change (for non-SSE tabs)
-    useEffect(() => {
-        if (activeTab !== 'open') {
-            loadNotifications();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [priorityFilter, typeFilter, teamFilter]);
-
     /**
      * Sort notifications by priority, repeat count, and timestamp
      *
@@ -143,7 +56,7 @@ const NotificationsDashboard = ({ user }) => {
      * @param {Array} notifications - Array of notification objects
      * @returns {Array} Sorted array
      */
-    function sortNotificationsByPriority(notifications) {
+    const sortNotificationsByPriority = useCallback((notifications) => {
         const priorityOrder = {
             'urgent': 3,
             'high': 2,
@@ -168,14 +81,14 @@ const NotificationsDashboard = ({ user }) => {
             const dateB = new Date(b.last_seen_at);
             return dateB - dateA;
         });
-    }
+    }, []);
 
     /**
      * Check if notification matches current filters
      * @param {Object} notification - Notification object
      * @returns {boolean} True if matches filters
      */
-    function matchesFilters(notification) {
+    const matchesFilters = useCallback((notification) => {
         // Check priority filter
         if (priorityFilter && notification.priority !== priorityFilter) {
             return false;
@@ -192,7 +105,127 @@ const NotificationsDashboard = ({ user }) => {
         }
 
         return true;
-    }
+    }, [priorityFilter, typeFilter, teamFilter]);
+
+    // SSE event handlers (wrapped in useCallback to prevent reconnection loops)
+    const handleNotification = useCallback((notificationData) => {
+        logger.debug('notifications_dashboard_received', {
+            notificationId: notificationData.id,
+            priority: notificationData.priority,
+            escalationType: notificationData.escalation_type,
+            module: 'NotificationsDashboard'
+        });
+
+        // Apply filters
+        if (!matchesFilters(notificationData)) {
+            logger.debug('notifications_dashboard_filtered_out', {
+                notificationId: notificationData.id,
+                module: 'NotificationsDashboard'
+            });
+            return;
+        }
+
+        // Update or add notification with proper priority ordering
+        setNotifications(prevNotifications => {
+            const existingIndex = prevNotifications.findIndex(n => n.id === notificationData.id);
+
+            if (existingIndex >= 0) {
+                // Update existing notification and re-sort
+                const updated = [...prevNotifications];
+                updated[existingIndex] = notificationData;
+                return sortNotificationsByPriority(updated);
+            } else {
+                // Add new notification and sort
+                const updated = [...prevNotifications, notificationData];
+                return sortNotificationsByPriority(updated);
+            }
+        });
+    }, [matchesFilters, sortNotificationsByPriority]);
+
+    const handleSSEConnect = useCallback(() => {
+        logger.info('notifications_dashboard_sse_connected', {
+            module: 'NotificationsDashboard'
+        });
+        setConnectionStatus('connected');
+        setError(null);
+        setLoading(false);
+        sseEnabledRef.current = true;
+    }, []);
+
+    const handleSSEDisconnect = useCallback(() => {
+        logger.info('notifications_dashboard_sse_disconnected', {
+            module: 'NotificationsDashboard'
+        });
+        setConnectionStatus('disconnected');
+        sseEnabledRef.current = false;
+    }, []);
+
+    const handleSSEError = useCallback((errorData) => {
+        logger.error('notifications_dashboard_sse_error', {
+            errorMessage: errorData.message,
+            module: 'NotificationsDashboard'
+        });
+        setError(errorData.message || 'Connection error');
+        setLoading(false);
+    }, []);
+
+    // SSE: Set up real-time notifications using hook (only for 'open' tab)
+    const { isConnected: sseConnected, disconnect: sseDisconnect } = useNotifications({
+        // Only connect when activeTab is 'open'
+        onNotification: activeTab === 'open' ? handleNotification : undefined,
+        onConnect: handleSSEConnect,
+        onDisconnect: handleSSEDisconnect,
+        onError: handleSSEError
+    });
+
+    // Update connection status based on SSE state
+    useEffect(() => {
+        if (activeTab === 'open') {
+            setConnectionStatus(sseConnected ? 'connected' : 'connecting');
+        } else {
+            setConnectionStatus('disconnected');
+        }
+    }, [sseConnected, activeTab]);
+
+    // Handle tab changes and SSE connection
+    useEffect(() => {
+        if (activeTab === 'open') {
+            logger.debug('notifications_dashboard_sse_setup', {
+                activeTab,
+                module: 'NotificationsDashboard'
+            });
+            setConnectionStatus('connecting');
+
+            // BUGFIX: Load initial data before SSE connects
+            // This ensures we start with a clean slate when switching tabs
+            loadNotifications().then(() => {
+                logger.debug('notifications_dashboard_initial_loaded', {
+                    module: 'NotificationsDashboard'
+                });
+            });
+        } else {
+            // Disconnect SSE for non-open tabs and use traditional API
+            if (sseEnabledRef.current) {
+                logger.debug('notifications_dashboard_sse_disconnect', {
+                    activeTab,
+                    module: 'NotificationsDashboard'
+                });
+                sseDisconnect();
+            }
+
+            // Load notifications via API for acknowledged/resolved tabs
+            loadNotifications();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
+
+    // Reload when filters change (for non-SSE tabs)
+    useEffect(() => {
+        if (activeTab !== 'open') {
+            loadNotifications();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [priorityFilter, typeFilter, teamFilter]);
 
     /**
      * Load notifications from API with current filters (for non-SSE tabs)
@@ -238,7 +271,11 @@ const NotificationsDashboard = ({ user }) => {
             setNotifications(data || []);
 
         } catch (err) {
-            console.error('Failed to load notifications:', err);
+            logger.error('notifications_dashboard_load_failed', {
+                activeTab,
+                errorMessage: err.message,
+                module: 'NotificationsDashboard'
+            }, err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -268,7 +305,11 @@ const NotificationsDashboard = ({ user }) => {
             await loadNotifications();
 
         } catch (err) {
-            console.error('Failed to resolve notification:', err);
+            logger.error('notifications_dashboard_resolve_failed', {
+                notificationId,
+                errorMessage: err.message,
+                module: 'NotificationsDashboard'
+            }, err);
             alert('Failed to resolve notification: ' + err.message);
         }
     }
@@ -296,7 +337,11 @@ const NotificationsDashboard = ({ user }) => {
             await loadNotifications();
 
         } catch (err) {
-            console.error('Failed to acknowledge notification:', err);
+            logger.error('notifications_dashboard_acknowledge_failed', {
+                notificationId,
+                errorMessage: err.message,
+                module: 'NotificationsDashboard'
+            }, err);
             alert('Failed to acknowledge notification: ' + err.message);
         }
     }
@@ -338,11 +383,18 @@ const NotificationsDashboard = ({ user }) => {
             }
 
             const result = await response.json();
-            console.log('[NotificationsDashboard] Test notification created:', result);
+            logger.debug('notifications_dashboard_test_created', {
+                notificationId: result.id,
+                priority: result.priority,
+                module: 'NotificationsDashboard'
+            });
             alert(`Test notification created! Priority: ${result.priority}`);
 
         } catch (err) {
-            console.error('Failed to create test notification:', err);
+            logger.error('notifications_dashboard_test_create_failed', {
+                errorMessage: err.message,
+                module: 'NotificationsDashboard'
+            }, err);
             alert('Failed to create test notification: ' + err.message);
         }
     }

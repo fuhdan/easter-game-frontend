@@ -26,6 +26,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onTokenRefresh } from '../services/api';
+import { logger } from '../utils/logger';
 
 /**
  * Generic SSE hook
@@ -79,36 +80,82 @@ export const useSSE = (options = {}) => {
   const currentReconnectDelayRef = useRef(reconnectDelay);
   const unsubscribeTokenRefreshRef = useRef(null);
 
+  // CRITICAL FIX: Store callbacks and arrays in refs to prevent reconnection loops
+  // When callbacks/arrays change, we don't want to trigger reconnections
+  const onMessageRef = useRef(onMessage);
+  const onErrorRef = useRef(onError);
+  const onConnectRef = useRef(onConnect);
+  const onDisconnectRef = useRef(onDisconnect);
+  const eventTypesRef = useRef(eventTypes);
+
+  // Update refs when callbacks/arrays change (without triggering reconnections)
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    onConnectRef.current = onConnect;
+  }, [onConnect]);
+
+  useEffect(() => {
+    onDisconnectRef.current = onDisconnect;
+  }, [onDisconnect]);
+
+  useEffect(() => {
+    eventTypesRef.current = eventTypes;
+  }, [eventTypes]);
+
   /**
    * Handle connection opened
    */
   const handleOpen = useCallback(() => {
-    console.log(`[${name}] Connected successfully`);
+    logger.info('sse_connected', {
+      endpoint,
+      hookName: name,
+      module: 'useSSE'
+    });
     setIsConnected(true);
     setError(null);
     reconnectAttemptsRef.current = 0;
     currentReconnectDelayRef.current = reconnectDelay;
-    onConnect?.();
-  }, [name, reconnectDelay, onConnect]);
+    onConnectRef.current?.();
+  }, [name, reconnectDelay, endpoint]);
 
   /**
    * Setup event listeners for all configured event types
    */
   const setupEventListeners = useCallback((eventSource) => {
-    eventTypes.forEach(eventType => {
+    eventTypesRef.current.forEach(eventType => {
       eventSource.addEventListener(eventType, (event) => {
         try {
           const parsedData = JSON.parse(event.data);
-          const eventLabel = eventType.charAt(0).toUpperCase() + eventType.slice(1);
-          console.log(`[${name}] ${eventLabel}:`, parsedData);
+
+          // PERF: Don't log heartbeats - they happen frequently
+          if (eventType !== 'heartbeat') {
+            logger.debug('sse_message_received', {
+              eventType,
+              dataSize: event.data?.length,
+              hookName: name,
+              module: 'useSSE'
+            });
+          }
 
           setData({ type: eventType, payload: parsedData });
-          onMessage?.(eventType, parsedData);
+          onMessageRef.current?.(eventType, parsedData);
         } catch (err) {
-          console.error(`[${name}] Failed to parse ${eventType}:`, err);
+          logger.error('sse_parse_error', {
+            eventType,
+            errorMessage: err.message,
+            hookName: name,
+            module: 'useSSE'
+          }, err);
           const errorData = { message: `Failed to parse ${eventType}`, error: err };
           setError(errorData);
-          onError?.(errorData);
+          onErrorRef.current?.(errorData);
         }
       });
     });
@@ -118,15 +165,19 @@ export const useSSE = (options = {}) => {
       try {
         if (event.data) {
           const errorData = JSON.parse(event.data);
-          console.error(`[${name}] Server error:`, errorData.message);
+          logger.error('sse_server_error', {
+            errorMessage: errorData.message,
+            hookName: name,
+            module: 'useSSE'
+          });
           setError(errorData);
-          onError?.(errorData);
+          onErrorRef.current?.(errorData);
         }
       } catch (err) {
         // Not a JSON error event, ignore
       }
     });
-  }, [eventTypes, name, onMessage, onError]);
+  }, [name]);
 
   /**
    * Attempt to reconnect with exponential backoff
@@ -134,19 +185,28 @@ export const useSSE = (options = {}) => {
   const reconnect = useCallback(() => {
     // Don't reconnect if intentionally closed
     if (isIntentionalCloseRef.current) {
-      console.log(`[${name}] Not reconnecting (intentional close)`);
+      logger.debug('sse_skip_reconnect', {
+        reason: 'intentional_close',
+        hookName: name,
+        module: 'useSSE'
+      });
       return;
     }
 
     // Check if max attempts reached
     if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-      console.error(`[${name}] Max reconnection attempts reached`);
+      logger.error('sse_max_reconnect_attempts', {
+        attempts: reconnectAttemptsRef.current,
+        maxAttempts: maxReconnectAttempts,
+        hookName: name,
+        module: 'useSSE'
+      });
       const errorData = {
         message: 'Failed to reconnect after maximum attempts',
         attempts: reconnectAttemptsRef.current
       };
       setError(errorData);
-      onError?.(errorData);
+      onErrorRef.current?.(errorData);
       return;
     }
 
@@ -158,21 +218,33 @@ export const useSSE = (options = {}) => {
       maxReconnectDelay
     );
 
-    console.log(
-      `[${name}] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-    );
+    logger.info('sse_reconnect_scheduled', {
+      delayMs: delay,
+      attempt: reconnectAttemptsRef.current,
+      maxAttempts: maxReconnectAttempts,
+      hookName: name,
+      module: 'useSSE'
+    });
 
     reconnectTimeoutRef.current = setTimeout(() => {
-      console.log(`[${name}] Attempting reconnection...`);
+      logger.info('sse_reconnect_attempting', {
+        attempt: reconnectAttemptsRef.current,
+        hookName: name,
+        module: 'useSSE'
+      });
       connect();
     }, delay);
-  }, [name, maxReconnectAttempts, maxReconnectDelay, onError]);
+  }, [name, maxReconnectAttempts, maxReconnectDelay]);
 
   /**
    * Handle connection error
    */
   const handleError = useCallback((event) => {
-    console.error(`[${name}] Connection error:`, event);
+    logger.error('sse_connection_error', {
+      readyState: eventSourceRef.current?.readyState,
+      hookName: name,
+      module: 'useSSE'
+    });
 
     // Mark as disconnected
     setIsConnected(false);
@@ -186,19 +258,23 @@ export const useSSE = (options = {}) => {
     // Emit error event
     const errorData = { message: 'Connection lost', event };
     setError(errorData);
-    onError?.(errorData);
+    onErrorRef.current?.(errorData);
 
     // Only reconnect if not intentionally closed
     if (!isIntentionalCloseRef.current) {
       reconnect();
     }
-  }, [name, onError, reconnect]);
+  }, [name, reconnect]);
 
   /**
    * Handle token refresh
    */
   const handleTokenRefresh = useCallback(() => {
-    console.log(`[${name}] Token refreshed - reconnecting`);
+    logger.info('sse_token_refreshed', {
+      hookName: name,
+      willReconnect: true,
+      module: 'useSSE'
+    });
 
     // Disconnect current connection
     if (eventSourceRef.current) {
@@ -215,17 +291,27 @@ export const useSSE = (options = {}) => {
    */
   const connect = useCallback(() => {
     if (!endpoint) {
-      console.warn(`[${name}] No endpoint provided, skipping connection`);
+      logger.warn('sse_no_endpoint', {
+        hookName: name,
+        module: 'useSSE'
+      });
       return;
     }
 
     if (eventSourceRef.current) {
-      console.log(`[${name}] Already connected`);
+      logger.debug('sse_already_connected', {
+        hookName: name,
+        module: 'useSSE'
+      });
       return;
     }
 
     try {
-      console.log(`[${name}] Connecting to ${endpoint}`);
+      logger.info('sse_connecting', {
+        endpoint,
+        hookName: name,
+        module: 'useSSE'
+      });
 
       // SECURITY: Create EventSource connection
       // NOTE: EventSource automatically sends cookies (credentials: 'include' by default)
@@ -249,19 +335,27 @@ export const useSSE = (options = {}) => {
       isIntentionalCloseRef.current = false;
 
     } catch (err) {
-      console.error(`[${name}] Connection error:`, err);
+      logger.error('sse_connect_error', {
+        endpoint,
+        errorMessage: err.message,
+        hookName: name,
+        module: 'useSSE'
+      }, err);
       const errorData = { message: 'Failed to connect', error: err };
       setError(errorData);
-      onError?.(errorData);
+      onErrorRef.current?.(errorData);
       reconnect();
     }
-  }, [endpoint, name, handleOpen, handleError, setupEventListeners, handleTokenRefresh, onError, reconnect]);
+  }, [endpoint, name, handleOpen, handleError, setupEventListeners, handleTokenRefresh, reconnect]);
 
   /**
    * Disconnect from SSE endpoint
    */
   const disconnect = useCallback(() => {
-    console.log(`[${name}] Disconnecting`);
+    logger.info('sse_disconnecting', {
+      hookName: name,
+      module: 'useSSE'
+    });
     isIntentionalCloseRef.current = true;
 
     // Clear reconnect timeout
@@ -283,8 +377,8 @@ export const useSSE = (options = {}) => {
     }
 
     setIsConnected(false);
-    onDisconnect?.();
-  }, [name, onDisconnect]);
+    onDisconnectRef.current?.();
+  }, [name]);
 
   /**
    * Manual reconnect function

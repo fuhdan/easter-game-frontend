@@ -20,6 +20,7 @@ import api from '../../services/api';
 import ProviderSelector from './ProviderSelector';
 import ModelSelector from './ModelSelector';
 import OllamaModelManager from './OllamaModelManager';
+import { logger } from '../../utils/logger';
 import './AISettings.css';
 
 const AISettings = () => {
@@ -45,7 +46,10 @@ const AISettings = () => {
       setActiveProvider(response.active_provider || '');
       setActiveModel(response.active_model || '');
     } catch (err) {
-      console.error('Failed to load providers:', err);
+      logger.error('ai_providers_load_failed', {
+        errorMessage: err.message,
+        module: 'AISettings'
+      }, err);
       setError('Failed to load AI providers. Please check your permissions.');
     } finally {
       setLoading(false);
@@ -72,7 +76,11 @@ const AISettings = () => {
         await loadProviders();
       }
     } catch (err) {
-      console.error('Failed to change provider:', err);
+      logger.error('ai_provider_change_failed', {
+        providerName,
+        errorMessage: err.message,
+        module: 'AISettings'
+      }, err);
       setError(`Failed to change provider: ${err.message || 'Unknown error'}`);
     } finally {
       setSaving(false);
@@ -89,7 +97,11 @@ const AISettings = () => {
         setActiveModel(modelName);
       }
     } catch (err) {
-      console.error('Failed to change model:', err);
+      logger.error('ai_model_change_failed', {
+        modelName,
+        errorMessage: err.message,
+        module: 'AISettings'
+      }, err);
       setError(`Failed to change model: ${err.message || 'Unknown error'}`);
     } finally {
       setSaving(false);

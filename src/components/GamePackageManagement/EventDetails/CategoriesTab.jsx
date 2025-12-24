@@ -12,6 +12,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../../utils/logger';
 import { createCategory, updateCategory, deleteCategory } from '../../../services';
 import CategoryModal from '../Modals/CategoryModal';
 
@@ -54,16 +55,16 @@ function CategoriesTab({ categories, onCategoriesChanged }) {
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, categoryFormData);
-        console.log(`✅ Category updated: ${editingCategory.id}`);
+        logger.info('category_updated', { categoryId: editingCategory.id, module: 'CategoriesTab' });
       } else {
         await createCategory(categoryFormData);
-        console.log(`✅ Category created`);
+        logger.info('category_created', { categoryName: categoryFormData.name, module: 'CategoriesTab' });
       }
 
       setShowCategoryModal(false);
       if (onCategoriesChanged) onCategoriesChanged();
     } catch (error) {
-      console.error('Failed to save category:', error);
+      logger.error('category_save_failed', { isUpdate: !!editingCategory, errorMessage: error.message, module: 'CategoriesTab' }, error);
       alert(`❌ Failed to save category: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -75,10 +76,10 @@ function CategoriesTab({ categories, onCategoriesChanged }) {
 
     try {
       await deleteCategory(category.id);
-      console.log(`✅ Category deleted: ${category.id}`);
+      logger.info('category_deleted', { categoryId: category.id, module: 'CategoriesTab' });
       if (onCategoriesChanged) onCategoriesChanged();
     } catch (error) {
-      console.error('Failed to delete category:', error);
+      logger.error('category_delete_failed', { categoryId: category.id, errorMessage: error.message, module: 'CategoriesTab' }, error);
       alert(`❌ Failed to delete category: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -86,10 +87,10 @@ function CategoriesTab({ categories, onCategoriesChanged }) {
   const _handleToggleCategoryActive = async (category) => {
     try {
       await updateCategory(category.id, { is_active: !category.is_active });
-      console.log(`✅ Category ${category.is_active ? 'deactivated' : 'activated'}: ${category.id}`);
+      logger.info('category_toggled', { categoryId: category.id, newStatus: !category.is_active, module: 'CategoriesTab' });
       if (onCategoriesChanged) onCategoriesChanged();
     } catch (error) {
-      console.error('Failed to toggle category:', error);
+      logger.error('category_toggle_failed', { categoryId: category.id, errorMessage: error.message, module: 'CategoriesTab' }, error);
       alert('❌ Failed to update category');
     }
   };

@@ -25,6 +25,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import { getMyTeamProgress } from '../../services/teams';
 
 const TeamProgress = ({ user, teamId, eventId, currentGameId, showPoints = true, refreshKey }) => {
@@ -52,7 +53,7 @@ const TeamProgress = ({ user, teamId, eventId, currentGameId, showPoints = true,
       const data = await getMyTeamProgress();
       setProgressData(data);
     } catch (err) {
-      console.error('Error fetching team progress:', err);
+      logger.error('Error fetching team progress:', err);
       setError(
         err.response?.status === 403
           ? 'You must be assigned to a team to view progress'

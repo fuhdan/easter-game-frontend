@@ -19,6 +19,7 @@
  */
 
 import React from 'react';
+import { logger } from '../../utils/logger';
 import './Navigation.css';
 
 /**
@@ -38,6 +39,19 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
         { id: 'profile', label: '👤 Profile' }
     ];
 
+    /**
+     * Handle tab change with logging
+     */
+    const handleTabChange = (newTab) => {
+        logger.info('navigation_tab_changed', {
+            previousTab: activeTab,
+            newTab,
+            userRole: user.role,
+            module: 'Navigation'
+        });
+        onTabChange(newTab);
+    };
+
     return (
         <nav className="nav-tabs">
 
@@ -45,7 +59,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
             {(user.role === 'admin' || user.role === 'content_admin' || user.role === 'system_admin') && (
                 <button
                     className={`nav-tab ${activeTab === 'system_admin' ? 'active' : ''}`}
-                    onClick={() => onTabChange('system_admin')}
+                    onClick={() => handleTabChange('system_admin')}
                 >
                 {tabs[0].label}  {/* ✅ Label will show */}
                 </button>
@@ -55,7 +69,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
             {(user.role === 'admin' || user.role === 'game_admin') && (
                 <button
                 className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => onTabChange('dashboard')}
+                onClick={() => handleTabChange('dashboard')}
                 >
                 {tabs[1].label}  {/* ✅ Label will show */}
                 </button>
@@ -65,7 +79,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
             {(user.role === 'admin' || user.role === 'game_admin') && (
                 <button
                 className={`nav-tab ${activeTab === 'notifications' ? 'active' : ''}`}
-                onClick={() => onTabChange('notifications')}
+                onClick={() => handleTabChange('notifications')}
                 >
                 {tabs[2].label}  {/* ✅ Label will show */}
                 </button>
@@ -75,7 +89,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
             {(user.role === 'admin' || user.role === 'game_admin' || user.role === 'team_captain') && (
                 <button
                     className={`nav-tab ${activeTab === 'team_management' ? 'active' : ''}`}
-                    onClick={() => onTabChange('team_management')}
+                    onClick={() => handleTabChange('team_management')}
                 >
                     {tabs[3].label}  {/* ✅ Label will show */}
                 </button>
@@ -85,7 +99,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
             {(user.role === 'team_captain' || user.role === 'player' || user.role === 'admin') && (
                 <button
                     className={`nav-tab ${activeTab === 'game' ? 'active' : ''}`}
-                    onClick={() => onTabChange('game')}
+                    onClick={() => handleTabChange('game')}
                 >
                     {tabs[4].label}  {/* ✅ Label will show */}
                 </button>
@@ -93,7 +107,7 @@ const Navigation = ({ activeTab, onTabChange, user }) => {
 
             <button
                 className={`nav-tab ${activeTab === 'profile' ? 'active' : ''}`}
-                onClick={() => onTabChange('profile')}
+                onClick={() => handleTabChange('profile')}
             >
                 {tabs[5].label}  {/* ✅ Label will show */}
             </button>

@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { logger } from '../../utils/logger';
 import './ModelSelector.css';
 
 const ModelSelector = ({ provider, activeModel, onSelect, disabled }) => {
@@ -40,7 +41,10 @@ const ModelSelector = ({ provider, activeModel, onSelect, disabled }) => {
         }));
         setModels(transformedModels);
       } catch (err) {
-        console.error('Failed to load Ollama models:', err);
+        logger.error('ollama_models_load_failed', {
+          errorMessage: err.message,
+          module: 'ModelSelector'
+        }, err);
         setModels([]);
       } finally {
         setLoading(false);

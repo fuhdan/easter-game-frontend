@@ -17,6 +17,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { logger } from '../../utils/logger';
 import './AdminNotificationsView.css';
 
 /**
@@ -28,9 +29,21 @@ const AdminNotificationsView = () => {
   const { adminNotifications } = useChat();
   const messageListRef = useRef(null);
 
+  // Log when view is opened
+  useEffect(() => {
+    logger.info('admin_notifications_view_opened', {
+      notificationCount: adminNotifications.length,
+      module: 'AdminNotificationsView'
+    });
+  }, []); // Only log on mount
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messageListRef.current) {
+    if (messageListRef.current && adminNotifications.length > 0) {
+      logger.debug('admin_notifications_auto_scrolled', {
+        notificationCount: adminNotifications.length,
+        module: 'AdminNotificationsView'
+      });
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
   }, [adminNotifications]);

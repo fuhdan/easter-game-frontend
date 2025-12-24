@@ -173,6 +173,12 @@
   color: #333;
 }
 
+/* TEAM-BASED AI CHAT: User sender name styling */
+.message-sender.user-sender {
+  color: var(--primary-blue);
+  font-weight: 700;
+}
+
 /* Message Content */
 .message-content {
   line-height: 1.5;

@@ -15,6 +15,7 @@
 
 import React from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { logger } from '../../utils/logger';
 import './TeamMemberList.css';
 
 /**
@@ -41,10 +42,43 @@ const TeamMemberList = () => {
   const teamName = user?.team_name || 'Team';
 
   const handleHeaderClick = () => {
+    logger.info('team_broadcast_selected', {
+      previousSelection: selectedTeamMember?.id || selectedAdminContact?.id || 'admin_notifications',
+      module: 'TeamMemberList'
+    });
     // Clear selection to show team broadcast
     selectTeamMember(null);
     clearAdminNotifications();
     selectAdminContact(null);
+  };
+
+  const handleTeamMemberClick = (member) => {
+    logger.info('team_member_selected', {
+      memberId: member.id,
+      memberUsername: member.username,
+      memberRole: member.role,
+      module: 'TeamMemberList'
+    });
+    selectTeamMember(member);
+  };
+
+  const handleAdminNotificationsClick = () => {
+    logger.info('admin_notifications_selected', {
+      notificationCount: adminNotifications.length,
+      unreadCount: unreadCounts.adminNotifications,
+      module: 'TeamMemberList'
+    });
+    selectAdminNotifications();
+  };
+
+  const handleAdminContactClick = (admin) => {
+    logger.info('admin_contact_selected', {
+      adminId: admin.id,
+      adminUsername: admin.username,
+      unreadCount: unreadCounts.private[admin.id] || 0,
+      module: 'TeamMemberList'
+    });
+    selectAdminContact(admin);
   };
 
   // Check if header should be highlighted (viewing team broadcast)
@@ -77,7 +111,7 @@ const TeamMemberList = () => {
             <div
               key={member.id}
               className={`team-member-item ${selectedTeamMember?.id === member.id ? 'selected' : ''}`}
-              onClick={() => selectTeamMember(member)}
+              onClick={() => handleTeamMemberClick(member)}
             >
               <div className="team-member-info">
                 <div className="team-member-name">{member.display_name}</div>
@@ -95,7 +129,7 @@ const TeamMemberList = () => {
       <div className="admin-notifications-section">
         <div
           className={`admin-notifications-header ${showingAdminNotifications ? 'selected' : ''}`}
-          onClick={selectAdminNotifications}
+          onClick={handleAdminNotificationsClick}
           style={{ cursor: 'pointer' }}
         >
           <span className="header-icon">👑</span>
@@ -115,7 +149,7 @@ const TeamMemberList = () => {
               <div
                 key={admin.id}
                 className={`admin-contact-item ${selectedAdminContact?.id === admin.id ? 'selected' : ''}`}
-                onClick={() => selectAdminContact(admin)}
+                onClick={() => handleAdminContactClick(admin)}
               >
                 <div className="admin-contact-info">
                   <div className="admin-contact-name">{admin.display_name || admin.username}</div>

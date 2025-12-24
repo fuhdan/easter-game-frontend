@@ -15,6 +15,7 @@
 
 import { useState } from 'react';
 import { getEvent, updateEvent, deleteEvent } from '../../../services';
+import { logger } from '../../../utils/logger';
 
 /**
  * Custom hook for event operations
@@ -51,6 +52,7 @@ export function useEventOperations(loadAllData) {
     author: '',
     is_active: true,
     show_points: true,
+    show_dependencies: true,
     image_path: '',
     image_data: ''
   });
@@ -69,7 +71,7 @@ export function useEventOperations(loadAllData) {
     try {
       // Fetch full event details from the API (includes story_html and image_data)
       const fullEventData = await getEvent(event.id);
-      console.log('handleViewEvent - full event data:', fullEventData);
+      logger.debug('event_full_data_loaded', { eventId: event.id, hasStoryHtml: !!fullEventData.story_html, module: 'useEventOperations' });
 
       setSelectedEvent(fullEventData);
       setViewMode('view');
@@ -84,11 +86,12 @@ export function useEventOperations(loadAllData) {
         author: fullEventData.author || '',
         is_active: fullEventData.is_active,
         show_points: fullEventData.show_points !== false,
+        show_dependencies: fullEventData.show_dependencies !== false,
         image_path: fullEventData.image_path || '',
         image_data: fullEventData.image_data || ''
       });
     } catch (error) {
-      console.error('Failed to load event details:', error);
+      logger.error('event_details_load_failed', { eventId: event.id, errorMessage: error.message, module: 'useEventOperations' }, error);
       alert('Failed to load event details. Please try again.');
     }
   };
@@ -113,6 +116,7 @@ export function useEventOperations(loadAllData) {
       author: event.author || '',
       is_active: event.is_active,
       show_points: event.show_points !== false,
+      show_dependencies: event.show_dependencies !== false,
       image_path: event.image_path || '',
       image_data: event.image_data || ''
     });
@@ -160,12 +164,13 @@ export function useEventOperations(loadAllData) {
           author: fullEventData.author || '',
           is_active: fullEventData.is_active,
           show_points: fullEventData.show_points !== false,
+          show_dependencies: fullEventData.show_dependencies !== false,
           image_path: fullEventData.image_path || '',
           image_data: fullEventData.image_data || ''
         });
       }
     } catch (error) {
-      console.error('Failed to update event:', error);
+      logger.error('event_update_failed', { eventId: selectedEvent.data.id, errorMessage: error.message, module: 'useEventOperations' }, error);
       alert(`❌ Failed to update event: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -198,7 +203,7 @@ export function useEventOperations(loadAllData) {
       alert(`✅ Event ${newStatus ? 'activated' : 'archived'} successfully!`);
       await loadAllData();
     } catch (error) {
-      console.error('Failed to toggle event status:', error);
+      logger.error('event_toggle_failed', { eventId: event.id, errorMessage: error.message, module: 'useEventOperations' }, error);
       alert(`❌ Failed to update event status`);
     }
   };
@@ -213,13 +218,13 @@ export function useEventOperations(loadAllData) {
     try {
       if (deleteTarget && deleteTarget.type === 'event') {
         await deleteEvent(deleteTarget.data.id);
-        console.log(`✅ Event deleted: ${deleteTarget.data.id}`);
+        logger.info('event_deleted', { eventId: deleteTarget.data.id, eventTitle: deleteTarget.data.title, module: 'useEventOperations' });
       }
 
       setDeleteTarget(null);
       await loadAllData();
     } catch (error) {
-      console.error('Failed to delete:', error);
+      logger.error('event_delete_failed', { errorMessage: error.message, module: 'useEventOperations' }, error);
       alert(`❌ Failed to delete: ${error.response?.data?.detail || error.message}`);
     }
   };

@@ -22,14 +22,15 @@
  * @since 2025-11-21
  * @updated 2025-11-23 - Renamed to GameAdminDashboard, prepared for SSE integration
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { buildApiUrl } from '../../config/apiConfig';
+import { logger } from '../../utils/logger';
 import StatsGrid from './StatsGrid';
 import TeamProgressTable from './TeamProgressTable.jsx';
 import RateLimitCard from './RateLimitCard.jsx';
 import GamesAnalyticsTab from './GamesAnalyticsTab.jsx';
 import SecurityDashboard from './SecurityDashboard.jsx';
-import GenericSSEClient from '../../services/GenericSSEClient';
+import { useSSE } from '../../hooks/useSSE';
 import './GameAdminDashboard.css';
 
 /**
@@ -45,8 +46,6 @@ import './GameAdminDashboard.css';
 const GameAdminDashboard = ({ user }) => {
     const [activeTab, setActiveTab] = useState('overview');
     const [dashboardData, setDashboardData] = useState(null);
-    const [sseClient, setSseClient] = useState(null);
-    const [connectionStatus, setConnectionStatus] = useState('disconnected'); // connected, connecting, disconnected
 
     useEffect(() => {
         loadDashboardData();
@@ -94,103 +93,139 @@ const GameAdminDashboard = ({ user }) => {
                 }))
             };
 
-            console.log(`Dashboard data loaded: ${realData.stats.active_teams} teams, ${realData.stats.games_completed} games completed, ${totalGames} total games`);
+            logger.info('game_admin_dashboard_data_loaded', {
+                activeTeams: realData.stats.active_teams,
+                gamesCompleted: realData.stats.games_completed,
+                totalGames,
+                module: 'GameAdminDashboard'
+            });
             setDashboardData(realData);
 
         } catch (err) {
-            console.error('Failed to load dashboard data:', err);
+            logger.error('game_admin_dashboard_data_load_failed', {
+                errorMessage: err.message,
+                module: 'GameAdminDashboard'
+            }, err);
             // Keep showing default data on error - no error state needed
         }
     }
 
-    // Set up SSE connection for real-time updates
-    useEffect(() => {
-        // Only connect SSE for Overview and Games Analytics tabs
-        // Security and Rate Limits tabs don't need SSE
-        if (activeTab === 'security' || activeTab === 'rate-limits') {
-            return;
-        }
-
-        console.log('[GameAdminDashboard] Setting up SSE connection');
-
-        // Create SSE client for game dashboard updates
-        const client = new GenericSSEClient({
-            endpoint: buildApiUrl('admin/game-dashboard/stream'),
-            eventTypes: ['stats_update', 'team_progress_update', 'heartbeat', 'error'],
-            maxReconnectAttempts: 5,
-            reconnectDelay: 1000,
-            maxReconnectDelay: 30000,
-            name: 'GameDashboardSSE'
-        });
-
-        // Setup event listeners
-        client.on('connected', () => {
-            console.log('[GameAdminDashboard] SSE connected');
-            setConnectionStatus('connected');
-        });
-
-        client.on('disconnected', () => {
-            console.log('[GameAdminDashboard] SSE disconnected');
-            setConnectionStatus('disconnected');
-        });
-
-        client.on('stats_update', (data) => {
-            console.log('[GameAdminDashboard] Stats update received:', data);
-            setDashboardData(prev => ({
-                ...prev,
-                stats: data
-            }));
-        });
-
-        client.on('team_progress_update', (teamData) => {
-            console.log('[GameAdminDashboard] Team progress update:', teamData.team_name, teamData.progress_percentage + '%');
-            setDashboardData(prev => {
-                if (!prev || !prev.teams) {
-                    return prev;
-                }
-
-                // Update the specific team in the teams array
-                const updatedTeams = prev.teams.map(team => {
-                    if (team.team_id === teamData.team_id) {
-                        return {
-                            ...team,
-                            team_id: teamData.team_id,
-                            team_name: teamData.team_name,
-                            progress: teamData.progress_percentage,
-                            games_completed: teamData.completed_games,
-                            help_requests: teamData.help_requests,
-                            status: teamData.status
-                        };
-                    }
-                    return team;
+    /**
+     * Handle SSE message events
+     */
+    const handleSSEMessage = useCallback((eventType, data) => {
+        switch (eventType) {
+            case 'stats_update':
+                logger.debug('game_admin_dashboard_stats_update', {
+                    hasData: !!data,
+                    module: 'GameAdminDashboard'
                 });
-
-                return {
+                setDashboardData(prev => ({
                     ...prev,
-                    teams: updatedTeams
-                };
-            });
+                    stats: data
+                }));
+                break;
+
+            case 'team_progress_update':
+                logger.debug('game_admin_dashboard_team_progress_update', {
+                    teamName: data.team_name,
+                    progressPercentage: data.progress_percentage,
+                    completedGames: data.completed_games,
+                    module: 'GameAdminDashboard'
+                });
+                setDashboardData(prev => {
+                    if (!prev || !prev.teams) {
+                        return prev;
+                    }
+
+                    // Update the specific team in the teams array
+                    const updatedTeams = prev.teams.map(team => {
+                        if (team.team_id === data.team_id) {
+                            return {
+                                ...team,
+                                team_id: data.team_id,
+                                team_name: data.team_name,
+                                progress: data.progress_percentage,
+                                games_completed: data.completed_games,
+                                help_requests: data.help_requests,
+                                status: data.status
+                            };
+                        }
+                        return team;
+                    });
+
+                    return {
+                        ...prev,
+                        teams: updatedTeams
+                    };
+                });
+                break;
+
+            case 'heartbeat':
+                // PERF: Don't log heartbeats - they happen frequently
+                break;
+
+            default:
+                logger.warn('game_admin_dashboard_unknown_sse_event', {
+                    eventType,
+                    module: 'GameAdminDashboard'
+                });
+        }
+    }, []);
+
+    /**
+     * Handle SSE connection established
+     */
+    const handleSSEConnect = useCallback(() => {
+        logger.info('game_admin_dashboard_sse_connected', {
+            module: 'GameAdminDashboard'
         });
+    }, []);
 
-        client.on('heartbeat', (data) => {
-            console.log('[GameAdminDashboard] Heartbeat:', data.timestamp);
+    /**
+     * Handle SSE disconnection
+     */
+    const handleSSEDisconnect = useCallback(() => {
+        logger.info('game_admin_dashboard_sse_disconnected', {
+            module: 'GameAdminDashboard'
         });
+    }, []);
 
-        client.on('error', (error) => {
-            console.error('[GameAdminDashboard] SSE error:', error);
-            setConnectionStatus('disconnected');
+    /**
+     * Handle SSE errors
+     */
+    const handleSSEError = useCallback((errorData) => {
+        logger.error('game_admin_dashboard_sse_error', {
+            errorMessage: errorData.message,
+            module: 'GameAdminDashboard'
         });
+    }, []);
 
-        // Connect
-        client.connect();
-        setSseClient(client);
+    // Set up SSE connection for real-time updates (only for Overview and Games Analytics tabs)
+    const shouldConnectSSE = activeTab !== 'security' && activeTab !== 'rate-limits';
 
-        // Cleanup on unmount or tab change
-        return () => {
-            console.log('[GameAdminDashboard] Cleaning up SSE connection');
-            client.disconnect();
-        };
-    }, [activeTab]); // Reconnect when tab changes
+    // Memoize endpoint to prevent reconnections
+    const sseEndpoint = useMemo(() => {
+        return shouldConnectSSE ? buildApiUrl('admin/game-dashboard/stream') : null;
+    }, [shouldConnectSSE]);
+
+    // Memoize event types array to prevent reconnections
+    const sseEventTypes = useMemo(() => {
+        return ['stats_update', 'team_progress_update', 'heartbeat', 'error'];
+    }, []);
+
+    const { isConnected } = useSSE({
+        endpoint: sseEndpoint,
+        eventTypes: sseEventTypes,
+        onMessage: handleSSEMessage,
+        onConnect: handleSSEConnect,
+        onDisconnect: handleSSEDisconnect,
+        onError: handleSSEError,
+        maxReconnectAttempts: 5,
+        reconnectDelay: 1000,
+        maxReconnectDelay: 30000,
+        name: 'GameDashboardSSE'
+    });
 
     /**
      * Render connection status indicator
@@ -202,10 +237,12 @@ const GameAdminDashboard = ({ user }) => {
             return null;
         }
 
+        const connectionStatus = isConnected ? 'connected' : 'disconnected';
+
         return (
             <div className={`stat-badge connection-status ${connectionStatus}`}>
                 <div className="status-indicator"></div>
-                <span>{connectionStatus === 'connected' ? 'Live' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}</span>
+                <span>{isConnected ? 'Live' : 'Disconnected'}</span>
             </div>
         );
     };

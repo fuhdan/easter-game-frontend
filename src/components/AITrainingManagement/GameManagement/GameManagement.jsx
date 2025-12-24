@@ -15,6 +15,7 @@ import React, { useState } from 'react';
 import { createGame, updateGame, deleteGame } from '../../../services';
 import GameModal from './GameModal';
 import DeleteConfirmModal from '../shared/DeleteConfirmModal';
+import { logger } from '../../../utils/logger';
 
 function GameManagement({ games, events, categories, onGamesChanged }) {
   const [editingGame, setEditingGame] = useState(null);
@@ -34,6 +35,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
     technical_skills: '',
     difficulty_level: 'medium',
     max_hints: 0,
+    hint_penalty_points: null,
     points_value: 100,
     order_index: 0
   });
@@ -55,6 +57,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       technical_skills: '',
       difficulty_level: 'medium',
       max_hints: 0,
+      hint_penalty_points: null,
       points_value: 100,
       order_index: games.length
     });
@@ -78,6 +81,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       technical_skills: game.technical_skills || '',
       difficulty_level: game.difficulty_level || 'medium',
       max_hints: game.max_hints,
+      hint_penalty_points: game.hint_penalty_points !== undefined ? game.hint_penalty_points : null,
       points_value: game.points_value,
       order_index: game.order_index
     });
@@ -92,11 +96,19 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       if (editingGame) {
         // Update existing game
         await updateGame(editingGame.id, gameForm);
-        console.log(`✅ Game updated: ${editingGame.id}`);
+        logger.info('game_updated', {
+          gameId: editingGame.id,
+          gameTitle: gameForm.title,
+          module: 'GameManagement'
+        });
       } else {
         // Create new game
         await createGame(gameForm);
-        console.log(`✅ Game created`);
+        logger.info('game_created', {
+          gameTitle: gameForm.title,
+          difficulty: gameForm.difficulty_level,
+          module: 'GameManagement'
+        });
       }
 
       setShowGameModal(false);
@@ -107,7 +119,12 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
         onGamesChanged();
       }
     } catch (error) {
-      console.error('Failed to save game:', error);
+      logger.error('game_save_failed', {
+        isUpdate: !!editingGame,
+        gameId: editingGame?.id,
+        errorMessage: error.message,
+        module: 'GameManagement'
+      }, error);
       alert(`❌ Failed to save game: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -134,7 +151,11 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
   const _confirmDeleteGame = async () => {
     try {
       await deleteGame(gameToDelete.id);
-      console.log(`✅ Game deleted: ${gameToDelete.id}`);
+      logger.info('game_deleted', {
+        gameId: gameToDelete.id,
+        gameTitle: gameToDelete.title,
+        module: 'GameManagement'
+      });
 
       setShowGameDeleteModal(false);
       setGameToDelete(null);
@@ -144,7 +165,11 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
         onGamesChanged();
       }
     } catch (error) {
-      console.error('Failed to delete game:', error);
+      logger.error('game_delete_failed', {
+        gameId: gameToDelete.id,
+        errorMessage: error.message,
+        module: 'GameManagement'
+      }, error);
       alert(`❌ Failed to delete game: ${error.response?.data?.detail || error.message}`);
     }
   };

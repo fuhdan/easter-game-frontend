@@ -12,6 +12,8 @@
  * @since 2025-11-09
  */
 
+import { logger } from '../../utils/logger';
+
 /**
  * Generate unique message ID
  * Uses timestamp + counter to avoid collisions
@@ -30,7 +32,10 @@ const generateMessageId = () => {
  * @private
  */
 const handlePong = (message, context) => {
-  console.log('[MessageHandler] Pong received:', message.timestamp);
+  logger.debug('ws_message_pong_received', {
+    timestamp: message.timestamp,
+    module: 'messageHandler'
+  });
   // Heartbeat handled by ChatWebSocket class
   // No action needed in context
 };
@@ -45,13 +50,14 @@ const handlePong = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleAIResponse = (message, context) => {
-  console.log('[MessageHandler] AI response received:', {
+  logger.debug('ws_message_ai_response_received', {
     hasContent: !!message.content,
     contentLength: message.content?.length || 0,
-    processingTime: message.processing_time_ms
+    processingTime: message.processing_time_ms,
+    module: 'messageHandler'
   });
 
-  const { addMessage, setIsTyping } = context;
+  const { addMessage, setIsTyping, loadAIContext } = context;
 
   // Stop typing indicator
   if (setIsTyping) {
@@ -60,13 +66,21 @@ const handleAIResponse = (message, context) => {
 
   // Validate message has content
   if (!message.content || message.content.trim().length === 0) {
-    console.warn('[MessageHandler] AI response has empty content, skipping display');
+    logger.warn('ws_message_ai_response_empty', {
+      hasContent: !!message.content,
+      trimmedLength: message.content?.trim().length,
+      module: 'messageHandler'
+    });
     return;
   }
 
   // Add AI message to chat
   if (addMessage) {
-    console.log('[MessageHandler] Adding AI message to chat:', message.content.substring(0, 50) + '...');
+    logger.debug('ws_message_adding_ai_to_chat', {
+      contentPreview: message.content.substring(0, 50) + '...',
+      contentLength: message.content.length,
+      module: 'messageHandler'
+    });
     addMessage({
       id: generateMessageId(),  // BUGFIX: Always generate unique ID (conversation_id is session ID, not message ID)
       type: 'ai',
@@ -78,8 +92,20 @@ const handleAIResponse = (message, context) => {
         processing_time_ms: message.processing_time_ms
       }
     });
+
+    // BUGFIX: Refresh AI context banner after response (updates hints count, progress, etc.)
+    if (loadAIContext) {
+      logger.debug('ws_message_refreshing_ai_context', {
+        reason: 'ai_response_received',
+        module: 'messageHandler'
+      });
+      loadAIContext();
+    }
   } else {
-    console.error('[MessageHandler] addMessage function not available in context!');
+    logger.error('ws_message_add_function_unavailable', {
+      functionName: 'addMessage',
+      module: 'messageHandler'
+    });
   }
 };
 
@@ -92,7 +118,7 @@ const handleAIResponse = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleAdminMessage = (message, context) => {
-  console.log('[MessageHandler] Admin message received');
+  logger.debug('ws_message_admin_received', { module: 'messageHandler' });
 
   const { addMessage } = context;
 
@@ -118,7 +144,10 @@ const handleAdminMessage = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleSecurityWarning = (message, context) => {
-  console.warn('[MessageHandler] Security warning:', message.message);
+  logger.warn('ws_message_security_warning', {
+    warningMessage: message.message,
+    module: 'messageHandler'
+  });
 
   const { addMessage, setLastError, setIsTyping } = context;
 
@@ -163,7 +192,11 @@ const handleSecurityWarning = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleRateLimitError = (message, context) => {
-  console.warn('[MessageHandler] Rate limit exceeded:', message.limit_type);
+  logger.warn('ws_message_rate_limit_exceeded', {
+    limitType: message.limit_type,
+    retryAfter: message.retry_after,
+    module: 'messageHandler'
+  });
 
   const { addMessage, setRateLimitStatus, setIsTyping } = context;
 
@@ -208,7 +241,11 @@ const handleRateLimitError = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleSystemNotification = (message, context) => {
-  console.log('[MessageHandler] System notification:', message.content);
+  logger.info('ws_message_system_notification', {
+    content: message.content,
+    notificationType: message.type,
+    module: 'messageHandler'
+  });
 
   const { addMessage } = context;
 
@@ -234,14 +271,20 @@ const handleSystemNotification = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleTeamPrivateMessage = (message, context) => {
-  console.log('[MessageHandler] Team private message received');
+  logger.debug('ws_message_team_private_received', {
+    hasMessage: !!message.message,
+    module: 'messageHandler'
+  });
 
   const { handleIncomingPrivateMessage } = context;
 
   if (handleIncomingPrivateMessage) {
     handleIncomingPrivateMessage(message.message);
   } else {
-    console.warn('[MessageHandler] handleIncomingPrivateMessage not available in context');
+    logger.warn('ws_message_context_function_unavailable', {
+      functionName: 'handleIncomingPrivateMessage',
+      module: 'messageHandler'
+    });
   }
 };
 
@@ -253,14 +296,20 @@ const handleTeamPrivateMessage = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleTeamBroadcastMessage = (message, context) => {
-  console.log('[MessageHandler] Team broadcast message received');
+  logger.debug('ws_message_team_broadcast_received', {
+    hasMessage: !!message.message,
+    module: 'messageHandler'
+  });
 
   const { handleIncomingBroadcast } = context;
 
   if (handleIncomingBroadcast) {
     handleIncomingBroadcast(message.message);
   } else {
-    console.warn('[MessageHandler] handleIncomingBroadcast not available in context');
+    logger.warn('ws_message_context_function_unavailable', {
+      functionName: 'handleIncomingBroadcast',
+      module: 'messageHandler'
+    });
   }
 };
 
@@ -291,30 +340,57 @@ const handleTypingIndicator = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleMessageSent = (message, context) => {
-  console.log('[MessageHandler] Message sent confirmation:', message);
-  console.log('[MessageHandler] message.success:', message.success, 'message.message:', message.message, 'message.team_name:', message.team_name);
+  logger.debug('ws_message_sent_confirmation', {
+    success: message.success,
+    hasMessage: !!message.message,
+    hasTeamName: !!message.team_name,
+    module: 'messageHandler'
+  });
 
   // Check if this is an admin broadcast (admin sending to a team they're not part of)
   // Admin broadcasts include team_name in the response
   if (message.success && message.message && message.team_name) {
     const { addAdminSentBroadcast } = context;
     const sentMessage = message.message;
-    console.log('[MessageHandler] Admin broadcast detected, sentMessage:', sentMessage);
-    console.log('[MessageHandler] addAdminSentBroadcast available:', !!addAdminSentBroadcast);
+
+    logger.debug('ws_message_admin_broadcast_detected', {
+      hasSentMessage: !!sentMessage,
+      hasAddFunction: !!addAdminSentBroadcast,
+      module: 'messageHandler'
+    });
 
     // This is an admin broadcast - add to local state so admin can see their own message
     const isAdminBroadcast = sentMessage.sender_role === 'admin' ||
                               sentMessage.sender_role === 'game_admin';
-    console.log('[MessageHandler] isAdminBroadcast:', isAdminBroadcast, 'sender_role:', sentMessage.sender_role);
+
+    logger.debug('ws_message_checking_admin_role', {
+      isAdminBroadcast,
+      senderRole: sentMessage.sender_role,
+      module: 'messageHandler'
+    });
 
     if (isAdminBroadcast && addAdminSentBroadcast) {
-      console.log('[MessageHandler] Adding admin broadcast to local state:', sentMessage);
+      logger.debug('ws_message_adding_admin_broadcast', {
+        messageId: sentMessage.id,
+        module: 'messageHandler'
+      });
       addAdminSentBroadcast(sentMessage);
     } else {
-      console.log('[MessageHandler] NOT adding - isAdminBroadcast:', isAdminBroadcast, 'addAdminSentBroadcast:', !!addAdminSentBroadcast);
+      logger.debug('ws_message_skipping_admin_broadcast', {
+        isAdminBroadcast,
+        hasAddFunction: !!addAdminSentBroadcast,
+        module: 'messageHandler'
+      });
     }
   } else {
-    console.log('[MessageHandler] Not an admin broadcast - missing fields');
+    logger.debug('ws_message_not_admin_broadcast', {
+      missingFields: {
+        success: !message.success,
+        message: !message.message,
+        teamName: !message.team_name
+      },
+      module: 'messageHandler'
+    });
   }
 
   // Note: Regular team broadcasts and private messages are already added via WebSocket events:
@@ -326,7 +402,10 @@ const handleMessageSent = (message, context) => {
  * Handle mode switched confirmation
  */
 const handleModeSwitched = (message, context) => {
-  console.log('[MessageHandler] Mode switched:', message.mode);
+  logger.debug('ws_message_mode_switched', {
+    mode: message.mode,
+    module: 'messageHandler'
+  });
   // Mode already switched on client, this is just confirmation
 };
 
@@ -338,7 +417,10 @@ const handleModeSwitched = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleMessageStored = (message, context) => {
-  console.log('[MessageHandler] Message stored:', message.message_id);
+  logger.debug('ws_message_stored', {
+    messageId: message.message_id,
+    module: 'messageHandler'
+  });
   // Message already added to UI, this is backend confirmation
 };
 
@@ -347,15 +429,21 @@ const handleMessageStored = (message, context) => {
  *
  * @param {object} message - AI typing indicator
  * @param {boolean} message.typing - Typing status
+ * @param {string} [message.sender_name] - Name of user asking AI (team-based AI chat)
  * @param {object} context - Chat context state and methods
  */
 const handleAITyping = (message, context) => {
-  console.log('[MessageHandler] AI typing:', message.typing);
+  logger.debug('ws_message_ai_typing', {
+    typing: message.typing,
+    senderName: message.sender_name,
+    module: 'messageHandler'
+  });
 
   const { setIsTyping } = context;
 
   if (setIsTyping) {
-    setIsTyping(message.typing === true);
+    // TEAM-BASED AI CHAT: Include sender name if available
+    setIsTyping(message.typing === true ? (message.sender_name || true) : false);
   }
 };
 
@@ -367,7 +455,10 @@ const handleAITyping = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleError = (message, context) => {
-  console.error('[MessageHandler] Error received:', message.message);
+  logger.error('ws_message_error_received', {
+    errorMessage: message.message,
+    module: 'messageHandler'
+  });
 
   const { addMessage, setLastError } = context;
 
@@ -405,10 +496,11 @@ const handleError = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleNewEscalation = (message, context) => {
-  console.log('[MessageHandler] New escalation for admin:', {
-    notification_id: message.notification_id,
-    team_id: message.team_id,
-    priority: message.priority
+  logger.debug('ws_message_new_escalation', {
+    notificationId: message.notification_id,
+    teamId: message.team_id,
+    priority: message.priority,
+    module: 'messageHandler'
   });
 
   // This is sent to admins via WebSocket when a new escalation is created
@@ -427,10 +519,11 @@ const handleNewEscalation = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleEscalationCreated = (message, context) => {
-  console.log('[MessageHandler] Escalation created:', {
-    notification_id: message.notification_id,
+  logger.debug('ws_message_escalation_created', {
+    notificationId: message.notification_id,
     status: message.status,
-    repeat_count: message.repeat_count
+    repeatCount: message.repeat_count,
+    module: 'messageHandler'
   });
 
   const { updateLastUserMessage } = context;
@@ -445,7 +538,11 @@ const handleEscalationCreated = (message, context) => {
       }
     });
   } else {
-    console.warn('[MessageHandler] updateLastUserMessage not available - cannot attach badge to user message');
+    logger.warn('ws_message_context_function_unavailable', {
+      functionName: 'updateLastUserMessage',
+      impact: 'Cannot attach badge to user message',
+      module: 'messageHandler'
+    });
   }
 };
 
@@ -459,10 +556,11 @@ const handleEscalationCreated = (message, context) => {
  * @param {object} context - Chat context state and methods
  */
 const handleEscalationStatusUpdated = (message, context) => {
-  console.log('[MessageHandler] Escalation status updated:', {
-    notification_id: message.notification_id,
+  logger.debug('ws_message_escalation_status_updated', {
+    notificationId: message.notification_id,
     status: message.status,
-    repeat_count: message.repeat_count
+    repeatCount: message.repeat_count,
+    module: 'messageHandler'
   });
 
   const { updateMessagesByNotificationId } = context;
@@ -475,7 +573,11 @@ const handleEscalationStatusUpdated = (message, context) => {
       }
     });
   } else {
-    console.warn('[MessageHandler] updateMessagesByNotificationId not available - status update failed');
+    logger.warn('ws_message_context_function_unavailable', {
+      functionName: 'updateMessagesByNotificationId',
+      impact: 'Status update failed',
+      module: 'messageHandler'
+    });
   }
 };
 
@@ -522,21 +624,36 @@ const MESSAGE_HANDLERS = {
  * );
  */
 export const handleWebSocketMessage = (message, context) => {
-  console.log('[MessageHandler] handleWebSocketMessage called with:', message.type, message);
+  logger.debug('ws_message_handler_called', {
+    messageType: message?.type,
+    hasMessage: !!message,
+    module: 'messageHandler'
+  });
 
   if (!message || !message.type) {
-    console.error('[MessageHandler] Invalid message:', message);
+    logger.error('ws_message_invalid', {
+      hasMessage: !!message,
+      hasType: !!message?.type,
+      module: 'messageHandler'
+    });
     return;
   }
 
   const handler = MESSAGE_HANDLERS[message.type];
 
   if (handler) {
-    console.log('[MessageHandler] Found handler for:', message.type);
+    logger.debug('ws_message_handler_found', {
+      messageType: message.type,
+      module: 'messageHandler'
+    });
     try {
       handler(message, context);
     } catch (error) {
-      console.error(`[MessageHandler] Error handling ${message.type}:`, error);
+      logger.error('ws_message_handler_error', {
+        messageType: message.type,
+        errorMessage: error.message,
+        module: 'messageHandler'
+      }, error);
 
       // Set error in context if available
       if (context.setLastError) {
@@ -548,7 +665,10 @@ export const handleWebSocketMessage = (message, context) => {
       }
     }
   } else {
-    console.warn('[MessageHandler] Unknown message type:', message.type);
+    logger.warn('ws_message_unknown_type', {
+      messageType: message.type,
+      module: 'messageHandler'
+    });
   }
 };
 

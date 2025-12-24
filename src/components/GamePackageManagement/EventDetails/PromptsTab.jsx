@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import { createSystemPrompt, updateSystemPrompt, deleteSystemPrompt } from '../../../services';
 import SystemPromptModal from '../Modals/SystemPromptModal';
+import { logger } from '../../../utils/logger';
 
 const PROMPT_CATEGORY_ORDER = [
   'core_rules',
@@ -73,16 +74,29 @@ function PromptsTab({ systemPrompts, onPromptsChanged }) {
           description: promptFormData.description,
           priority: promptFormData.priority
         });
-        console.log(`✅ System prompt updated: ${promptFormData.id}`);
+        logger.info('system_prompt_updated', {
+          promptId: promptFormData.id,
+          category: promptFormData.category,
+          module: 'PromptsTab'
+        });
       } else {
         await createSystemPrompt(promptFormData);
-        console.log(`✅ System prompt created`);
+        logger.info('system_prompt_created', {
+          category: promptFormData.category,
+          name: promptFormData.name,
+          module: 'PromptsTab'
+        });
       }
 
       setShowPromptModal(false);
       if (onPromptsChanged) onPromptsChanged();
     } catch (error) {
-      console.error('Failed to save system prompt:', error);
+      logger.error('system_prompt_save_failed', {
+        isUpdate: !!promptFormData.id,
+        promptId: promptFormData.id,
+        errorMessage: error.message,
+        module: 'PromptsTab'
+      }, error);
       alert(`❌ Failed to save system prompt: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -95,13 +109,21 @@ function PromptsTab({ systemPrompts, onPromptsChanged }) {
   const _confirmDeletePrompt = async () => {
     try {
       await deleteSystemPrompt(promptToDelete.id);
-      console.log(`✅ System prompt deleted: ${promptToDelete.id}`);
+      logger.info('system_prompt_deleted', {
+        promptId: promptToDelete.id,
+        category: promptToDelete.category,
+        module: 'PromptsTab'
+      });
 
       setShowDeleteModal(false);
       setPromptToDelete(null);
       if (onPromptsChanged) onPromptsChanged();
     } catch (error) {
-      console.error('Failed to delete prompt:', error);
+      logger.error('system_prompt_delete_failed', {
+        promptId: promptToDelete.id,
+        errorMessage: error.message,
+        module: 'PromptsTab'
+      }, error);
       alert(`❌ Failed to delete prompt: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -110,10 +132,19 @@ function PromptsTab({ systemPrompts, onPromptsChanged }) {
     try {
       const newStatus = !prompt.is_active;
       await updateSystemPrompt(prompt.id, { is_active: newStatus });
-      console.log(`✅ System prompt ${newStatus ? 'activated' : 'deactivated'}: ${prompt.id}`);
+      logger.info('system_prompt_toggled', {
+        promptId: prompt.id,
+        newStatus,
+        action: newStatus ? 'activated' : 'deactivated',
+        module: 'PromptsTab'
+      });
       if (onPromptsChanged) onPromptsChanged();
     } catch (error) {
-      console.error('Failed to toggle prompt status:', error);
+      logger.error('system_prompt_toggle_failed', {
+        promptId: prompt.id,
+        errorMessage: error.message,
+        module: 'PromptsTab'
+      }, error);
       alert(`❌ Failed to update prompt status`);
     }
   };

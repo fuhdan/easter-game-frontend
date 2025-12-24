@@ -21,6 +21,7 @@ import {
   getPerGameAnalytics,
   getGameAdminDetails
 } from '../../services/admin';
+import { logger } from '../../utils/logger';
 import './GamesAnalyticsTab.css';
 
 /**
@@ -61,7 +62,10 @@ const GamesAnalyticsTab = () => {
       setStatistics(statsResponse.stats);
       setAnalytics(analyticsResponse.games);
     } catch (err) {
-      console.error('Error fetching game analytics:', err);
+      logger.error('games_analytics_fetch_failed', {
+        errorMessage: err.message,
+        module: 'GamesAnalyticsTab'
+      }, err);
       setError(err.message || 'Failed to load game analytics');
     } finally {
       setLoading(false);
@@ -81,7 +85,11 @@ const GamesAnalyticsTab = () => {
       const response = await getGameAdminDetails(gameId);
       setGameDetails(response);
     } catch (err) {
-      console.error(`Error fetching details for game ${gameId}:`, err);
+      logger.error('game_details_fetch_failed', {
+        gameId,
+        errorMessage: err.message,
+        module: 'GamesAnalyticsTab'
+      }, err);
       setError(err.message || 'Failed to load game details');
     } finally {
       setDetailsLoading(false);

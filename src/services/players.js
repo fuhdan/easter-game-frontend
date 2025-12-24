@@ -13,7 +13,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Get all players
@@ -86,7 +87,7 @@ export const deletePlayer = (id) => request('DELETE', `/players/${id}`);
  * @throws {APIError} 400 if validation fails, 403 if not admin
  */
 export const bulkCreate = (players) => {
-  log.info(`Uploading ${players.length} players`);
+  logger.info(`Uploading ${players.length} players`);
   return request('POST', '/players/bulk-create', { players });
 };
 
@@ -125,6 +126,6 @@ export const exportPlayers = () => request('GET', '/players/export');
  * @throws {APIError} 403 if not admin, 404 if player not found
  */
 export const generateOtp = (playerId) => {
-  log.info(`Generating OTP for player ${playerId}`);
+  logger.info(`Generating OTP for player ${playerId}`);
   return request('POST', `/players/${playerId}/generate-otp`);
 };

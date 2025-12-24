@@ -27,6 +27,7 @@
 import { useCallback } from 'react';
 import { useSSE } from './useSSE';
 import { buildApiUrl } from '../config/apiConfig';
+import { logger } from '../utils/logger';
 
 /**
  * Admin Notifications SSE Hook
@@ -60,17 +61,27 @@ export const useNotifications = (options = {}) => {
   const handleMessage = useCallback((eventType, data) => {
     switch (eventType) {
       case 'notification':
-        console.log('[useNotifications] Received notification:', data);
+        logger.debug('notifications_received', {
+          notificationId: data.id,
+          priority: data.priority,
+          module: 'useNotifications'
+        });
         onNotification?.(data);
         break;
 
       case 'heartbeat':
-        console.log('[useNotifications] Heartbeat:', data.count, 'notifications');
+        logger.debug('notifications_heartbeat', {
+          count: data.count,
+          module: 'useNotifications'
+        });
         onHeartbeat?.(data);
         break;
 
       default:
-        console.log('[useNotifications] Unknown event type:', eventType, data);
+        logger.warn('notifications_unknown_event', {
+          eventType,
+          module: 'useNotifications'
+        });
     }
   }, [onNotification, onHeartbeat]);
 
@@ -78,7 +89,9 @@ export const useNotifications = (options = {}) => {
    * Handle connection established
    */
   const handleConnect = useCallback(() => {
-    console.log('[useNotifications] SSE connected');
+    logger.info('notifications_connected', {
+      module: 'useNotifications'
+    });
     onConnect?.();
   }, [onConnect]);
 
@@ -86,7 +99,9 @@ export const useNotifications = (options = {}) => {
    * Handle disconnection
    */
   const handleDisconnect = useCallback(() => {
-    console.log('[useNotifications] SSE disconnected');
+    logger.info('notifications_disconnected', {
+      module: 'useNotifications'
+    });
     onDisconnect?.();
   }, [onDisconnect]);
 
@@ -94,7 +109,10 @@ export const useNotifications = (options = {}) => {
    * Handle errors
    */
   const handleError = useCallback((errorData) => {
-    console.error('[useNotifications] SSE error:', errorData);
+    logger.error('notifications_error', {
+      errorMessage: errorData.message,
+      module: 'useNotifications'
+    });
     onError?.(errorData);
   }, [onError]);
 

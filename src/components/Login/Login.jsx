@@ -10,6 +10,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import PasswordChangeModal from '../PasswordChangeModal/PasswordChangeModal.jsx';
 import { login, auth, utils } from '../../services';
@@ -92,7 +93,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
       }
       
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       setLoginError(utils.handleError(error));
     } finally {
       setLoginLoading(false);
@@ -122,7 +123,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
       }
 
     } catch (error) {
-      console.error('Account activation error:', error);
+      logger.error('Account activation error:', error);
       setLoginError(error.message || 'Account activation failed');
     } finally {
       setActivationLoading(false);

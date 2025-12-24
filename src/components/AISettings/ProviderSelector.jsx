@@ -9,11 +9,23 @@
  */
 
 import React from 'react';
+import { logger } from '../../utils/logger';
 import './ProviderSelector.css';
 
 const ProviderSelector = ({ providers, activeProvider, onSelect, disabled }) => {
   const handleChange = (e) => {
-    onSelect(e.target.value);
+    const newProvider = e.target.value;
+    const providerDetails = providers.find(p => p.name === newProvider);
+
+    logger.info('ai_provider_selected', {
+      previousProvider: activeProvider,
+      newProvider,
+      providerDisplayName: providerDetails?.display_name,
+      supportsDynamicModels: providerDetails?.supports_dynamic_models,
+      module: 'ProviderSelector'
+    });
+
+    onSelect(newProvider);
   };
 
   return (

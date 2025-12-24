@@ -31,6 +31,7 @@
 import { useCallback } from 'react';
 import { useSSE } from './useSSE';
 import { buildApiUrl } from '../config/apiConfig';
+import { logger } from '../utils/logger';
 
 /**
  * Team Game Updates SSE Hook
@@ -70,27 +71,44 @@ export const useTeamGameUpdates = (options = {}) => {
   const handleMessage = useCallback((eventType, data) => {
     switch (eventType) {
       case 'game_started':
-        console.log('[useTeamGameUpdates] Team member started game:', data);
+        logger.info('team_game_started', {
+          gameName: data.game_name,
+          playerName: data.player_name,
+          module: 'useTeamGameUpdates'
+        });
         onGameStarted?.(data);
         break;
 
       case 'game_completed':
-        console.log('[useTeamGameUpdates] Team member completed game:', data);
+        logger.info('team_game_completed', {
+          gameName: data.game_name,
+          playerName: data.player_name,
+          score: data.score,
+          module: 'useTeamGameUpdates'
+        });
         onGameCompleted?.(data);
         break;
 
       case 'hint_used':
-        console.log('[useTeamGameUpdates] Team member used hint:', data);
+        logger.info('team_hint_used', {
+          gameName: data.game_name,
+          playerName: data.player_name,
+          hintNumber: data.hint_number,
+          module: 'useTeamGameUpdates'
+        });
         onHintUsed?.(data);
         break;
 
       case 'heartbeat':
-        console.log('[useTeamGameUpdates] Heartbeat:', data);
+        // PERF: Don't log heartbeats - they happen every 30 seconds
         onHeartbeat?.(data);
         break;
 
       default:
-        console.log('[useTeamGameUpdates] Unknown event type:', eventType, data);
+        logger.warn('team_updates_unknown_event', {
+          eventType,
+          module: 'useTeamGameUpdates'
+        });
     }
   }, [onGameStarted, onGameCompleted, onHintUsed, onHeartbeat]);
 
@@ -98,7 +116,9 @@ export const useTeamGameUpdates = (options = {}) => {
    * Handle connection established
    */
   const handleConnect = useCallback(() => {
-    console.log('[useTeamGameUpdates] SSE connected');
+    logger.info('team_updates_connected', {
+      module: 'useTeamGameUpdates'
+    });
     onConnect?.();
   }, [onConnect]);
 
@@ -106,7 +126,9 @@ export const useTeamGameUpdates = (options = {}) => {
    * Handle disconnection
    */
   const handleDisconnect = useCallback(() => {
-    console.log('[useTeamGameUpdates] SSE disconnected');
+    logger.info('team_updates_disconnected', {
+      module: 'useTeamGameUpdates'
+    });
     onDisconnect?.();
   }, [onDisconnect]);
 
@@ -114,7 +136,10 @@ export const useTeamGameUpdates = (options = {}) => {
    * Handle errors
    */
   const handleError = useCallback((errorData) => {
-    console.error('[useTeamGameUpdates] SSE error:', errorData);
+    logger.error('team_updates_error', {
+      errorMessage: errorData.message,
+      module: 'useTeamGameUpdates'
+    });
     onError?.(errorData);
   }, [onError]);
 

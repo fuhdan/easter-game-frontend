@@ -14,6 +14,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../utils/logger';
 import { updateMyTeamName } from '../../services';
 
 /**
@@ -87,7 +88,7 @@ const TeamNameCard = ({ user }) => {
       }
 
     } catch (error) {
-      console.error('Team name update error:', error);
+      logger.error('Team name update error:', error);
       if (error.data?.detail) {
         setErrors({ name: error.data.detail });
       } else if (error.message) {

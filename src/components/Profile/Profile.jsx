@@ -18,6 +18,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import PasswordChangeCard from './PasswordChangeCard';
 import GameRatingCard from './GameRatingCard';
@@ -51,7 +52,7 @@ const Profile = ({ user }) => {
 
     // SECURITY: Validate user prop and required fields
     if (!user) {
-        console.error('Profile component: user prop is required');
+        logger.error('Profile component: user prop is required');
         return (
             <div className="profile-card">
                 <div className="card-header">⚠️ Error</div>
@@ -64,7 +65,7 @@ const Profile = ({ user }) => {
 
     // Validate required user fields
     if (!user.id || !user.username || !user.role) {
-        console.error('Profile component: user object missing required fields', {
+        logger.error('Profile component: user object missing required fields', {
             hasId: !!user.id,
             hasUsername: !!user.username,
             hasRole: !!user.role

@@ -25,6 +25,7 @@ import {
 import EventManagement from './EventManagement/EventManagement';
 import GameManagement from './GameManagement/GameManagement';
 import HintManagement from './HintManagement/HintManagement';
+import { logger } from '../../utils/logger';
 
 function AITrainingManagement({ initialTab = 'events', showTabs = true }) {
   // State management
@@ -71,9 +72,17 @@ function AITrainingManagement({ initialTab = 'events', showTabs = true }) {
       setEvents(eventsData || []);
       setCategories(categoriesData.categories || []);
 
-      console.log(`Loaded ${gamesWithHints.length} games, ${eventsData?.length || 0} events, ${categoriesData.categories?.length || 0} categories`);
+      logger.debug('ai_training_data_loaded', {
+        gamesCount: gamesWithHints.length,
+        eventsCount: eventsData?.length || 0,
+        categoriesCount: categoriesData.categories?.length || 0,
+        module: 'AITrainingManagement'
+      });
     } catch (error) {
-      console.error('Failed to load AI training data:', error);
+      logger.error('ai_training_data_load_failed', {
+        errorMessage: error.message,
+        module: 'AITrainingManagement'
+      }, error);
       setError('Failed to load AI training data. Please check your permissions.');
     } finally {
       setLoading(false);

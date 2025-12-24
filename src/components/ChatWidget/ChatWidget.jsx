@@ -22,6 +22,7 @@ import ChatToggleButton from './ChatToggleButton';
 import ChatHeader from './ChatHeader';
 import ChatBody from './ChatBody';
 import ChatFooter from './ChatFooter';
+import { logger } from '../../utils/logger';
 import './ChatWidget.css';
 
 // Default window dimensions and position
@@ -67,7 +68,10 @@ const ChatWidget = () => {
         if (savedPos) setPosition(savedPos);
         if (savedSize) setSize(savedSize);
       } catch (e) {
-        console.warn('[ChatWidget] Failed to load saved state:', e);
+        logger.warn('chat_widget_state_load_failed', {
+          errorMessage: e.message,
+          module: 'ChatWidget'
+        }, e);
       }
     }
   }, []);

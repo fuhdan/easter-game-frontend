@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from './utils/logger';
 import { API_CONFIG } from './config/apiConfig';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import Login from './components/Login/Login';
@@ -89,7 +90,7 @@ const App = () => {
                 setUser(null);
             }
         } catch (err) {
-            console.error('Auth check failed:', err);
+            logger.error('Auth check failed:', err);
             setUser(null);
         } finally {
             setLoading(false);
@@ -150,7 +151,7 @@ const App = () => {
                 headers: { 'Content-Type': 'application/json' }
             });
         } catch (err) {
-            console.error('Logout error:', err);
+            logger.error('Logout error:', err);
         } finally {
             setUser(null);
             setError(null);

@@ -29,7 +29,7 @@ import * as aiTraining from './aiTraining';
 import * as files from './files';
 
 // Core API utilities
-export { request, buildHeaders, onTokenRefresh, utils, log, CONFIG, APIError } from './api';
+export { request, buildHeaders, onTokenRefresh, utils, CONFIG, APIError } from './api';
 
 // Export namespaced services (no conflicts)
 export { auth, users, teams, players, games, events, admin, chat, system, aiTraining, files };

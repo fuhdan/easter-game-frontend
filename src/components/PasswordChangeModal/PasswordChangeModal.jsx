@@ -5,7 +5,8 @@
  * Location: frontend/src/components/PasswordChangeModal/PasswordChangeModal.jsx
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import './PasswordChangeModal.css';
 
 const PasswordChangeModal = ({ 
@@ -24,6 +25,17 @@ const PasswordChangeModal = ({
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+
+  // Log when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      logger.info('password_change_modal_opened', {
+        username,
+        requiresOTP,
+        module: 'PasswordChangeModal'
+      });
+    }
+  }, [isOpen, username, requiresOTP]);
 
   // Don't render if not open
   if (!isOpen) return null;
@@ -72,6 +84,15 @@ const PasswordChangeModal = ({
     }
 
     setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      logger.warn('password_change_validation_failed', {
+        errors: Object.keys(newErrors),
+        requiresOTP,
+        module: 'PasswordChangeModal'
+      });
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -80,10 +101,17 @@ const PasswordChangeModal = ({
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
+
+    logger.info('password_change_form_submitted', {
+      username,
+      requiresOTP,
+      hasOTP: !!formData.otp,
+      module: 'PasswordChangeModal'
+    });
 
     const activationData = {
       username: username,
@@ -105,7 +133,13 @@ const PasswordChangeModal = ({
    */
   const handleClose = () => {
     if (loading) return; // Prevent closing during loading
-    
+
+    logger.info('password_change_modal_closed', {
+      username,
+      formFilled: !!(formData.newPassword || formData.confirmPassword || formData.otp),
+      module: 'PasswordChangeModal'
+    });
+
     setFormData({
       newPassword: '',
       confirmPassword: '',

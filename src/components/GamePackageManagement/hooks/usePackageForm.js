@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react';
+import { logger } from '../../../utils/logger';
 import { createEvent } from '../../../services';
 
 /**
@@ -92,7 +93,7 @@ export function usePackageForm(loadAllData, imageData = {}) {
       setShowCreatePackageModal(false);
       await loadAllData();
     } catch (error) {
-      console.error('Failed to create package:', error);
+      logger.error('Failed to create package:', error);
       alert(`❌ Failed to create package: ${error.response?.data?.detail || error.message}`);
     }
   };

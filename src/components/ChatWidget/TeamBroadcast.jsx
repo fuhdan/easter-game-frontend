@@ -14,6 +14,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { logger } from '../../utils/logger';
 import './TeamBroadcast.css';
 
 /**
@@ -31,7 +32,7 @@ const TeamBroadcast = ({ user, selectedTeam }) => {
   // Filter to show team broadcast messages
   // Use useMemo to avoid re-filtering on every render
   const teamMessages = React.useMemo(() => {
-    return teamBroadcastMessages.filter(msg => {
+    const filtered = teamBroadcastMessages.filter(msg => {
       // If a specific team is selected (admin view), show ALL broadcasts for that team
       if (selectedTeam) {
         return msg.team_id === selectedTeam.id;
@@ -44,17 +45,41 @@ const TeamBroadcast = ({ user, selectedTeam }) => {
 
       return true;
     });
+
+    logger.debug('team_broadcast_messages_filtered', {
+      totalMessages: teamBroadcastMessages.length,
+      filteredCount: filtered.length,
+      isAdminView: !!selectedTeam,
+      teamId: selectedTeam?.id,
+      module: 'TeamBroadcast'
+    });
+
+    return filtered;
   }, [teamBroadcastMessages, selectedTeam]);
 
   // Clear unread count when component mounts
   useEffect(() => {
+    logger.info('team_broadcast_view_opened', {
+      messageCount: teamMessages.length,
+      isAdminView: !!selectedTeam,
+      teamId: selectedTeam?.id,
+      module: 'TeamBroadcast'
+    });
     clearBroadcastUnread();
-  }, [clearBroadcastUnread]);
+  }, [clearBroadcastUnread, selectedTeam?.id]);
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
     if (lastError) {
+      logger.warn('team_broadcast_error_displayed', {
+        errorMessage: lastError.message,
+        module: 'TeamBroadcast'
+      });
+
       const timer = setTimeout(() => {
+        logger.debug('team_broadcast_error_dismissed', {
+          module: 'TeamBroadcast'
+        });
         setLastError(null);
       }, 5000);
       return () => clearTimeout(timer);

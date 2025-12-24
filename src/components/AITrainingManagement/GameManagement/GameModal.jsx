@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../../utils/logger';
 
 function GameModal({ game, gameForm, events, categories, games, onFormChange, onSave, onClose }) {
   const [dependencies, setDependencies] = useState([]);
@@ -42,7 +43,11 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
         setDependencies(data.dependencies || []);
       }
     } catch (error) {
-      console.error('Error loading dependencies:', error);
+      logger.error('game_dependencies_load_failed', {
+        gameId: game.id,
+        errorMessage: error.message,
+        module: 'GameModal'
+      }, error);
     } finally {
       setLoading(false);
     }
@@ -69,7 +74,12 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
         alert(error.detail || 'Failed to add dependency');
       }
     } catch (error) {
-      console.error('Error adding dependency:', error);
+      logger.error('game_dependency_add_failed', {
+        gameId: game.id,
+        prereqId,
+        errorMessage: error.message,
+        module: 'GameModal'
+      }, error);
       alert('Failed to add dependency');
     }
   }
@@ -91,7 +101,12 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
         await loadDependencies();
       }
     } catch (error) {
-      console.error('Error removing dependency:', error);
+      logger.error('game_dependency_remove_failed', {
+        gameId: game.id,
+        prereqId,
+        errorMessage: error.message,
+        module: 'GameModal'
+      }, error);
       alert('Failed to remove dependency');
     }
   }
@@ -270,6 +285,25 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
                 className="form-control"
                 min="0"
                 title="Maximum number of AI hints available for this game (0 = no hints)"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="game-hint-penalty">
+                Hint Penalty Points
+              </label>
+              <input
+                type="number"
+                id="game-hint-penalty"
+                value={gameForm.hint_penalty_points !== undefined && gameForm.hint_penalty_points !== null ? gameForm.hint_penalty_points : ''}
+                onChange={(e) => onFormChange({
+                  ...gameForm,
+                  hint_penalty_points: e.target.value === '' ? null : parseInt(e.target.value)
+                })}
+                className="form-control"
+                min="0"
+                placeholder="Use system default (10)"
+                title="Points deducted per hint used. Leave empty to use system default from config."
               />
             </div>
 

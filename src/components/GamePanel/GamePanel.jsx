@@ -14,7 +14,8 @@
  * @since 2025-08-27
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import CurrentGame from './CurrentGame';
@@ -38,49 +39,12 @@ const GamePanel = ({ user }) => {
     const [storyCollapsed, setStoryCollapsed] = useState(false);
     const [teamProgressRefreshKey, setTeamProgressRefreshKey] = useState(0);
 
-    // SSE: Set up real-time team game updates using hook
-    useTeamGameUpdates({
-        onGameStarted: (data) => {
-            console.log('[GamePanel] Team member started game:', data);
-            // Refresh games list to show updated progress
-            loadEventAndGames();
-        },
-        onGameCompleted: (data) => {
-            console.log('[GamePanel] Team member completed game:', data);
-            // Only refresh if another team member completed (not current user)
-            // Current user's completion already refreshes via onSubmitSolution
-            if (data.completed_by_user_id !== user.id) {
-                console.log('[GamePanel] Refreshing for teammate completion');
-                loadEventAndGames();
-            } else {
-                console.log('[GamePanel] Skipping refresh - current user already refreshed');
-            }
-        },
-        onHintUsed: (data) => {
-            console.log('[GamePanel] Team member used hint:', data);
-            // Optionally refresh to show updated hint count
-        },
-        onConnect: () => {
-            console.log('[GamePanel] SSE connected');
-        },
-        onDisconnect: () => {
-            console.log('[GamePanel] SSE disconnected');
-        },
-        onError: (errorData) => {
-            console.error('[GamePanel] SSE error:', errorData);
-        }
-    });
-
-    useEffect(() => {
-        loadEventAndGames();
-    }, []);
-
     /**
      * Load active event and its games.
      * @async
      * @returns {Promise<void>}
      */
-    async function loadEventAndGames() {
+    const loadEventAndGames = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -94,14 +58,64 @@ const GamePanel = ({ user }) => {
                 setGames(eventGames);
             }
         } catch (err) {
-            console.error('Error loading event and games:', err);
+            logger.error('Error loading event and games:', err);
             setError(err.message || 'Failed to load games');
         } finally {
             setLoading(false);
             // Increment refresh key to trigger TeamProgress refresh
             setTeamProgressRefreshKey(prev => prev + 1);
         }
-    }
+    }, []); // No dependencies needed
+
+    // SSE event handlers (wrapped in useCallback to prevent reconnection loops)
+    const handleGameStarted = useCallback((data) => {
+        logger.debug('[GamePanel] Team member started game:', data);
+        // Refresh games list to show updated progress
+        loadEventAndGames();
+    }, [loadEventAndGames]);
+
+    const handleGameCompleted = useCallback((data) => {
+        logger.debug('[GamePanel] Team member completed game:', data);
+        // Only refresh if another team member completed (not current user)
+        // Current user's completion already refreshes via onSubmitSolution
+        if (data.completed_by_user_id !== user.id) {
+            logger.debug('[GamePanel] Refreshing for teammate completion');
+            loadEventAndGames();
+        } else {
+            logger.debug('[GamePanel] Skipping refresh - current user already refreshed');
+        }
+    }, [user.id, loadEventAndGames]);
+
+    const handleHintUsed = useCallback((data) => {
+        logger.debug('[GamePanel] Team member used hint:', data);
+        // Optionally refresh to show updated hint count
+    }, []);
+
+    const handleSSEConnect = useCallback(() => {
+        logger.debug('[GamePanel] SSE connected');
+    }, []);
+
+    const handleSSEDisconnect = useCallback(() => {
+        logger.debug('[GamePanel] SSE disconnected');
+    }, []);
+
+    const handleSSEError = useCallback((errorData) => {
+        logger.error('[GamePanel] SSE error:', errorData);
+    }, []);
+
+    // SSE: Set up real-time team game updates using hook
+    useTeamGameUpdates({
+        onGameStarted: handleGameStarted,
+        onGameCompleted: handleGameCompleted,
+        onHintUsed: handleHintUsed,
+        onConnect: handleSSEConnect,
+        onDisconnect: handleSSEDisconnect,
+        onError: handleSSEError
+    });
+
+    useEffect(() => {
+        loadEventAndGames();
+    }, [loadEventAndGames]);
 
     /**
      * Get current game ID (if user has one in progress).

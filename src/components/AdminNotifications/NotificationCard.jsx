@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { logger } from '../../utils/logger';
 import './NotificationCard.css';
 
 /**
@@ -100,7 +101,20 @@ const NotificationCard = ({ notification, onResolve, onAcknowledge, currentTab }
      */
     function handleResolve() {
         if (window.confirm('Mark this notification as resolved?')) {
+            logger.info('notification_resolved', {
+                notificationId: notification.id,
+                teamName: notification.team_name,
+                escalationType: notification.escalation_type,
+                priority: notification.priority,
+                currentTab,
+                module: 'NotificationCard'
+            });
             onResolve(notification.id);
+        } else {
+            logger.debug('notification_resolve_cancelled', {
+                notificationId: notification.id,
+                module: 'NotificationCard'
+            });
         }
     }
 
@@ -108,6 +122,13 @@ const NotificationCard = ({ notification, onResolve, onAcknowledge, currentTab }
      * Handle acknowledge button click
      */
     function handleAcknowledge() {
+        logger.info('notification_acknowledged', {
+            notificationId: notification.id,
+            teamName: notification.team_name,
+            escalationType: notification.escalation_type,
+            priority: notification.priority,
+            module: 'NotificationCard'
+        });
         onAcknowledge(notification.id);
     }
 

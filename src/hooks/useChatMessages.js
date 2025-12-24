@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { logger } from '../utils/logger';
 
 /**
  * useChatMessages - Hook for managing chat messages
@@ -51,7 +52,11 @@ const useChatMessages = (options = {}) => {
           return Array.isArray(parsed) ? parsed : [];
         }
       } catch (error) {
-        console.error('[useChatMessages] Failed to load from storage:', error);
+        logger.error('chat_messages_load_storage_failed', {
+          storageKey,
+          errorMessage: error.message,
+          module: 'useChatMessages'
+        }, error);
       }
     }
     return [];
@@ -71,7 +76,12 @@ const useChatMessages = (options = {}) => {
       try {
         localStorage.setItem(storageKey, JSON.stringify(messages));
       } catch (error) {
-        console.error('[useChatMessages] Failed to save to storage:', error);
+        logger.error('chat_messages_save_storage_failed', {
+          storageKey,
+          messageCount: messages.length,
+          errorMessage: error.message,
+          module: 'useChatMessages'
+        }, error);
       }
     }
   }, [messages, persistToStorage, storageKey]);
@@ -89,7 +99,11 @@ const useChatMessages = (options = {}) => {
    */
   const addMessage = useCallback((message) => {
     if (!message || !message.content) {
-      console.warn('[useChatMessages] Cannot add message without content');
+      logger.warn('chat_messages_invalid_message', {
+        hasMessage: !!message,
+        hasContent: !!message?.content,
+        module: 'useChatMessages'
+      });
       return;
     }
 
@@ -122,7 +136,11 @@ const useChatMessages = (options = {}) => {
    */
   const addMessages = useCallback((messageArray) => {
     if (!Array.isArray(messageArray) || messageArray.length === 0) {
-      console.warn('[useChatMessages] Cannot add empty message array');
+      logger.warn('chat_messages_invalid_array', {
+        isArray: Array.isArray(messageArray),
+        length: messageArray?.length || 0,
+        module: 'useChatMessages'
+      });
       return;
     }
 
@@ -168,7 +186,11 @@ const useChatMessages = (options = {}) => {
       try {
         localStorage.removeItem(storageKey);
       } catch (error) {
-        console.error('[useChatMessages] Failed to clear storage:', error);
+        logger.error('chat_messages_clear_storage_failed', {
+          storageKey,
+          errorMessage: error.message,
+          module: 'useChatMessages'
+        }, error);
       }
     }
   }, [persistToStorage, storageKey]);

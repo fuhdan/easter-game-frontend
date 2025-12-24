@@ -13,7 +13,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Send message to AI assistant
@@ -26,7 +27,7 @@ import { request, log } from './api';
  * @throws {APIError} 400 if message invalid, 429 if rate limited
  */
 export const sendToAI = (message, context) => {
-  log.info('Sending message to AI assistant');
+  logger.info('Sending message to AI assistant');
   return request('POST', '/chat/ai', { message, context });
 };
 
@@ -41,7 +42,7 @@ export const sendToAI = (message, context) => {
  * @throws {APIError} 400 if message invalid, 429 if rate limited
  */
 export const sendToAdmin = (message) => {
-  log.info('Sending message to admin');
+  logger.info('Sending message to admin');
   return request('POST', '/chat/admin', { message });
 };
 

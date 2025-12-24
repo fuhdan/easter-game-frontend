@@ -15,6 +15,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { logger } from '../../utils/logger';
 import './Header.css';
 
 /**
@@ -25,6 +26,17 @@ import './Header.css';
  * @returns {JSX.Element}
  */
 const Header = ({ user, onLogout }) => {
+    /**
+     * Handle logout click with logging
+     */
+    const handleLogout = () => {
+        logger.info('logout_button_clicked', {
+            userRole: user.role,
+            module: 'Header'
+        });
+        onLogout();
+    };
+
     return (
         <div className="dashboard-header">
             <div className="dashboard-logo">
@@ -50,7 +62,7 @@ const Header = ({ user, onLogout }) => {
                         </div>
                     </div>
                 </div>
-                <button onClick={onLogout} className="logout-btn">
+                <button onClick={handleLogout} className="logout-btn">
                     Logout
                 </button>
             </div> 

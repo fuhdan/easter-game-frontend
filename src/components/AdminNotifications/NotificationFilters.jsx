@@ -14,6 +14,7 @@
  */
 
 import React from 'react';
+import { logger } from '../../utils/logger';
 import './NotificationFilters.css';
 
 /**
@@ -33,6 +34,12 @@ const NotificationFilters = ({ priority, type, team, onFiltersChange, onReset })
      */
     function handlePriorityChange(e) {
         const value = e.target.value || null;
+        logger.info('notification_filter_changed', {
+            filterType: 'priority',
+            previousValue: priority,
+            newValue: value,
+            module: 'NotificationFilters'
+        });
         onFiltersChange({ priority: value, type, team });
     }
 
@@ -41,6 +48,12 @@ const NotificationFilters = ({ priority, type, team, onFiltersChange, onReset })
      */
     function handleTypeChange(e) {
         const value = e.target.value || null;
+        logger.info('notification_filter_changed', {
+            filterType: 'escalation_type',
+            previousValue: type,
+            newValue: value,
+            module: 'NotificationFilters'
+        });
         onFiltersChange({ priority, type: value, team });
     }
 
@@ -49,7 +62,26 @@ const NotificationFilters = ({ priority, type, team, onFiltersChange, onReset })
      */
     function handleTeamChange(e) {
         const value = e.target.value ? parseInt(e.target.value, 10) : null;
+        logger.info('notification_filter_changed', {
+            filterType: 'team',
+            previousValue: team,
+            newValue: value,
+            module: 'NotificationFilters'
+        });
         onFiltersChange({ priority, type, team: value });
+    }
+
+    /**
+     * Handle filter reset
+     */
+    function handleReset() {
+        logger.info('notification_filters_reset', {
+            previousPriority: priority,
+            previousType: type,
+            previousTeam: team,
+            module: 'NotificationFilters'
+        });
+        onReset();
     }
 
     // Check if any filters are active
@@ -115,7 +147,7 @@ const NotificationFilters = ({ priority, type, team, onFiltersChange, onReset })
                     <div className="filter-group filter-actions">
                         <button
                             className="btn-reset-filters"
-                            onClick={onReset}
+                            onClick={handleReset}
                             title="Clear all filters"
                         >
                             Clear Filters

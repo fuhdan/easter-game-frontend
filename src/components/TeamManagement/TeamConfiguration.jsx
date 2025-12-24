@@ -22,6 +22,7 @@
  */
 
 import React from 'react';
+import { logger } from '../../utils/logger';
 import { createTeams, resetTeams, utils } from '../../services';
 import './TeamConfiguration.css';
 
@@ -126,7 +127,7 @@ const TeamConfiguration = ({
       }
       
     } catch (error) {
-      console.error('Team creation failed:', error);
+      logger.error('Team creation failed:', error);
       // Use centralized error handling
       const errorMessage = utils.handleError(error, showNotification);
       showNotification(errorMessage || 'Failed to create teams', 'error');
@@ -156,7 +157,7 @@ const TeamConfiguration = ({
       }
       
     } catch (error) {
-      console.error('Reset failed:', error);
+      logger.error('Reset failed:', error);
       utils.handleError(error, showNotification);
     } finally {
       setLoading(false);

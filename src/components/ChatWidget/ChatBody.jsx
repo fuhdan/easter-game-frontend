@@ -24,6 +24,7 @@ import AdminTeamList from './AdminTeamList';
 import PrivateConversation from './PrivateConversation';
 import TeamBroadcast from './TeamBroadcast';
 import AdminNotificationsView from './AdminNotificationsView';
+import { logger } from '../../utils/logger';
 import './ChatBody.css';
 
 /**
@@ -106,6 +107,9 @@ const ChatBody = ({ user }) => {
       metadata?.error_type === 'general_error'
     );
 
+    // TEAM-BASED AI CHAT: Determine if this is a user message
+    const isUserMessage = type === 'user' || sender_type === 'user';
+
     // Helper to get escalation status badge
     const getEscalationBadge = () => {
       // Check metadata for escalation status
@@ -144,7 +148,9 @@ const ChatBody = ({ user }) => {
 
     return (
       <div key={id} className={`chat-message chat-message-${type || sender_type}${isError ? ' chat-message-error' : ''}`}>
-        {(type !== 'user' && sender_type !== 'user') && (
+        {/* Show sender for all message types in AI chat mode */}
+        {/* TEAM-BASED AI CHAT: Show sender name for user messages so team knows who asked */}
+        {!isUserMessage ? (
           <div className="message-header">
             <span className="message-sender">
               {type === 'ai' || sender_type === 'ai' ? 'AI Assistant' :
@@ -152,6 +158,15 @@ const ChatBody = ({ user }) => {
                'System'}
             </span>
           </div>
+        ) : (
+          /* Show sender name for user messages in AI chat (team-based) */
+          chatMode === 'ai' && sender_name && (
+            <div className="message-header">
+              <span className="message-sender user-sender">
+                {sender_name}
+              </span>
+            </div>
+          )
         )}
 
         <div className="message-content">{content}</div>
@@ -182,7 +197,11 @@ const ChatBody = ({ user }) => {
                 selectTeamMember(member);
               }}
               onSelectTeam={(team) => {
-                console.log('[ChatBody] Admin selected team for broadcast:', team);
+                logger.debug('chat_body_admin_team_selected', {
+                  teamId: team?.id,
+                  teamName: team?.name,
+                  module: 'ChatBody'
+                });
               }}
             />
             {selectedTeam ? (
@@ -272,7 +291,10 @@ const ChatBody = ({ user }) => {
               <span className="typing-dot"></span>
               <span className="typing-dot"></span>
             </div>
-            <span className="typing-text">AI is thinking...</span>
+            {/* TEAM-BASED AI CHAT: Show who is asking if sender name available */}
+            <span className="typing-text">
+              {typeof isTyping === 'string' ? `${isTyping} is asking AI...` : 'AI is thinking...'}
+            </span>
           </div>
         )}
       </div>

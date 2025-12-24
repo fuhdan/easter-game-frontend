@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import { getMyTeamPlayers, getAllTeams, generateOtp } from '../../services';
 import './ActivationCodesTab.css';
@@ -95,7 +96,7 @@ function ActivationCodesTab({ user }) {
         }
       }
     } catch (error) {
-      console.error('Failed to load team members:', error);
+      logger.error('Failed to load team members:', error);
       setError('Failed to load team members');
     } finally {
       setLoading(false);
@@ -117,7 +118,7 @@ function ActivationCodesTab({ user }) {
         ));
       }
     } catch (error) {
-      console.error('Failed to generate activation code:', error);
+      logger.error('Failed to generate activation code:', error);
     }
   };
 
@@ -177,15 +178,15 @@ function ActivationCodesTab({ user }) {
           setCopySuccess(prev => ({ ...prev, [memberId]: true }));
           setTimeout(() => setCopySuccess(prev => ({ ...prev, [memberId]: false })), 2000);
         } else {
-          console.error('Failed to copy code using fallback');
+          logger.error('Failed to copy code using fallback');
         }
       } catch (fallbackErr) {
-        console.error('Fallback copy failed:', fallbackErr);
+        logger.error('Fallback copy failed:', fallbackErr);
       } finally {
         document.body.removeChild(textArea);
       }
     } catch (err) {
-      console.error('Failed to copy code:', err);
+      logger.error('Failed to copy code:', err);
     }
   };
 

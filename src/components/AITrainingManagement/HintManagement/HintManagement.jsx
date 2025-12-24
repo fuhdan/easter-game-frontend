@@ -17,6 +17,7 @@ import { createHint, updateHint, deleteHint, bulkDeleteHints } from '../../../se
 import HintModal, { HINT_TYPES, HINT_LEVELS } from './HintModal';
 import HintsList from './HintsList';
 import DeleteConfirmModal from '../shared/DeleteConfirmModal';
+import { logger } from '../../../utils/logger';
 
 function HintManagement({ games, onHintsChanged }) {
   const [selectedGame, setSelectedGame] = useState(null);
@@ -109,11 +110,21 @@ function HintManagement({ games, onHintsChanged }) {
       if (editingHint) {
         // Update existing hint
         await updateHint(editingHint.id, hintData);
-        console.log(`✅ Hint updated: ${editingHint.id}`);
+        logger.info('hint_updated', {
+          hintId: editingHint.id,
+          hintType: hintData.hint_type,
+          hintLevel: hintData.hint_level,
+          module: 'HintManagement'
+        });
       } else {
         // Create new hint
         await createHint(hintData);
-        console.log(`✅ Hint created`);
+        logger.info('hint_created', {
+          gameId: hintData.game_id,
+          hintType: hintData.hint_type,
+          hintLevel: hintData.hint_level,
+          module: 'HintManagement'
+        });
       }
 
       setShowHintModal(false);
@@ -124,7 +135,12 @@ function HintManagement({ games, onHintsChanged }) {
         onHintsChanged();
       }
     } catch (error) {
-      console.error('Failed to save hint:', error);
+      logger.error('hint_save_failed', {
+        isUpdate: !!editingHint,
+        hintId: editingHint?.id,
+        errorMessage: error.message,
+        module: 'HintManagement'
+      }, error);
       alert(`❌ Failed to save hint: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -151,7 +167,11 @@ function HintManagement({ games, onHintsChanged }) {
   const _confirmDeleteHint = async () => {
     try {
       await deleteHint(hintToDelete.id);
-      console.log(`✅ Hint deleted: ${hintToDelete.id}`);
+      logger.info('hint_deleted', {
+        hintId: hintToDelete.id,
+        hintType: hintToDelete.hint_type,
+        module: 'HintManagement'
+      });
 
       setShowDeleteModal(false);
       setHintToDelete(null);
@@ -161,7 +181,11 @@ function HintManagement({ games, onHintsChanged }) {
         onHintsChanged();
       }
     } catch (error) {
-      console.error('Failed to delete hint:', error);
+      logger.error('hint_delete_failed', {
+        hintId: hintToDelete.id,
+        errorMessage: error.message,
+        module: 'HintManagement'
+      }, error);
       alert(`❌ Failed to delete hint: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -189,7 +213,12 @@ function HintManagement({ games, onHintsChanged }) {
   const _confirmBulkDelete = async () => {
     try {
       await bulkDeleteHints(gameToCleanup.id);
-      console.log(`✅ All hints deleted for game: ${gameToCleanup.id}`);
+      logger.info('hints_bulk_deleted', {
+        gameId: gameToCleanup.id,
+        gameTitle: gameToCleanup.title,
+        hintsCount: gameToCleanup.hints?.length || 0,
+        module: 'HintManagement'
+      });
 
       setShowBulkDeleteModal(false);
       setGameToCleanup(null);
@@ -199,7 +228,11 @@ function HintManagement({ games, onHintsChanged }) {
         onHintsChanged();
       }
     } catch (error) {
-      console.error('Failed to bulk delete hints:', error);
+      logger.error('hints_bulk_delete_failed', {
+        gameId: gameToCleanup.id,
+        errorMessage: error.message,
+        module: 'HintManagement'
+      }, error);
       alert(`❌ Failed to bulk delete hints: ${error.response?.data?.detail || error.message}`);
     }
   };

@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import ModelPullProgress from './ModelPullProgress';
+import { logger } from '../../utils/logger';
 import './OllamaModelManager.css';
 
 const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
@@ -49,7 +50,10 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
       setAvailableModels(response.available || []);
       setOllamaReachable(response.ollama_reachable !== false);
     } catch (err) {
-      console.error('Failed to load Ollama models:', err);
+      logger.error('ollama_models_load_failed', {
+        errorMessage: err.message,
+        module: 'OllamaModelManager'
+      }, err);
       setError('Failed to load Ollama models');
       setOllamaReachable(false);
     } finally {
@@ -76,7 +80,10 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
         setPullingTasks(restoredTasks);
       }
     } catch (err) {
-      console.error('Failed to restore active pulls:', err);
+      logger.error('ollama_active_pulls_restore_failed', {
+        errorMessage: err.message,
+        module: 'OllamaModelManager'
+      }, err);
     }
   };
 
@@ -129,7 +136,9 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
     });
 
     eventSource.addEventListener('error', (event) => {
-      console.error('SSE connection error:', event);
+      logger.error('ollama_sse_connection_error', {
+        module: 'OllamaModelManager'
+      });
       // EventSource will automatically reconnect
     });
 
@@ -139,11 +148,18 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
   const handlePullModel = async () => {
     if (!selectedModel) return;
 
-    console.log('Pulling model:', selectedModel);
+    logger.debug('ollama_model_pull_started', {
+      modelName: selectedModel,
+      module: 'OllamaModelManager'
+    });
     setError(null);
     try {
       const response = await api.pullOllamaModel(selectedModel);
-      console.log('Pull response:', response);
+      logger.debug('ollama_model_pull_initiated', {
+        modelName: selectedModel,
+        taskId: response.task_id,
+        module: 'OllamaModelManager'
+      });
       if (response.success) {
         // Add to pulling tasks
         setPullingTasks(prev => ({
@@ -158,8 +174,12 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
         setSelectedModel(''); // Reset selection
       }
     } catch (err) {
-      console.error('Failed to pull model:', err);
-      console.error('Error data:', err.data);
+      logger.error('ollama_model_pull_failed', {
+        modelName: selectedModel,
+        errorMessage: err.message,
+        errorDetail: err.data?.detail,
+        module: 'OllamaModelManager'
+      }, err);
       const errorMsg = err.data?.detail || err.data?.message || err.message || 'Unknown error';
       const errors = err.data?.errors;
       if (errors && errors.length > 0) {
@@ -189,7 +209,11 @@ const OllamaModelManager = ({ activeModel, onModelInstalled }) => {
         setError(`Failed to delete model: ${response.message || 'Unknown error'}`);
       }
     } catch (err) {
-      console.error('Failed to delete model:', err);
+      logger.error('ollama_model_delete_failed', {
+        modelName,
+        errorMessage: err.message,
+        module: 'OllamaModelManager'
+      }, err);
       setError(`Failed to delete model: ${err.message || 'Unknown error'}`);
     }
   };

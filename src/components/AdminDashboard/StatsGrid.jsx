@@ -9,7 +9,8 @@
  * - Responsive grid layout
  * - Hover animations
  */
-import React from 'react';
+import React, { useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import './StatsGrid.css';
 
 /**
@@ -29,6 +30,18 @@ const StatsGrid = ({ data }) => {
 
     // Use API data when available, fallback to defaults
     const stats = data || defaultStats;
+    const usingDefaultData = !data;
+
+    // Log when component renders with data
+    useEffect(() => {
+        logger.debug('stats_grid_rendered', {
+            usingDefaultData,
+            activeTeams: stats.active_teams,
+            gamesCompleted: stats.games_completed,
+            participationRate: stats.participation_rate,
+            module: 'StatsGrid'
+        });
+    }, [data, usingDefaultData, stats.active_teams, stats.games_completed, stats.participation_rate]);
 
     return (
         <div className="stats-card-container">

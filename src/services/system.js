@@ -11,7 +11,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Health check
@@ -53,7 +54,7 @@ export const ping = () => request('GET', '/ping');
  */
 export const getConfig = (category = null) => {
   const url = category ? `/system/config?category=${category}` : '/system/config';
-  log.info(`Fetching system configuration${category ? ` (category: ${category})` : ''}`);
+  logger.info(`Fetching system configuration${category ? ` (category: ${category})` : ''}`);
   return request('GET', url);
 };
 
@@ -68,7 +69,7 @@ export const getConfig = (category = null) => {
  * @throws {APIError} 400 if validation fails, 403 if not super_admin, 404 if key not found
  */
 export const updateConfig = (key, value) => {
-  log.info(`Updating configuration: ${key} = ${value}`);
+  logger.info(`Updating configuration: ${key} = ${value}`);
   return request('PATCH', `/system/config/${key}`, { value });
 };
 
@@ -83,6 +84,6 @@ export const updateConfig = (key, value) => {
  * @throws {APIError} 403 if not super_admin
  */
 export const reloadConfig = () => {
-  log.info('Reloading configuration cache');
+  logger.info('Reloading configuration cache');
   return request('POST', '/system/config/reload');
 };

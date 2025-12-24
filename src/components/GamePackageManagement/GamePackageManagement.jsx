@@ -26,6 +26,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import './GamePackageManagement.css';
@@ -74,9 +75,9 @@ function GamePackageManagement({ user }) {
       const categoriesResponse = await getCategories();
       setCategories(categoriesResponse.categories || []);
 
-      console.log(`Loaded ${eventsResponse.length} events, ${promptsResponse.prompts.length} prompts, ${categoriesResponse.categories?.length || 0} categories`);
+      logger.debug(`Loaded ${eventsResponse.length} events, ${promptsResponse.prompts.length} prompts, ${categoriesResponse.categories?.length || 0} categories`);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('Failed to load data:', error);
       alert('Failed to load game packages. Please check your permissions.');
     } finally {
       setLoading(false);

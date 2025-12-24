@@ -12,10 +12,20 @@
  * @see ../Loader/Loader.jsx for main app loading
  */
 
-import React from "react";
+import React, { useEffect } from "react";
+import { logger } from '../../utils/logger';
 import "./TeamLoader.css";
 
 const TeamLoader = ({ message = "Processing...", progress = 0 }) => {
+  // Log when team loader is displayed and track progress
+  useEffect(() => {
+    logger.debug('team_loader_displayed', {
+      message,
+      progress,
+      module: 'TeamLoader'
+    });
+  }, [message, progress]);
+
   return (
     <div className="loading-overlay">
       <div className="loading-content">

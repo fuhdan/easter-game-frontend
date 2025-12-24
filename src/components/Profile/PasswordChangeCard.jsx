@@ -10,6 +10,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../utils/logger';
 
 /**
  * PasswordChangeCard component - Password change form
@@ -99,7 +100,7 @@ const PasswordChangeCard = () => {
       }
 
     } catch (error) {
-      console.error('Password change error:', error);
+      logger.error('Password change error:', error);
       setPasswordErrors({ 
         current: 'Network error. Please try again.' 
       });

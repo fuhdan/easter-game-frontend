@@ -13,7 +13,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Login user with credentials
@@ -36,7 +37,7 @@ export const login = (credentials) => {
     username: credentials.username?.trim() || credentials.username
   };
 
-  log.info('Attempting login for:', sanitizedCredentials.username);
+  logger.info('Attempting login for:', sanitizedCredentials.username);
   return request('POST', '/auth/login', sanitizedCredentials);
 };
 
@@ -51,7 +52,7 @@ export const login = (credentials) => {
  * @throws {APIError} 400 if validation fails, 401 if credentials invalid
  */
 export const activateAccount = (activationData) => {
-  log.info('Activating account for:', activationData.username);
+  logger.info('Activating account for:', activationData.username);
   return request('POST', '/users/change-password', activationData);
 };
 

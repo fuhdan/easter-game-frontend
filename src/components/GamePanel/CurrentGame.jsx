@@ -15,7 +15,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../utils/logger';
 import { getAllGames, submitSolution, startGame } from '../../services';
+import { useChat } from '../../contexts/ChatContext';
 
 /**
  * CurrentGame component - Game selection and solution submission
@@ -36,6 +38,15 @@ import { getAllGames, submitSolution, startGame } from '../../services';
 const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolution }) => {
   // Admin users can view games but not play them
   const isAdmin = user && user.role === 'admin';
+
+  // Get chat context to refresh AI context banner when game state changes
+  const { loadAIContext } = useChat();
+
+  // DEBUG: Log to verify loadAIContext is available
+  useEffect(() => {
+    logger.debug('CurrentGame mounted - loadAIContext available:', !!loadAIContext);
+  }, [loadAIContext]);
+
   const [selectedGame, setSelectedGame] = useState(null);
   const [solution, setSolution] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -55,8 +66,12 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   useEffect(() => {
     if (games && games.length > 0) {
       loadGameProgress();
+      // BUGFIX: Also refresh AI context when games change (e.g., teammate completes game)
+      if (loadAIContext) {
+        loadAIContext();
+      }
     }
-  }, [games]);
+  }, [games, loadAIContext]);
 
   /**
    * Load game progress to determine which games are completed
@@ -76,27 +91,27 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
       const progressMap = {};
       if (response && response.games) {
         // DEBUG: Log all games with their dependency status
-        console.log('=== FRONTEND DEBUG: Games received from API ===');
+        logger.debug('=== FRONTEND DEBUG: Games received from API ===');
         response.games.forEach(game => {
-          console.log(`Game ${game.id}: ${game.title}`);
-          console.log('  dependency_status:', JSON.stringify(game.dependency_status, null, 2));
-          console.log('  is_available:', game.dependency_status?.is_available);
-          console.log('  total_dependencies:', game.dependency_status?.total_dependencies);
-          console.log('  completed_dependencies:', game.dependency_status?.completed_dependencies);
-          console.log('---');
+          logger.debug(`Game ${game.id}: ${game.title}`);
+          logger.debug('  dependency_status:', JSON.stringify(game.dependency_status, null, 2));
+          logger.debug('  is_available:', game.dependency_status?.is_available);
+          logger.debug('  total_dependencies:', game.dependency_status?.total_dependencies);
+          logger.debug('  completed_dependencies:', game.dependency_status?.completed_dependencies);
+          logger.debug('---');
 
           if (game.progress) {
             progressMap[game.id] = game.progress;
           }
         });
-        console.log('==============================================');
+        logger.debug('==============================================');
 
         // BUGFIX: Store full games data with dependency_status
         setGamesWithDependencies(response.games);
       }
       setGameProgress(progressMap);
     } catch (err) {
-      console.error('Failed to load game progress:', err);
+      logger.error('Failed to load game progress:', err);
     }
   }
 
@@ -114,14 +129,11 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   function isGameLocked(game) {
     // If no dependency_status, game is available (backwards compatibility)
     if (!game.dependency_status) {
-      console.log(`🔓 Game ${game.id} (${game.title}): NO dependency_status - UNLOCKED`);
       return false;
     }
 
     // Use backend's availability check (respects event toggle and dependencies)
-    const locked = !game.dependency_status.is_available;
-    console.log(`${locked ? '🔒' : '🔓'} Game ${game.id} (${game.title}): is_available=${game.dependency_status.is_available} - ${locked ? 'LOCKED' : 'UNLOCKED'}`);
-    return locked;
+    return !game.dependency_status.is_available;
   }
 
   /**
@@ -235,9 +247,21 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
         if (onSubmitSolution) {
           onSubmitSolution();
         }
+        // BUGFIX: Refresh AI context banner to show current game
+        logger.debug('🎯 [CurrentGame] Game started successfully, calling loadAIContext', {
+          gameId,
+          hasLoadAIContext: !!loadAIContext
+        });
+        if (loadAIContext) {
+          logger.debug('🎯 [CurrentGame] Calling loadAIContext NOW');
+          loadAIContext();
+          logger.debug('🎯 [CurrentGame] loadAIContext called');
+        } else {
+          logger.error('🎯 [CurrentGame] loadAIContext is NOT available!');
+        }
       }
     } catch (err) {
-      console.error('Failed to start game:', err);
+      logger.error('Failed to start game:', err);
 
       // Show dependency error message if game is locked
       if (err.message && err.message.includes('locked')) {
@@ -283,6 +307,10 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
         setSolution('');
         // Reload progress to update completed status
         loadGameProgress();
+        // BUGFIX: Refresh AI context banner to show updated progress
+        if (loadAIContext) {
+          loadAIContext();
+        }
         setTimeout(() => {
           setSelectedGame(null);
           onSubmitSolution();

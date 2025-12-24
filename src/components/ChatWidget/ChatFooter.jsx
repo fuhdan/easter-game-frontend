@@ -18,6 +18,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { logger } from '../../utils/logger';
 import './ChatFooter.css';
 
 /**
@@ -66,7 +67,10 @@ const ChatFooter = () => {
 
       // Auto-clear rate limit when countdown reaches 0
       if (remaining <= 0 && rateLimitStatus.exceeded) {
-        console.log('[ChatFooter] Rate limit countdown complete, clearing status');
+        logger.debug('chat_footer_rate_limit_cleared', {
+          limitType: rateLimitStatus.limit_type,
+          module: 'ChatFooter'
+        });
         setRateLimitStatus({
           exceeded: false,
           limit_type: null,
@@ -145,7 +149,13 @@ const ChatFooter = () => {
         }
       }
     } catch (error) {
-      console.error('[ChatFooter] Send failed:', error);
+      logger.error('chat_footer_send_failed', {
+        chatMode,
+        hasSelectedMember: !!selectedTeamMember,
+        hasSelectedAdmin: !!selectedAdminContact,
+        errorMessage: error.message,
+        module: 'ChatFooter'
+      }, error);
     } finally {
       setIsSending(false);
     }

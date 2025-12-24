@@ -6,13 +6,15 @@
  * Provides core HTTP request functionality with:
  * - Automatic token refresh on 401 errors
  * - Retry logic for server errors
- * - Debug logging in development
+ * - Centralized logging with security compliance
  * - HTTPOnly cookie authentication
  *
  * @since 2025-11-20
  */
 
 import { API_CONFIG } from '../config/apiConfig';
+import { logger } from '../utils/logger';
+import { generateCorrelationId, setCorrelationId } from '../utils/context';
 
 /**
  * Configuration
@@ -23,17 +25,6 @@ const CONFIG = {
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000,
   DEBUG: process.env.NODE_ENV === 'development'
-};
-
-/**
- * Debug logging
- */
-const log = {
-  info: (msg, data) => CONFIG.DEBUG && console.log(`🔵 [API] ${msg}`, data || ''),
-  success: (msg, data) => CONFIG.DEBUG && console.log(`🟢 [API] ${msg}`, data || ''),
-  error: (msg, error) => console.error(`🔴 [API] ${msg}`, error || ''),
-  request: (method, url) => CONFIG.DEBUG && console.log(`📤 [${method}] ${url}`),
-  response: (method, url, status) => CONFIG.DEBUG && console.log(`📥 [${method}] ${url} - ${status}`)
 };
 
 /**
@@ -99,7 +90,7 @@ const notifyTokenRefresh = () => {
     try {
       callback();
     } catch (error) {
-      console.error('Token refresh listener error:', error);
+      logger.error('token_refresh_listener_error', { callback: callback.name }, error);
     }
   });
 };
@@ -135,7 +126,19 @@ export const buildHeaders = (contentType = 'application/json') => {
  */
 export const request = async (method, endpoint, data = null, options = {}) => {
   const url = `${CONFIG.BASE_URL}${endpoint}`;
-  log.request(method, url);
+
+  // Generate correlation ID for this request
+  const correlationId = generateCorrelationId();
+  setCorrelationId(correlationId);
+
+  const startTime = performance.now();
+
+  logger.debug('api_request_sent', {
+    method,
+    endpoint,
+    correlationId,
+    module: 'api'
+  });
 
   const config = {
     method,
@@ -153,7 +156,16 @@ export const request = async (method, endpoint, data = null, options = {}) => {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRIES; attempt++) {
     try {
       const response = await fetch(url, config);
-      log.response(method, url, response.status);
+      const duration = Math.round(performance.now() - startTime);
+
+      logger.debug('api_response_received', {
+        method,
+        endpoint,
+        status: response.status,
+        duration,
+        correlationId,
+        module: 'api'
+      });
 
       const responseData = response.headers.get('content-type')?.includes('application/json')
         ? await response.json()
@@ -167,20 +179,47 @@ export const request = async (method, endpoint, data = null, options = {}) => {
         );
       }
 
+      logger.info('api_request_completed', {
+        method,
+        endpoint,
+        status: response.status,
+        duration,
+        correlationId,
+        module: 'api'
+      });
+
       return responseData;
 
     } catch (error) {
       lastError = error;
-      log.error(`Attempt ${attempt} failed:`, error.message);
+
+      logger.warn('api_request_attempt_failed', {
+        attempt,
+        maxRetries: CONFIG.MAX_RETRIES,
+        method,
+        endpoint,
+        status: error.status,
+        error: error.message,
+        correlationId,
+        module: 'api'
+      });
 
       // Handle 401 with automatic token refresh (with mutex)
       if (error.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
-        log.info('401 Unauthorized - attempting token refresh');
+        logger.info('api_unauthorized_attempting_refresh', {
+          endpoint,
+          correlationId,
+          module: 'api'
+        });
 
         try {
           // MUTEX: Check if a refresh is already in progress
           if (!refreshPromise) {
-            log.info('Starting token refresh (no refresh in progress)');
+            logger.info('token_refresh_started', {
+              reason: 'No refresh in progress',
+              correlationId,
+              module: 'api'
+            });
 
             // Start the refresh and store the promise
             // eslint-disable-next-line no-loop-func
@@ -197,7 +236,10 @@ export const request = async (method, endpoint, data = null, options = {}) => {
               }
               // Clear the promise on success
               refreshPromise = null;
-              log.success('Token refresh completed successfully');
+              logger.info('token_refresh_completed', {
+                correlationId,
+                module: 'api'
+              });
               return response;
             })
             // eslint-disable-next-line no-loop-func
@@ -207,13 +249,21 @@ export const request = async (method, endpoint, data = null, options = {}) => {
               throw err;
             });
           } else {
-            log.info('Token refresh already in progress - waiting for it to complete');
+            logger.info('token_refresh_waiting', {
+              reason: 'Refresh already in progress',
+              correlationId,
+              module: 'api'
+            });
           }
 
           // Wait for the refresh to complete (either this one or an existing one)
           await refreshPromise;
 
-          log.success('Token refresh successful - retrying original request');
+          logger.info('token_refresh_successful_retrying', {
+            endpoint,
+            correlationId,
+            module: 'api'
+          });
 
           // Notify listeners (e.g., SSE connections) to reconnect with new tokens
           notifyTokenRefresh();
@@ -232,10 +282,22 @@ export const request = async (method, endpoint, data = null, options = {}) => {
             );
           }
 
+          logger.info('token_refresh_retry_successful', {
+            endpoint,
+            status: retryResponse.status,
+            correlationId,
+            module: 'api'
+          });
+
           return retryData;
 
         } catch (refreshError) {
-          log.error('Token refresh failed:', refreshError);
+          logger.error('token_refresh_failed', {
+            endpoint,
+            error: refreshError.message,
+            correlationId,
+            module: 'api'
+          }, refreshError);
 
           // Dispatch auth-error event for AuthContext to handle
           window.dispatchEvent(new CustomEvent('auth-error', {
@@ -272,7 +334,12 @@ export const utils = {
   processLoginResponse: (response) => {
     // Scenario 1: Successful login
     if (response.success === true) {
-      log.success('Login successful - user authenticated');
+      logger.info('login_successful', {
+        scenario: 1,
+        userId: response.user?.id,
+        role: response.user?.role,
+        module: 'api'
+      });
       return {
         success: true,
         scenario: 1,
@@ -286,7 +353,11 @@ export const utils = {
       const user = response.user || {};
 
       if (user.requiresOTP === true) {
-        log.info('Login requires password change + OTP (Scenario 3)');
+        logger.info('login_requires_password_and_otp', {
+          scenario: 3,
+          username: user.username,
+          module: 'api'
+        });
         return {
           success: false,
           scenario: 3,
@@ -296,7 +367,11 @@ export const utils = {
           message: response.message
         };
       } else if (user.requiresPasswordChange === true) {
-        log.info('Login requires password change only (Scenario 2)');
+        logger.info('login_requires_password_change', {
+          scenario: 2,
+          username: user.username,
+          module: 'api'
+        });
         return {
           success: false,
           scenario: 2,
@@ -309,6 +384,11 @@ export const utils = {
     }
 
     // Fallback
+    logger.warn('login_failed_unknown_scenario', {
+      scenario: 0,
+      hasMessage: !!response.message,
+      module: 'api'
+    });
     return {
       success: false,
       scenario: 0,
@@ -324,7 +404,13 @@ export const utils = {
       ? error.getUserMessage()
       : 'An unexpected error occurred';
 
-    log.error('API Error:', error);
+    logger.error('api_error_handled', {
+      status: error.status,
+      message: error.message,
+      hasNotification: !!showNotification,
+      module: 'api'
+    }, error);
+
     if (showNotification) {
       showNotification(message, 'error');
     }
@@ -414,4 +500,4 @@ export const utils = {
 };
 
 export default utils;
-export { log, CONFIG };
+export { CONFIG };

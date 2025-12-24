@@ -12,7 +12,8 @@
  * @since 2025-08-27
  */
 
-import React from "react";
+import React, { useEffect } from "react";
+import { logger } from '../../utils/logger';
 import "./Loader.css";
 
 /**
@@ -23,6 +24,14 @@ import "./Loader.css";
  * @returns {JSX.Element}
  */
 const Loader = ({ message = "Loading..." }) => {
+  // Log when loader is displayed
+  useEffect(() => {
+    logger.debug('loader_displayed', {
+      message,
+      module: 'Loader'
+    });
+  }, [message]);
+
   return (
     <div className="loading">
       <div className="logo">

@@ -28,6 +28,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './SystemAdminDashboard.css';
 import { getConfig, updateConfig, reloadConfig } from '../../services';
+import { logger } from '../../utils/logger';
 import { validateValue, convertToType } from '../../utils/validators/configValidator';
 import GamePackageManagement from '../GamePackageManagement/GamePackageManagement';
 import ConfigCategoryFilter from './ConfigCategoryFilter';
@@ -116,7 +117,10 @@ function SystemAdminDashboard({ user }) {
       setConfigs(response.configs);
       setCategories(['all', ...response.categories]);
     } catch (error) {
-      console.error('Failed to load configuration:', error);
+      logger.error('system_config_load_failed', {
+        errorMessage: error.message,
+        module: 'SystemAdminDashboard'
+      }, error);
       setError('Failed to load configuration. Please check your permissions.');
     } finally {
       setLoading(false);
@@ -165,9 +169,9 @@ function SystemAdminDashboard({ user }) {
    * @private
    */
   const _confirmChange = async () => {
-    try {
-      const { config, newValue } = pendingChange;
+    const { config, newValue } = pendingChange;
 
+    try {
       // Convert value to appropriate type using utility function
       const typedValue = convertToType(newValue, config.value_type);
 
@@ -183,7 +187,11 @@ function SystemAdminDashboard({ user }) {
       setShowConfirmModal(false);
       setPendingChange(null);
     } catch (error) {
-      console.error('Failed to update configuration:', error);
+      logger.error('system_config_update_failed', {
+        configKey: config.key,
+        errorMessage: error.message,
+        module: 'SystemAdminDashboard'
+      }, error);
       alert(`❌ Failed to update configuration: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -204,7 +212,10 @@ function SystemAdminDashboard({ user }) {
       await _loadConfiguration();
       alert('✅ Configuration cache reloaded successfully');
     } catch (error) {
-      console.error('Failed to reload cache:', error);
+      logger.error('system_config_cache_reload_failed', {
+        errorMessage: error.message,
+        module: 'SystemAdminDashboard'
+      }, error);
       alert('❌ Failed to reload cache');
     }
   };

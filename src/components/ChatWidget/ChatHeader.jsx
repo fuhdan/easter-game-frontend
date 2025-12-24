@@ -15,6 +15,7 @@
 
 import React from 'react';
 import { useChat } from '../../contexts/ChatContext';
+import { logger } from '../../utils/logger';
 import './ChatHeader.css';
 
 /**
@@ -32,6 +33,31 @@ const ChatHeader = ({ onClose }) => {
 
   // SECURITY: Check if user is admin/game_admin to hide admin mode button
   const isAdmin = user && (user.role === 'admin' || user.role === 'game_admin');
+
+  /**
+   * Handle mode switch with logging
+   */
+  const handleModeSwitch = (newMode) => {
+    logger.info('chat_mode_switched', {
+      previousMode: chatMode,
+      newMode,
+      userId: user?.id,
+      module: 'ChatHeader'
+    });
+    switchMode(newMode);
+  };
+
+  /**
+   * Handle chat close with logging
+   */
+  const handleClose = () => {
+    logger.info('chat_widget_closed', {
+      currentMode: chatMode,
+      userId: user?.id,
+      module: 'ChatHeader'
+    });
+    onClose();
+  };
 
   // Calculate team chat unread count
   const teamUnreadCount = unreadCounts
@@ -83,7 +109,7 @@ const ChatHeader = ({ onClose }) => {
         <div className="chat-mode-selector" role="tablist">
           <button
             className={`chat-mode-btn ${chatMode === 'ai' ? 'active' : ''}`}
-            onClick={() => switchMode('ai')}
+            onClick={() => handleModeSwitch('ai')}
             role="tab"
             aria-selected={chatMode === 'ai'}
           >
@@ -94,7 +120,7 @@ const ChatHeader = ({ onClose }) => {
           {!isAdmin && (
             <button
               className={`chat-mode-btn ${chatMode === 'admin' ? 'active' : ''}`}
-              onClick={() => switchMode('admin')}
+              onClick={() => handleModeSwitch('admin')}
               role="tab"
               aria-selected={chatMode === 'admin'}
             >
@@ -104,7 +130,7 @@ const ChatHeader = ({ onClose }) => {
 
           <button
             className={`chat-mode-btn ${chatMode === 'team' ? 'active' : ''}`}
-            onClick={() => switchMode('team')}
+            onClick={() => handleModeSwitch('team')}
             role="tab"
             aria-selected={chatMode === 'team'}
           >
@@ -115,7 +141,7 @@ const ChatHeader = ({ onClose }) => {
           </button>
         </div>
 
-        <button className="chat-close-button" onClick={onClose} aria-label="Close chat">
+        <button className="chat-close-button" onClick={handleClose} aria-label="Close chat">
           &times;
         </button>
       </div>

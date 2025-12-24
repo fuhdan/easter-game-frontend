@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { buildApiUrl } from '../../config/apiConfig';
+import { logger } from '../../utils/logger';
 import './SecurityDashboard.css';
 
 /**
@@ -126,10 +127,19 @@ const SecurityDashboard = () => {
             setTrend(trendData.trend || []);
             setTopUsers(usersData.users || []);
 
-            console.log('Security data loaded successfully');
-            console.log('Summary data:', summaryData);
+            logger.debug('security_data_loaded', {
+                categoriesCount: categoriesData.categories?.length || 0,
+                languagesCount: languagesData.languages?.length || 0,
+                eventsCount: eventsData.events?.length || 0,
+                trendDataPoints: trendData.trend?.length || 0,
+                topUsersCount: usersData.users?.length || 0,
+                module: 'SecurityDashboard'
+            });
         } catch (err) {
-            console.error('Failed to load security data:', err);
+            logger.error('security_data_load_failed', {
+                errorMessage: err.message,
+                module: 'SecurityDashboard'
+            }, err);
             setError('Failed to load security analytics. Please try again.');
         } finally {
             setLoading(false);

@@ -14,7 +14,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Get dashboard statistics
@@ -153,7 +154,7 @@ export const updateGameContent = (gameId, content) => request('PUT', `/admin/gam
  * @throws {APIError} 403 if not admin
  */
 export const resetRateLimit = (target, identifier) => {
-  log.info(`Resetting ${target} rate limit for: ${identifier}`);
+  logger.info('admin_reset_rate_limit', { target, identifier, module: 'admin' });
   return request('POST', '/admin/reset-rate-limit', { target, identifier });
 };
 
@@ -167,7 +168,7 @@ export const resetRateLimit = (target, identifier) => {
  * @throws {APIError} 403 if not admin
  */
 export const resetRateLimitBulk = (ips) => {
-  log.info(`Bulk resetting rate limits for ${ips.length} IP(s)`);
+  logger.info('admin_bulk_reset_rate_limits', { count: ips.length, module: 'admin' });
   return request('POST', '/admin/reset-rate-limit-bulk', { ips });
 };
 
@@ -197,7 +198,7 @@ export const resetRateLimitBulk = (ips) => {
  * @since 2025-11-21
  */
 export const getGameStatistics = () => {
-  log.info('Fetching game statistics overview');
+  logger.debug('admin_fetch_game_stats', { module: 'admin' });
   return request('GET', '/admin/dashboard/games/stats');
 };
 
@@ -237,7 +238,7 @@ export const getGameStatistics = () => {
  * @since 2025-11-21
  */
 export const getPerGameAnalytics = () => {
-  log.info('Fetching per-game analytics');
+  logger.debug('admin_fetch_game_analytics', { module: 'admin' });
   return request('GET', '/admin/dashboard/games/analytics');
 };
 
@@ -278,6 +279,6 @@ export const getPerGameAnalytics = () => {
  * @since 2025-11-21
  */
 export const getGameAdminDetails = (gameId) => {
-  log.info(`Fetching admin details for game ${gameId}`);
+  logger.debug('admin_fetch_game_details', { gameId, module: 'admin' });
   return request('GET', `/admin/dashboard/games/${gameId}/details`);
 };

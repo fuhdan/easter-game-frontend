@@ -33,6 +33,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../config/apiConfig';
 import { login, logout } from '../services';
+import { logger } from '../utils/logger';
 
 const AuthContext = createContext();
 
@@ -70,7 +71,10 @@ export function AuthProvider({ children }) {
      * @param {string} reason - Reason for session expiry (optional)
      */
     const handleSessionExpiry = useCallback((reason = 'Session expired') => {
-        console.log('🔴 Session expired:', reason);
+        logger.warn('auth_session_expired', {
+            reason,
+            module: 'AuthContext'
+        });
         setUser(null);
         setSessionExpired(true);
         setError('Your session has expired. Please log in again.');
@@ -92,7 +96,11 @@ export function AuthProvider({ children }) {
         const handleUnauthorized = (event) => {
             // Only handle if user was previously authenticated
             if (user) {
-                console.log('🔴 Unauthorized event detected - session expired');
+                logger.warn('auth_unauthorized_event', {
+                    userId: user.id,
+                    username: user.username,
+                    module: 'AuthContext'
+                });
                 handleSessionExpiry('Authentication failed');
             }
         };
@@ -128,7 +136,10 @@ export function AuthProvider({ children }) {
                 setUser(null);
             }
         } catch (err) {
-            console.error('Auth check failed:', err);
+            logger.error('auth_check_failed', {
+                errorMessage: err.message,
+                module: 'AuthContext'
+            }, err);
             setUser(null);
         } finally {
             setLoading(false);
@@ -158,14 +169,29 @@ export function AuthProvider({ children }) {
 
             if (response.success) {
                 setUser(response.user);
+                logger.info('auth_login_success', {
+                    userId: response.user.id,
+                    username: response.user.username,
+                    role: response.user.role,
+                    module: 'AuthContext'
+                });
                 return { success: true, message: response.message };
             } else {
                 const errorMsg = response.detail || response.message || 'Login failed';
                 setError(errorMsg);
+                logger.warn('auth_login_failed', {
+                    username: username.trim(),
+                    errorMessage: errorMsg,
+                    module: 'AuthContext'
+                });
                 return { success: false, message: errorMsg };
             }
         } catch (err) {
-            console.error('Login error:', err);
+            logger.error('auth_login_error', {
+                username: username.trim(),
+                errorMessage: err.message,
+                module: 'AuthContext'
+            }, err);
             const errorMsg = err.message || 'Network error. Please try again.';
             setError(errorMsg);
             return { success: false, message: errorMsg };
@@ -192,8 +218,16 @@ export function AuthProvider({ children }) {
             setUser(null);
             setError(null);
             setSessionExpired(false);  // STEP 8: Clear expiry flag
+
+            logger.info('auth_logout_success', {
+                module: 'AuthContext'
+            });
         } catch (err) {
-            console.error('Logout error:', err);
+            logger.warn('auth_logout_api_failed', {
+                errorMessage: err.message,
+                localLogoutSucceeded: true,
+                module: 'AuthContext'
+            }, err);
             // Still clear local state even if API call fails
             setUser(null);
             setError(null);

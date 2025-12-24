@@ -21,6 +21,7 @@
 
 import React from 'react';
 import './ErrorBoundary.css';
+import { logger } from '../../utils/logger';
 
 /**
  * Error Boundary component to catch React errors
@@ -69,14 +70,13 @@ class ErrorBoundary extends React.Component {
    * @param {Object} errorInfo - Component stack trace information
    */
   componentDidCatch(error, errorInfo) {
-    // SECURITY: Log error to console in development only
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by ErrorBoundary:', error);
-      console.error('Component stack:', errorInfo.componentStack);
-    }
-
-    // TODO(2025-11-20): Send to error tracking service (Sentry, LogRocket, etc.)
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+    // Log critical React error - this caused component tree to crash
+    logger.critical('react_error_boundary_caught', {
+      errorName: error.name,
+      errorMessage: error.message,
+      componentStack: errorInfo.componentStack,
+      module: 'ErrorBoundary'
+    }, error);
 
     // Store error details in state for display
     this.setState({

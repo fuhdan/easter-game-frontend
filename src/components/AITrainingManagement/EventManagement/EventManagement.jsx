@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import { updateEvent } from '../../../services';
 import EventModal from './EventModal';
+import { logger } from '../../../utils/logger';
 
 function EventManagement({ events, onEventsChanged }) {
   const [editingEvent, setEditingEvent] = useState(null);
@@ -45,7 +46,11 @@ function EventManagement({ events, onEventsChanged }) {
   const _handleSaveEvent = async () => {
     try {
       await updateEvent(editingEvent.id, eventForm);
-      console.log(`✅ Event updated: ${editingEvent.id}`);
+      logger.info('event_updated', {
+        eventId: editingEvent.id,
+        eventTitle: eventForm.title,
+        module: 'EventManagement'
+      });
 
       setShowEventModal(false);
       setEditingEvent(null);
@@ -55,7 +60,11 @@ function EventManagement({ events, onEventsChanged }) {
         onEventsChanged();
       }
     } catch (error) {
-      console.error('Failed to save event:', error);
+      logger.error('event_save_failed', {
+        eventId: editingEvent.id,
+        errorMessage: error.message,
+        module: 'EventManagement'
+      }, error);
       alert(`❌ Failed to save event: ${error.response?.data?.detail || error.message}`);
     }
   };

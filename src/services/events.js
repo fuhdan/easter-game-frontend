@@ -11,7 +11,8 @@
  * @since 2025-11-20
  */
 
-import { request, log } from './api';
+import { request } from './api';
+import { logger } from '../utils/logger';
 
 /**
  * Get all events
@@ -20,7 +21,7 @@ import { request, log } from './api';
  * @throws {APIError} 401 if not authenticated
  */
 export const getAll = () => {
-  log.info('Fetching all events');
+  logger.info('Fetching all events');
   return request('GET', '/events');
 };
 
@@ -39,7 +40,7 @@ export const getAll = () => {
  * @throws {APIError} 404 if no active event
  */
 export const getActive = () => {
-  log.info('Fetching active event with story');
+  logger.info('Fetching active event with story');
   return request('GET', '/events/active');
 };
 
@@ -51,7 +52,7 @@ export const getActive = () => {
  * @throws {APIError} 404 if event not found
  */
 export const getByYear = (year) => {
-  log.info(`Fetching event for year ${year}`);
+  logger.info(`Fetching event for year ${year}`);
   return request('GET', `/events/${year}`);
 };
 
@@ -63,6 +64,6 @@ export const getByYear = (year) => {
  * @throws {APIError} 404 if event not found
  */
 export const getGames = (eventId) => {
-  log.info(`Fetching games for event ${eventId}`);
+  logger.info(`Fetching games for event ${eventId}`);
   return request('GET', `/events/${eventId}/games`);
 };
