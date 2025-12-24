@@ -22,6 +22,7 @@ import { HINT_TYPES } from './HintModal';
  * @param {Array} props.hints - Array of hint objects
  * @param {Function} props.onEdit - Callback when edit button is clicked
  * @param {Function} props.onDelete - Callback when delete button is clicked
+ * @param {Function} props.onToggleActive - Callback when active toggle is switched
  * @returns {JSX.Element} Hints list or empty state
  *
  * @example
@@ -29,9 +30,10 @@ import { HINT_TYPES } from './HintModal';
  *   hints={gameHints}
  *   onEdit={handleEditHint}
  *   onDelete={handleDeleteHint}
+ *   onToggleActive={handleToggleActive}
  * />
  */
-function HintsList({ hints, onEdit, onDelete }) {
+function HintsList({ hints, onEdit, onDelete, onToggleActive }) {
   // Empty state
   if (hints.length === 0) {
     return (
@@ -48,15 +50,36 @@ function HintsList({ hints, onEdit, onDelete }) {
   return (
     <div className="hints-list">
       {hints.map(hint => (
-        <div key={hint.id} className="hint-item">
+        <div key={hint.id} className={`hint-item ${!hint.is_active ? 'hint-inactive' : ''}`}>
           {/* Hint Header - Type and Level Badges */}
           <div className="hint-header">
-            <span className={`hint-type-badge type-${hint.hint_type}`}>
-              {HINT_TYPES[hint.hint_type] || hint.hint_type}
-            </span>
-            <span className={`hint-level-badge level-${hint.hint_level}`}>
-              Level {hint.hint_level}
-            </span>
+            <div className="hint-badges">
+              <span className={`hint-type-badge type-${hint.hint_type}`}>
+                {HINT_TYPES[hint.hint_type] || hint.hint_type}
+              </span>
+              <span className={`hint-level-badge level-${hint.hint_level}`}>
+                Level {hint.hint_level}
+              </span>
+              <span className="hint-progress-badge">
+                {hint.min_progress !== undefined && hint.max_progress !== undefined
+                  ? `${hint.min_progress}-${hint.max_progress}%`
+                  : '0-100%'}
+              </span>
+            </div>
+            <div className="hint-toggle">
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={hint.is_active}
+                  onChange={() => onToggleActive(hint)}
+                  aria-label={`Toggle hint ${hint.is_active ? 'inactive' : 'active'}`}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+              <span className="toggle-label">
+                {hint.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
           </div>
 
           {/* Hint Content */}
@@ -66,13 +89,8 @@ function HintsList({ hints, onEdit, onDelete }) {
 
           {/* Hint Metadata */}
           <div className="hint-meta">
-            {hint.effectiveness_score !== null && (
-              <span className="effectiveness">
-                Effectiveness: {hint.effectiveness_score}%
-              </span>
-            )}
             <span className="status">
-              {hint.review_status} • {hint.is_active ? 'Active' : 'Inactive'}
+              {hint.is_active ? 'Active' : 'Inactive'}
             </span>
           </div>
 

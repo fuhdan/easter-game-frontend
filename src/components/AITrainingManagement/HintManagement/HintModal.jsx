@@ -85,6 +85,76 @@ function HintModal({ hint, hintForm, games, onFormChange, onSave, onClose }) {
             </select>
           </div>
 
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="min-progress">
+                Min Progress (%):
+                <span className="field-help">Hint shows when progress ≥ this value</span>
+              </label>
+              <input
+                type="number"
+                id="min-progress"
+                value={hintForm.min_progress !== undefined ? hintForm.min_progress : 0}
+                onChange={(e) => onFormChange({ ...hintForm, min_progress: parseInt(e.target.value) || 0 })}
+                className="form-control"
+                min="0"
+                max="100"
+                placeholder="0"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="max-progress">
+                Max Progress (%):
+                <span className="field-help">Hint shows when progress ≤ this value</span>
+              </label>
+              <input
+                type="number"
+                id="max-progress"
+                value={hintForm.max_progress !== undefined ? hintForm.max_progress : 100}
+                onChange={(e) => onFormChange({ ...hintForm, max_progress: parseInt(e.target.value) || 100 })}
+                className="form-control"
+                min="0"
+                max="100"
+                placeholder="100"
+              />
+            </div>
+          </div>
+
+          <div className="progress-examples">
+            <strong>Common Ranges:</strong>
+            <div className="example-chips">
+              <button
+                type="button"
+                className="chip"
+                onClick={() => onFormChange({ ...hintForm, min_progress: 0, max_progress: 24 })}
+              >
+                0-24% (Discovery)
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => onFormChange({ ...hintForm, min_progress: 25, max_progress: 49 })}
+              >
+                25-49% (Found Game)
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => onFormChange({ ...hintForm, min_progress: 50, max_progress: 74 })}
+              >
+                50-74% (Gameplay)
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => onFormChange({ ...hintForm, min_progress: 75, max_progress: 100 })}
+              >
+                75-100% (Advanced)
+              </button>
+            </div>
+          </div>
+
           <div className="form-group">
             <label htmlFor="hint-content">Hint Content:</label>
             <textarea
@@ -94,20 +164,6 @@ function HintModal({ hint, hintForm, games, onFormChange, onSave, onClose }) {
               className="form-control"
               rows="4"
               placeholder="Enter the hint content..."
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="effectiveness-score">Effectiveness Score (0-100, optional):</label>
-            <input
-              type="number"
-              id="effectiveness-score"
-              value={hintForm.effectiveness_score || ''}
-              onChange={(e) => onFormChange({ ...hintForm, effectiveness_score: e.target.value })}
-              className="form-control"
-              min="0"
-              max="100"
-              placeholder="Leave empty if unknown"
             />
           </div>
         </div>

@@ -34,7 +34,8 @@ function HintManagement({ games, onHintsChanged }) {
     hint_type: 'character_knowledge',
     hint_level: 1,
     hint_content: '',
-    effectiveness_score: null
+    min_progress: 0,
+    max_progress: 100
   });
 
   /**
@@ -75,7 +76,8 @@ function HintManagement({ games, onHintsChanged }) {
       hint_type: 'character_knowledge',
       hint_level: 1,
       hint_content: '',
-      effectiveness_score: null
+      min_progress: 0,
+      max_progress: 100
     });
     setShowHintModal(true);
   };
@@ -90,7 +92,8 @@ function HintManagement({ games, onHintsChanged }) {
       hint_type: hint.hint_type,
       hint_level: hint.hint_level,
       hint_content: hint.hint_content,
-      effectiveness_score: hint.effectiveness_score
+      min_progress: hint.min_progress !== undefined ? hint.min_progress : 0,
+      max_progress: hint.max_progress !== undefined ? hint.max_progress : 100
     });
     setShowHintModal(true);
   };
@@ -103,8 +106,7 @@ function HintManagement({ games, onHintsChanged }) {
       const hintData = {
         ...hintForm,
         game_id: parseInt(hintForm.game_id),
-        hint_level: parseInt(hintForm.hint_level),
-        effectiveness_score: hintForm.effectiveness_score ? parseInt(hintForm.effectiveness_score) : null
+        hint_level: parseInt(hintForm.hint_level)
       };
 
       if (editingHint) {
@@ -245,6 +247,32 @@ function HintManagement({ games, onHintsChanged }) {
     setGameToCleanup(null);
   };
 
+  /**
+   * Toggle hint active/inactive status
+   */
+  const _handleToggleActive = async (hint) => {
+    try {
+      await updateHint(hint.id, { is_active: !hint.is_active });
+      logger.info('hint_toggled', {
+        hintId: hint.id,
+        newStatus: !hint.is_active ? 'active' : 'inactive',
+        module: 'HintManagement'
+      });
+
+      // Notify parent to reload
+      if (onHintsChanged) {
+        onHintsChanged();
+      }
+    } catch (error) {
+      logger.error('hint_toggle_failed', {
+        hintId: hint.id,
+        errorMessage: error.message,
+        module: 'HintManagement'
+      }, error);
+      alert(`❌ Failed to toggle hint: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
   return (
     <>
       <div className="hints-section">
@@ -281,6 +309,7 @@ function HintManagement({ games, onHintsChanged }) {
           hints={hints}
           onEdit={_handleEditHint}
           onDelete={_handleDeleteHint}
+          onToggleActive={_handleToggleActive}
         />
       </div>
 

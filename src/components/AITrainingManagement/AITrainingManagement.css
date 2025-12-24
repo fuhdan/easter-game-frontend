@@ -169,8 +169,21 @@
 
 .hint-header {
   display: flex;
-  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 0.75rem;
+}
+
+.hint-badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hint-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .hint-type-badge {
@@ -232,6 +245,79 @@
 .hint-level-badge.level-4 {
   background: #ffebee;
   color: #c62828;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #005da0;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #005da0;
+}
+
+.toggle-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* Inactive Hint Styles */
+.hint-item.hint-inactive {
+  opacity: 0.6;
+  background: #fafafa;
+}
+
+.hint-item.hint-inactive .hint-content {
+  background: #f5f5f5;
+  color: #999;
+  border-left-color: #ccc;
+}
+
+.hint-item.hint-inactive .toggle-label {
+  color: #999;
 }
 
 .hint-content {
@@ -883,4 +969,76 @@ textarea.form-control {
 .status-badge.inactive {
   background: #f8d7da;
   color: #721c24;
+}
+
+/* Progress Range Fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.field-help {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: #666;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.progress-examples {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #005da0;
+}
+
+.progress-examples strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.875rem;
+}
+
+.example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.example-chips .chip {
+  background: #fff;
+  border: 1px solid #005da0;
+  color: #005da0;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.example-chips .chip:hover {
+  background: #005da0;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 93, 160, 0.2);
+}
+
+.example-chips .chip:active {
+  transform: translateY(0);
+}
+
+/* Progress Badge */
+.hint-progress-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e3f2fd;
+  color: #0277bd;
+  border: 1px solid #90caf9;
 }
