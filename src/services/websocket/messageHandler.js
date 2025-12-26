@@ -25,6 +25,19 @@ const generateMessageId = () => {
 };
 
 /**
+ * Handle ping (heartbeat request from server)
+ *
+ * @param {object} message - Ping message
+ * @param {object} context - Chat context state and methods
+ * @private
+ */
+const handlePing = (message, context) => {
+  // Server is checking if connection is alive
+  // WebSocket will automatically respond with pong
+  // No action needed - just silently acknowledge
+};
+
+/**
  * Handle pong (heartbeat response)
  *
  * @param {object} message - Pong message
@@ -606,8 +619,11 @@ const handleEscalationStatusUpdated = (message, context) => {
  * IMPORTANT: Add new message types here as they are implemented
  */
 const MESSAGE_HANDLERS = {
-  // Existing handlers (Phase 1-3)
+  // Heartbeat/Keep-alive
+  'ping': handlePing,
   'pong': handlePong,
+
+  // Existing handlers (Phase 1-3)
   'mode_switched': handleModeSwitched,
   'message_stored': handleMessageStored,
   'ai_typing': handleAITyping,
