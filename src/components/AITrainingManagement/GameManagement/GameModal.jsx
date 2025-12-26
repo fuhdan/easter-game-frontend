@@ -164,18 +164,6 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
           </div>
 
           <div className="form-group">
-            <label htmlFor="game-story">Story Text</label>
-            <textarea
-              id="game-story"
-              value={gameForm.story_text}
-              onChange={(e) => onFormChange({ ...gameForm, story_text: e.target.value })}
-              className="form-control"
-              rows="4"
-              placeholder="Main story/theme text shown on game screen (e.g., Faust summary)"
-            />
-          </div>
-
-          <div className="form-group">
             <label htmlFor="game-challenge">Challenge Text</label>
             <textarea
               id="game-challenge"
@@ -239,15 +227,18 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
           </div>
 
           <div className="form-group">
-            <label htmlFor="game-education">Educational Purpose</label>
+            <label htmlFor="game-ai-progress">AI Progress Guide</label>
             <textarea
-              id="game-education"
-              value={gameForm.educational_purpose}
-              onChange={(e) => onFormChange({ ...gameForm, educational_purpose: e.target.value })}
+              id="game-ai-progress"
+              value={gameForm.ai_progress_guide}
+              onChange={(e) => onFormChange({ ...gameForm, ai_progress_guide: e.target.value })}
               className="form-control"
-              rows="2"
-              placeholder="What players learn (e.g., 'Shows why SSL is essential')"
+              rows="6"
+              placeholder="AI progress estimation stages (e.g., '0-25%: Learning character, 25-50%: Found real name, 50-100%: Playing game')"
             />
+            <small className="form-hint" style={{ fontSize: '12px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
+              💡 Define progress stages to help the AI estimate player understanding and provide appropriate hints.
+            </small>
           </div>
 
           <div className="form-group">

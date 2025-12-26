@@ -53,9 +53,17 @@ const LANGUAGES = {
  * Displays comprehensive security analytics for the AI chat system.
  * Monitors attack patterns, languages, and trends.
  *
+ * Real-time updates via parent SSE connection:
+ * - Security summary stats updated in real-time
+ * - Latest security events pushed as they occur
+ * - Detailed stats (categories, languages, etc.) loaded once via REST
+ *
+ * @param {Object} props
+ * @param {Object} props.securitySummary - Real-time security summary from SSE (null if not yet received)
+ * @param {Object} props.latestSecurityEvent - Latest security event from SSE (null if none)
  * @returns {JSX.Element}
  */
-const SecurityDashboard = () => {
+const SecurityDashboard = ({ securitySummary, latestSecurityEvent }) => {
     const [summary, setSummary] = useState(null);
     const [categories, setCategories] = useState([]);
     const [languages, setLanguages] = useState([]);
@@ -65,12 +73,45 @@ const SecurityDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Update summary from real-time SSE data
+    useEffect(() => {
+        if (securitySummary) {
+            logger.debug('security_summary_updated_from_sse', {
+                totalMessages: securitySummary.total_messages,
+                totalBlocked: securitySummary.total_blocked,
+                module: 'SecurityDashboard'
+            });
+            setSummary(securitySummary);
+        }
+    }, [securitySummary]);
+
+    // Add latest event to recent events when received
+    useEffect(() => {
+        if (latestSecurityEvent && latestSecurityEvent.was_blocked) {
+            logger.debug('security_event_received_from_sse', {
+                eventId: latestSecurityEvent.id,
+                category: latestSecurityEvent.attack_category,
+                module: 'SecurityDashboard'
+            });
+
+            // Add to top of recent events list (avoiding duplicates)
+            setRecentEvents(prev => {
+                // Check if event already exists
+                if (prev.some(e => e.id === latestSecurityEvent.id)) {
+                    return prev;
+                }
+                // Add to top, limit to 10 events
+                return [latestSecurityEvent, ...prev].slice(0, 10);
+            });
+        }
+    }, [latestSecurityEvent]);
+
     useEffect(() => {
         loadSecurityData();
     }, []);
 
     /**
-     * Load all security analytics data
+     * Load security analytics data (excluding summary - that comes from SSE)
      * @async
      */
     const loadSecurityData = async () => {
@@ -78,12 +119,9 @@ const SecurityDashboard = () => {
         setError(null);
 
         try {
-            // Load all endpoints in parallel (using 9999 days to get all event data)
-            const [summaryRes, categoriesRes, languagesRes, eventsRes, trendRes, usersRes] = await Promise.all([
-                fetch(buildApiUrl('admin/security/summary'), {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                }),
+            // Load detailed stats in parallel (summary comes from SSE in real-time)
+            // Using 9999 days to get all event data
+            const [categoriesRes, languagesRes, eventsRes, trendRes, usersRes] = await Promise.all([
                 fetch(buildApiUrl('admin/security/stats/categories?days=9999'), {
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' }
@@ -107,20 +145,19 @@ const SecurityDashboard = () => {
             ]);
 
             // Check all responses
-            if (!summaryRes.ok || !categoriesRes.ok || !languagesRes.ok ||
-                !eventsRes.ok || !trendRes.ok || !usersRes.ok) {
+            if (!categoriesRes.ok || !languagesRes.ok || !eventsRes.ok ||
+                !trendRes.ok || !usersRes.ok) {
                 throw new Error('Failed to fetch security data');
             }
 
             // Parse all responses
-            const summaryData = await summaryRes.json();
             const categoriesData = await categoriesRes.json();
             const languagesData = await languagesRes.json();
             const eventsData = await eventsRes.json();
             const trendData = await trendRes.json();
             const usersData = await usersRes.json();
 
-            setSummary(summaryData);
+            // Summary comes from SSE (real-time), not REST API
             setCategories(categoriesData.categories || []);
             setLanguages(languagesData.languages || []);
             setRecentEvents(eventsData.events || []);
@@ -133,6 +170,7 @@ const SecurityDashboard = () => {
                 eventsCount: eventsData.events?.length || 0,
                 trendDataPoints: trendData.trend?.length || 0,
                 topUsersCount: usersData.users?.length || 0,
+                note: 'Summary data comes from SSE stream',
                 module: 'SecurityDashboard'
             });
         } catch (err) {

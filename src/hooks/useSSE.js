@@ -132,6 +132,17 @@ export const useSSE = (options = {}) => {
     eventTypesRef.current.forEach(eventType => {
       eventSource.addEventListener(eventType, (event) => {
         try {
+          // SECURITY: Check if event.data exists before parsing
+          // Browser native error events don't have data, only server-sent events do
+          if (!event.data) {
+            logger.warn('sse_event_without_data', {
+              eventType,
+              hookName: name,
+              module: 'useSSE'
+            });
+            return;
+          }
+
           const parsedData = JSON.parse(event.data);
 
           // PERF: Don't log heartbeats - they happen frequently
@@ -240,9 +251,16 @@ export const useSSE = (options = {}) => {
    * Handle connection error
    */
   const handleError = useCallback((event) => {
+    const readyState = eventSourceRef.current?.readyState;
+    const readyStateName = ['CONNECTING', 'OPEN', 'CLOSED'][readyState] || 'UNKNOWN';
+
     logger.error('sse_connection_error', {
-      readyState: eventSourceRef.current?.readyState,
+      readyState,
+      readyStateName,
+      endpoint,
       hookName: name,
+      eventType: event?.type,
+      eventTarget: event?.target?.constructor?.name,
       module: 'useSSE'
     });
 
@@ -256,7 +274,12 @@ export const useSSE = (options = {}) => {
     }
 
     // Emit error event
-    const errorData = { message: 'Connection lost', event };
+    const errorData = {
+      message: 'Connection lost',
+      event,
+      readyState: readyStateName,
+      endpoint
+    };
     setError(errorData);
     onErrorRef.current?.(errorData);
 
@@ -264,7 +287,7 @@ export const useSSE = (options = {}) => {
     if (!isIntentionalCloseRef.current) {
       reconnect();
     }
-  }, [name, reconnect]);
+  }, [name, endpoint, reconnect]);
 
   /**
    * Handle token refresh
@@ -307,9 +330,12 @@ export const useSSE = (options = {}) => {
     }
 
     try {
+      const connectTimestamp = new Date().toISOString();
       logger.info('sse_connecting', {
         endpoint,
         hookName: name,
+        connectTimestamp,
+        hasExistingConnection: !!eventSourceRef.current,
         module: 'useSSE'
       });
 
@@ -318,6 +344,13 @@ export const useSSE = (options = {}) => {
       // This ensures HTTPOnly authentication cookies are sent with the request
       const eventSource = new EventSource(endpoint);
       eventSourceRef.current = eventSource;
+
+      logger.debug('sse_eventsource_created', {
+        endpoint,
+        hookName: name,
+        readyState: eventSource.readyState,
+        module: 'useSSE'
+      });
 
       // Listen for connection open
       eventSource.addEventListener('open', handleOpen);

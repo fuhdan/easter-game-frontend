@@ -522,6 +522,21 @@ export function ChatProvider({ children, user }) {
         module: 'ChatContext'
       });
 
+      // DEBUG: Log full games array to debug progress issue
+      if (progressData.games && progressData.games.length > 0) {
+        logger.debug('🎯 [ChatContext] Full games data from API', {
+          games: progressData.games.map(g => ({
+            game_title: g.game_title,
+            order_index: g.order_index,
+            user_status: g.user_status,
+            team_progress_percentage: g.team_progress_percentage,
+            user_progress_percentage: g.user_progress_percentage,
+            total_hints_used: g.total_hints_used
+          })),
+          module: 'ChatContext'
+        });
+      }
+
       // Extract data from team progress response
       const games = progressData.games || [];
       const progressPercentage = Math.round(progressData.summary?.progress_percentage || 0);
@@ -537,10 +552,11 @@ export function ChatProvider({ children, user }) {
         currentGame = games.find(g => g.user_status && g.user_status !== 'completed');
       }
 
-      // Get hints used and game name
+      // Get hints used, game name, and game-specific progress
       let hintsUsed = 0;
       let gameName = null;  // null means no active game
       let hasActiveGame = false;
+      let displayProgress = progressPercentage;  // Default to overall progress
 
       if (currentGame && currentGame.user_status && currentGame.user_status !== 'not_started') {
         // Only set game info if user has started the game
@@ -548,12 +564,15 @@ export function ChatProvider({ children, user }) {
         // Use "Game X" format
         gameName = currentGame.order_index ? `Game ${currentGame.order_index}` : currentGame.game_title;
         hasActiveGame = true;
+        // TEAM-BASED: Use team progress (highest progress achieved by any team member)
+        // This ensures all team members see the same progress percentage
+        displayProgress = Math.round(currentGame.team_progress_percentage || 0);
       }
 
       const newContext = {
         game: gameName,
         team: teamName,
-        progress: progressPercentage,
+        progress: displayProgress,  // Game-specific progress if active, overall progress otherwise
         hints_used: hintsUsed,
         hasActiveGame: hasActiveGame  // Add flag to indicate if game is active
       };
@@ -583,10 +602,25 @@ export function ChatProvider({ children, user }) {
 
   useEffect(() => { if (chatMode === 'ai' && user) loadAIContext(); }, [chatMode, user, loadAIContext]);
 
+  // AI-BASED PROGRESS TRACKING: Function to trigger game progress refresh in GamePanel
+  const refreshGameProgress = useCallback((gameId) => {
+    logger.info('chat_refreshing_game_progress', {
+      gameId,
+      module: 'ChatContext'
+    });
+
+    // Dispatch custom event that GamePanel can listen to
+    const event = new CustomEvent('gameProgressUpdated', {
+      detail: { gameId, source: 'ai_estimation' }
+    });
+    window.dispatchEvent(event);
+  }, []);
+
   // BUGFIX: Add loadAIContext to handlers after it's defined
   useEffect(() => {
     handlersRef.current.loadAIContext = loadAIContext;
-  }, [loadAIContext]);
+    handlersRef.current.refreshGameProgress = refreshGameProgress;
+  }, [loadAIContext, refreshGameProgress]);
 
   // Load initial history when component mounts (AI mode is default)
   const hasLoadedInitialHistory = useRef(false);

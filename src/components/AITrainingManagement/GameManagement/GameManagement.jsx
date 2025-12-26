@@ -29,9 +29,8 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
     title: '',
     description: '',
     solution_password: '',
-    story_text: '',
     challenge_text: '',
-    educational_purpose: '',
+    ai_progress_guide: '',
     technical_skills: '',
     difficulty_level: 'medium',
     max_hints: 0,
@@ -51,9 +50,8 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       title: '',
       description: '',
       solution_password: '',
-      story_text: '',
       challenge_text: '',
-      educational_purpose: '',
+      ai_progress_guide: '',
       technical_skills: '',
       difficulty_level: 'medium',
       max_hints: 0,
@@ -75,9 +73,8 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       title: game.title,
       description: game.description,
       solution_password: game.solution_password,
-      story_text: game.story_text || '',
       challenge_text: game.challenge_text || '',
-      educational_purpose: game.educational_purpose || '',
+      ai_progress_guide: game.ai_progress_guide || '',
       technical_skills: game.technical_skills || '',
       difficulty_level: game.difficulty_level || 'medium',
       max_hints: game.max_hints,
@@ -216,9 +213,9 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
 
                 <div className="game-description">{game.description}</div>
 
-                {game.educational_purpose && (
+                {game.ai_progress_guide && (
                   <div className="game-education">
-                    <strong>🎓 Learning Goal:</strong> {game.educational_purpose}
+                    <strong>🎓 Technical Skills:</strong> {game.technical_skills}
                   </div>
                 )}
 

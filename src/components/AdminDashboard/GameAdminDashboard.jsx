@@ -110,6 +110,13 @@ const GameAdminDashboard = ({ user }) => {
         }
     }
 
+    // Blocked IPs state (for Rate Limits tab)
+    const [blockedIPsData, setBlockedIPsData] = useState(null);
+
+    // Security Dashboard state
+    const [securitySummary, setSecuritySummary] = useState(null);
+    const [latestSecurityEvent, setLatestSecurityEvent] = useState(null);
+
     /**
      * Handle SSE message events
      */
@@ -161,6 +168,35 @@ const GameAdminDashboard = ({ user }) => {
                 });
                 break;
 
+            case 'blocked_ips_update':
+                logger.debug('game_admin_dashboard_blocked_ips_update', {
+                    blockedIPsCount: data.blocked_ips?.length || 0,
+                    totalBlocked: data.total_blocked,
+                    module: 'GameAdminDashboard'
+                });
+                setBlockedIPsData(data);
+                break;
+
+            case 'security_summary_update':
+                logger.debug('game_admin_dashboard_security_summary_update', {
+                    totalMessages: data.total_messages,
+                    totalBlocked: data.total_blocked,
+                    blockRate: data.block_rate,
+                    module: 'GameAdminDashboard'
+                });
+                setSecuritySummary(data);
+                break;
+
+            case 'security_event':
+                logger.debug('game_admin_dashboard_security_event', {
+                    eventId: data.id,
+                    category: data.attack_category,
+                    wasBlocked: data.was_blocked,
+                    module: 'GameAdminDashboard'
+                });
+                setLatestSecurityEvent(data);
+                break;
+
             case 'heartbeat':
                 // PERF: Don't log heartbeats - they happen frequently
                 break;
@@ -201,19 +237,31 @@ const GameAdminDashboard = ({ user }) => {
         });
     }, []);
 
-    // Set up SSE connection for real-time updates (only for Overview and Games Analytics tabs)
-    const shouldConnectSSE = activeTab !== 'security' && activeTab !== 'rate-limits';
+    // Set up unified SSE connection for ALL game admin dashboard updates
+    // This single connection streams: game stats, team progress, AND blocked IPs
+    // Keeps connection alive across all tabs - more efficient than disconnecting/reconnecting
+    // NOTE: Security tab uses REST-only endpoints, but still benefits from stats/team updates
 
     // Memoize endpoint to prevent reconnections
     const sseEndpoint = useMemo(() => {
-        return shouldConnectSSE ? buildApiUrl('admin/game-dashboard/stream') : null;
-    }, [shouldConnectSSE]);
-
-    // Memoize event types array to prevent reconnections
-    const sseEventTypes = useMemo(() => {
-        return ['stats_update', 'team_progress_update', 'heartbeat', 'error'];
+        return buildApiUrl('sse/admin/game-dashboard/stream');
     }, []);
 
+    // Memoize event types array to prevent reconnections
+    // Unified admin dashboard stream includes all admin events
+    const sseEventTypes = useMemo(() => {
+        return [
+            'stats_update',
+            'team_progress_update',
+            'blocked_ips_update',
+            'security_summary_update',
+            'security_event',
+            'heartbeat',
+            'error'
+        ];
+    }, []);
+
+    // Single persistent SSE connection for entire game admin dashboard
     const { isConnected } = useSSE({
         endpoint: sseEndpoint,
         eventTypes: sseEventTypes,
@@ -224,7 +272,7 @@ const GameAdminDashboard = ({ user }) => {
         maxReconnectAttempts: 5,
         reconnectDelay: 1000,
         maxReconnectDelay: 30000,
-        name: 'GameDashboardSSE'
+        name: 'GameAdminDashboardSSE'
     });
 
     /**
@@ -232,11 +280,7 @@ const GameAdminDashboard = ({ user }) => {
      * @returns {JSX.Element}
      */
     const renderConnectionStatus = () => {
-        // Don't show status on Security and Rate Limits tabs
-        if (activeTab === 'security' || activeTab === 'rate-limits') {
-            return null;
-        }
-
+        // Show connection status on all tabs (unified SSE stream)
         const connectionStatus = isConnected ? 'connected' : 'disconnected';
 
         return (
@@ -295,10 +339,15 @@ const GameAdminDashboard = ({ user }) => {
                 return <GamesAnalyticsTab />;
 
             case 'security':
-                return <SecurityDashboard />;
+                return (
+                    <SecurityDashboard
+                        securitySummary={securitySummary}
+                        latestSecurityEvent={latestSecurityEvent}
+                    />
+                );
 
             case 'rate-limits':
-                return <RateLimitCard user={user} />;
+                return <RateLimitCard user={user} blockedIPsData={blockedIPsData} />;
 
             default:
                 return null;

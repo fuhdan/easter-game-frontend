@@ -13,10 +13,8 @@
  * @since 2025-11-06
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getConfig, resetRateLimitBulk, utils, getCurrentUser } from '../../services';
-import { useSSE } from '../../hooks/useSSE';
-import { buildApiUrl } from '../../config/apiConfig';
 import { logger } from '../../utils/logger';
 import './RateLimitCard.css';
 
@@ -25,9 +23,10 @@ import './RateLimitCard.css';
  *
  * @param {Object} props
  * @param {Object} props.user - Current authenticated admin user
+ * @param {Object} props.blockedIPsData - Blocked IPs data from parent SSE connection (null if not yet received)
  * @returns {JSX.Element}
  */
-const RateLimitCard = ({ user }) => {
+const RateLimitCard = ({ user, blockedIPsData }) => {
     // Blocked IP list state
     const [blockedIPs, setBlockedIPs] = useState([]);
     const [selectedIPs, setSelectedIPs] = useState(new Set());
@@ -179,95 +178,23 @@ const RateLimitCard = ({ user }) => {
         }
     };
 
-    /**
-     * Handle SSE message events
-     */
-    const handleSSEMessage = useCallback((eventType, data) => {
-        switch (eventType) {
-            case 'blocked_ips_update':
-                logger.debug('rate_limit_blocked_ips_update', {
-                    blockedIPsCount: data.blocked_ips.length,
-                    module: 'RateLimitCard'
-                });
-                setBlockedIPs(data.blocked_ips);
-                setLastUpdated(new Date(data.timestamp));
-                break;
-
-            case 'heartbeat':
-                // PERF: Don't log heartbeats - they happen frequently
-                break;
-
-            default:
-                logger.warn('rate_limit_unknown_sse_event', {
-                    eventType,
-                    module: 'RateLimitCard'
-                });
-        }
-    }, []);
-
-    /**
-     * Handle SSE connection established
-     */
-    const handleSSEConnect = useCallback(() => {
-        logger.info('rate_limit_sse_connected', {
-            module: 'RateLimitCard'
-        });
-    }, []);
-
-    /**
-     * Handle SSE disconnection
-     */
-    const handleSSEDisconnect = useCallback(() => {
-        logger.info('rate_limit_sse_disconnected', {
-            module: 'RateLimitCard'
-        });
-    }, []);
-
-    /**
-     * Handle SSE errors
-     */
-    const handleSSEError = useCallback((errorData) => {
-        logger.error('rate_limit_sse_error', {
-            errorMessage: errorData.message,
-            module: 'RateLimitCard'
-        });
-        if (errorData.message && errorData.message !== 'Connection lost') {
-            showNotification('Failed to retrieve blocked IPs', 'error');
-        }
-    }, []);
-
     // Load rate limit config on mount
     useEffect(() => {
         loadRateLimitConfig();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Connect to SSE for real-time blocked IPs updates
-    const { isConnected, reconnect } = useSSE({
-        endpoint: buildApiUrl('admin/blocked-ips/stream'),
-        eventTypes: ['blocked_ips_update', 'heartbeat', 'error'],
-        onMessage: handleSSEMessage,
-        onConnect: handleSSEConnect,
-        onDisconnect: handleSSEDisconnect,
-        onError: handleSSEError,
-        maxReconnectAttempts: 5,
-        reconnectDelay: 1000,
-        maxReconnectDelay: 30000,
-        name: 'RateLimitSSE'
-    });
-
-    /**
-     * Handle manual reconnect
-     *
-     * Triggers manual reconnection of the SSE stream.
-     * Useful when connection is lost and automatic reconnection failed.
-     */
-    const handleManualReconnect = () => {
-        logger.info('rate_limit_manual_reconnect', {
-            module: 'RateLimitCard'
-        });
-        reconnect();
-    };
+    // Update blocked IPs from parent SSE connection
+    useEffect(() => {
+        if (blockedIPsData) {
+            logger.debug('rate_limit_blocked_ips_update', {
+                blockedIPsCount: blockedIPsData.blocked_ips?.length || 0,
+                module: 'RateLimitCard'
+            });
+            setBlockedIPs(blockedIPsData.blocked_ips || []);
+            setLastUpdated(new Date());
+        }
+    }, [blockedIPsData]);
 
     // Client-side countdown for ban TTL (updates every second between SSE updates)
     useEffect(() => {
@@ -305,28 +232,12 @@ const RateLimitCard = ({ user }) => {
                 <div className="blocked-ip-list-section">
                     <div className="section-header">
                         <h3>Currently Blocked IPs (Real-Time)</h3>
-                    <div className="header-actions">
-                        <span className="last-updated">
-                            Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
-                        </span>
-
-                        {/* Connection Status */}
-                        <div className={`connection-status status-${isConnected ? 'connected' : 'disconnected'}`}>
-                            {isConnected ? '🟢 Live' : '🔴 Disconnected'}
+                        <div className="header-actions">
+                            <span className="last-updated">
+                                Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
+                            </span>
                         </div>
-
-                        {/* Manual reconnect button (only show if disconnected) */}
-                        {!isConnected && (
-                            <button
-                                className="btn-reconnect"
-                                onClick={handleManualReconnect}
-                                disabled={loading}
-                            >
-                                🔄 Reconnect
-                            </button>
-                        )}
                     </div>
-                </div>
 
                 {blockedIPs.length === 0 ? (
                     <div className="empty-state">

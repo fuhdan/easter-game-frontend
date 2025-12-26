@@ -117,6 +117,23 @@ const GamePanel = ({ user }) => {
         loadEventAndGames();
     }, [loadEventAndGames]);
 
+    // AI-BASED PROGRESS TRACKING: Listen for progress updates from AI
+    useEffect(() => {
+        const handleProgressUpdate = (event) => {
+            logger.info('[GamePanel] AI updated game progress - refreshing', {
+                gameId: event.detail.gameId,
+                source: event.detail.source
+            });
+            loadEventAndGames();
+        };
+
+        window.addEventListener('gameProgressUpdated', handleProgressUpdate);
+
+        return () => {
+            window.removeEventListener('gameProgressUpdated', handleProgressUpdate);
+        };
+    }, [loadEventAndGames]);
+
     /**
      * Get current game ID (if user has one in progress).
      *

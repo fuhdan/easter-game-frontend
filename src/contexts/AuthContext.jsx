@@ -34,6 +34,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { API_CONFIG } from '../config/apiConfig';
 import { login, logout } from '../services';
 import { logger } from '../utils/logger';
+import { startTokenRefresh, stopTokenRefresh } from '../services/tokenRefreshManager';
 
 const AuthContext = createContext();
 
@@ -75,6 +76,10 @@ export function AuthProvider({ children }) {
             reason,
             module: 'AuthContext'
         });
+
+        // SECURITY: Stop proactive token refresh
+        stopTokenRefresh();
+
         setUser(null);
         setSessionExpired(true);
         setError('Your session has expired. Please log in again.');
@@ -114,6 +119,32 @@ export function AuthProvider({ children }) {
     }, [user, handleSessionExpiry]);
 
     /**
+     * Automatic token refresh management
+     * Starts token refresh when user is authenticated
+     * Stops token refresh when user logs out
+     */
+    useEffect(() => {
+        if (user) {
+            // SECURITY: User is authenticated - start proactive token refresh
+            startTokenRefresh().catch(error => {
+                logger.error('auth_token_refresh_start_failed', {
+                    userId: user.id,
+                    error: error.message,
+                    module: 'AuthContext'
+                });
+            });
+        } else {
+            // User is not authenticated - ensure token refresh is stopped
+            stopTokenRefresh();
+        }
+
+        // Cleanup: stop token refresh when component unmounts
+        return () => {
+            stopTokenRefresh();
+        };
+    }, [user]);
+
+    /**
      * Validate current authentication status
      * Uses /api/auth/me to check HTTPOnly cookie
      *
@@ -132,6 +163,7 @@ export function AuthProvider({ children }) {
                 const userData = await response.json();
                 setUser(userData);
                 setSessionExpired(false);
+                // Token refresh will be started automatically by useEffect
             } else {
                 setUser(null);
             }
@@ -175,6 +207,8 @@ export function AuthProvider({ children }) {
                     role: response.user.role,
                     module: 'AuthContext'
                 });
+                // Token refresh will be started automatically by useEffect
+
                 return { success: true, message: response.message };
             } else {
                 const errorMsg = response.detail || response.message || 'Login failed';
@@ -215,6 +249,7 @@ export function AuthProvider({ children }) {
             await logout();
 
             // Clear local state
+            // Token refresh will be stopped automatically by useEffect when user becomes null
             setUser(null);
             setError(null);
             setSessionExpired(false);  // STEP 8: Clear expiry flag
@@ -229,6 +264,7 @@ export function AuthProvider({ children }) {
                 module: 'AuthContext'
             }, err);
             // Still clear local state even if API call fails
+            // Token refresh will be stopped automatically by useEffect
             setUser(null);
             setError(null);
             setSessionExpired(false);

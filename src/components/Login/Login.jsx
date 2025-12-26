@@ -85,6 +85,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
           setShowPasswordModal(true);
         } else {
           // Normal successful login - proceed to dashboard
+          // Token refresh will be started automatically by AuthContext
           await onLogin(credentials.username, credentials.password);
         }
       } else {

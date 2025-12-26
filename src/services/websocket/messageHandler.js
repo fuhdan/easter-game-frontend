@@ -54,10 +54,11 @@ const handleAIResponse = (message, context) => {
     hasContent: !!message.content,
     contentLength: message.content?.length || 0,
     processingTime: message.processing_time_ms,
+    hasProgressUpdate: !!message.progress_update,
     module: 'messageHandler'
   });
 
-  const { addMessage, setIsTyping, loadAIContext } = context;
+  const { addMessage, setIsTyping, loadAIContext, refreshGameProgress } = context;
 
   // Stop typing indicator
   if (setIsTyping) {
@@ -89,7 +90,8 @@ const handleAIResponse = (message, context) => {
       timestamp: message.timestamp || new Date().toISOString(),
       metadata: {
         conversation_id: message.conversation_id,
-        processing_time_ms: message.processing_time_ms
+        processing_time_ms: message.processing_time_ms,
+        progress_update: message.progress_update  // AI-BASED PROGRESS TRACKING: Include progress update in metadata
       }
     });
 
@@ -100,6 +102,23 @@ const handleAIResponse = (message, context) => {
         module: 'messageHandler'
       });
       loadAIContext();
+    }
+
+    // AI-BASED PROGRESS TRACKING: Refresh game progress if AI updated it
+    if (message.progress_update && refreshGameProgress) {
+      logger.info('ws_message_refreshing_game_progress', {
+        gameId: message.progress_update.game_id,
+        aiEstimatedProgress: message.progress_update.ai_estimated_progress,
+        updatedProgressPercentage: message.progress_update.updated_progress_percentage,
+        module: 'messageHandler'
+      });
+      refreshGameProgress(message.progress_update.game_id);
+    } else if (message.progress_update && !refreshGameProgress) {
+      logger.warn('ws_message_refresh_function_unavailable', {
+        functionName: 'refreshGameProgress',
+        impact: 'Game Panel will not update automatically',
+        module: 'messageHandler'
+      });
     }
   } else {
     logger.error('ws_message_add_function_unavailable', {
