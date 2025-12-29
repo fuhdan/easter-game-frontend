@@ -164,6 +164,25 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
           </div>
 
           <div className="form-group">
+            <label htmlFor="game-solution-keywords">
+              🔒 Solution Keywords (AI Security)
+            </label>
+            <textarea
+              id="game-solution-keywords"
+              value={gameForm.solution_keywords || ''}
+              onChange={(e) => onFormChange({ ...gameForm, solution_keywords: e.target.value })}
+              className="form-control"
+              rows="2"
+              placeholder="e.g., margarete, gretchen, faust (comma-separated or JSON array)"
+            />
+            <small className="form-hint" style={{ fontSize: '12px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
+              🛡️ <strong>AI Response Filter:</strong> Keywords to block in AI responses to prevent solution leakage.
+              Enter comma-separated words (e.g., <code>keyword1, solution_part, answer</code>) or JSON array.
+              <strong>Optional</strong> - only needed if AI might accidentally reveal the answer.
+            </small>
+          </div>
+
+          <div className="form-group">
             <label htmlFor="game-challenge">Challenge Text</label>
             <textarea
               id="game-challenge"

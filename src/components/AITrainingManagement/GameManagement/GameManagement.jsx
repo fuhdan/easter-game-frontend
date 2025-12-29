@@ -29,6 +29,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
     title: '',
     description: '',
     solution_password: '',
+    solution_keywords: '',  // AI_SECURITY: Keywords to filter from AI responses
     challenge_text: '',
     ai_progress_guide: '',
     technical_skills: '',
@@ -50,6 +51,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       title: '',
       description: '',
       solution_password: '',
+      solution_keywords: '',  // AI_SECURITY: Keywords to filter from AI responses
       challenge_text: '',
       ai_progress_guide: '',
       technical_skills: '',
@@ -73,6 +75,7 @@ function GameManagement({ games, events, categories, onGamesChanged }) {
       title: game.title,
       description: game.description,
       solution_password: game.solution_password,
+      solution_keywords: game.solution_keywords || '',  // AI_SECURITY: Keywords to filter from AI responses
       challenge_text: game.challenge_text || '',
       ai_progress_guide: game.ai_progress_guide || '',
       technical_skills: game.technical_skills || '',

@@ -190,7 +190,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
               type="text"
               name="username"
               className="form-control"
-              placeholder="Username (try: admin)"
+              placeholder="Username"
               value={credentials.username}
               onChange={handleInputChange}
               required
@@ -204,7 +204,7 @@ const Login = ({ onLogin, loading = false, error = null }) => {
               type="password"
               name="password"
               className="form-control"
-              placeholder="Password (try: demo)"
+              placeholder="Password"
               value={credentials.password}
               onChange={handleInputChange}
               required
