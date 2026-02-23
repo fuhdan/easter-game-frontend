@@ -214,6 +214,90 @@ export const getEvent = (eventId) => {
 };
 
 /**
+ * Get event by year (multi-database query)
+ *
+ * SUPER_ADMIN ONLY
+ *
+ * Queries all databases to find event by year.
+ * This is preferred over getEvent(id) for multi-database setups
+ * because IDs can be duplicated across databases.
+ *
+ * @param {number} year - Event year (e.g., 2024, 2025)
+ * @returns {Promise<Object>} Event object with full story
+ * @throws {APIError} 403 if not super_admin, 404 if not found
+ */
+export const getEventByYear = (year) => {
+  logger.info(`Fetching event by year ${year}`);
+  return request('GET', `/admin/content/events/year/${year}`);
+};
+
+/**
+ * Get games for event by year (multi-database query)
+ *
+ * SUPER_ADMIN ONLY
+ *
+ * Queries all databases to find games for the specified event year.
+ * This ensures games are loaded from the correct database, not the active one.
+ *
+ * @param {number} year - Event year (e.g., 2024, 2025)
+ * @returns {Promise<Array>} Array of game objects
+ * @throws {APIError} 403 if not super_admin, 404 if not found
+ */
+export const getGamesByYear = (year) => {
+  logger.info(`Fetching games for event year ${year}`);
+  return request('GET', `/admin/content/events/year/${year}/games`);
+};
+
+/**
+ * Get training hints for event by year (multi-database query)
+ *
+ * SUPER_ADMIN ONLY
+ *
+ * Queries all databases to find training hints for the specified event year.
+ * Returns hints organized by game.
+ *
+ * @param {number} year - Event year (e.g., 2024, 2025)
+ * @returns {Promise<Object>} Object with 'games' array containing hints
+ * @throws {APIError} 403 if not super_admin, 404 if not found
+ */
+export const getHintsByYear = (year) => {
+  logger.info(`Fetching training hints for event year ${year}`);
+  return request('GET', `/admin/content/events/year/${year}/hints`);
+};
+
+/**
+ * Get categories for event by year (multi-database query)
+ *
+ * SUPER_ADMIN ONLY
+ *
+ * Queries all databases to find categories for the specified event year.
+ *
+ * @param {number} year - Event year (e.g., 2024, 2025)
+ * @returns {Promise<Object>} Object with 'categories' array
+ * @throws {APIError} 403 if not super_admin, 404 if not found
+ */
+export const getCategoriesByYear = (year) => {
+  logger.info(`Fetching categories for event year ${year}`);
+  return request('GET', `/admin/content/events/year/${year}/categories`);
+};
+
+/**
+ * Get system prompts for event by year (multi-database query)
+ *
+ * SUPER_ADMIN ONLY
+ *
+ * Queries all databases to find system prompts for the specified event year.
+ *
+ * @param {number} year - Event year (e.g., 2024, 2025)
+ * @returns {Promise<Array>} Array of system prompt objects
+ * @throws {APIError} 403 if not super_admin, 404 if not found
+ */
+export const getSystemPromptsByYear = (year) => {
+  logger.info(`Fetching system prompts for event year ${year}`);
+  return request('GET', `/admin/content/events/year/${year}/system-prompts`);
+};
+
+/**
  * Create new event
  *
  * SUPER_ADMIN ONLY

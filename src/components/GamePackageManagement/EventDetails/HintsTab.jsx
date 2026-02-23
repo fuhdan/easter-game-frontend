@@ -11,14 +11,19 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import AITrainingManagement from '../../AITrainingManagement/AITrainingManagement';
 
-function HintsTab() {
+function HintsTab({ eventYear }) {
   return (
     <div className="hints-tab-wrapper">
-      <AITrainingManagement initialTab="hints" showTabs={false} />
+      <AITrainingManagement initialTab="hints" showTabs={false} eventYear={eventYear} />
     </div>
   );
 }
+
+HintsTab.propTypes = {
+  eventYear: PropTypes.number
+};
 
 export default HintsTab;

@@ -17,17 +17,19 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import './AITrainingManagement.css';
 import {
   getHintsByGame, getEvents,
   getCategories, getAllGames
 } from '../../services';
+import { getGamesByYear, getHintsByYear } from '../../services/aiTraining';
 import EventManagement from './EventManagement/EventManagement';
 import GameManagement from './GameManagement/GameManagement';
 import HintManagement from './HintManagement/HintManagement';
 import { logger } from '../../utils/logger';
 
-function AITrainingManagement({ initialTab = 'events', showTabs = true }) {
+function AITrainingManagement({ initialTab = 'events', showTabs = true, eventYear = null }) {
   // State management
   const [activeTab, setActiveTab] = useState(initialTab);
   const [games, setGames] = useState([]);
@@ -37,31 +39,56 @@ function AITrainingManagement({ initialTab = 'events', showTabs = true }) {
   const [error, setError] = useState(null);
 
   /**
-   * Load all data on component mount
+   * Load all data on component mount and when eventYear changes
    */
   useEffect(() => {
     loadAllData();
-  }, []);
+  }, [eventYear]);
 
   /**
    * Fetch all data from backend
+   * If eventYear is provided, loads games and hints from that specific event's database
    */
   const loadAllData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Load games, events, categories, prompts, and hints in parallel
-      const [gamesData, hintsData, eventsData, categoriesData] = await Promise.all([
-        getAllGames(false),
-        getHintsByGame(),
+      // Load games (from specific event year or all games)
+      let gamesData;
+      let hintsData;
+
+      if (eventYear) {
+        // MULTI-DATABASE: Load games and hints from specific event year's database
+        logger.debug('Loading games and hints from event year database', { eventYear });
+        const [gamesArray, hintsResponse] = await Promise.all([
+          getGamesByYear(eventYear),
+          getHintsByYear(eventYear)
+        ]);
+        gamesData = { games: gamesArray };
+        hintsData = hintsResponse;
+      } else {
+        // Load all games and hints from active database
+        [gamesData, hintsData] = await Promise.all([
+          getAllGames(false),
+          getHintsByGame()
+        ]);
+      }
+
+      // Load events and categories in parallel
+      const [eventsData, categoriesData] = await Promise.all([
         getEvents(),
         getCategories()
       ]);
 
       // Merge game data with hint counts
+      // MULTI-DATABASE: Handle different data structures
+      // - When eventYear is null: hintsData is an array directly
+      // - When eventYear is set: hintsData is { games: [...] }
+      const hintsArray = eventYear ? (hintsData.games || []) : (hintsData || []);
+
       const gamesWithHints = (gamesData.games || []).map(game => {
-        const hintData = hintsData.games?.find(g => g.game_id === game.id);
+        const hintData = hintsArray.find(g => g.game_id === game.id);
         return {
           ...game,
           hints: hintData?.hints || []
@@ -76,11 +103,13 @@ function AITrainingManagement({ initialTab = 'events', showTabs = true }) {
         gamesCount: gamesWithHints.length,
         eventsCount: eventsData?.length || 0,
         categoriesCount: categoriesData.categories?.length || 0,
+        eventYear: eventYear || 'all',
         module: 'AITrainingManagement'
       });
     } catch (error) {
       logger.error('ai_training_data_load_failed', {
         errorMessage: error.message,
+        eventYear: eventYear || 'all',
         module: 'AITrainingManagement'
       }, error);
       setError('Failed to load AI training data. Please check your permissions.');
@@ -174,5 +203,11 @@ function AITrainingManagement({ initialTab = 'events', showTabs = true }) {
     </div>
   );
 }
+
+AITrainingManagement.propTypes = {
+  initialTab: PropTypes.string,
+  showTabs: PropTypes.bool,
+  eventYear: PropTypes.number
+};
 
 export default AITrainingManagement;

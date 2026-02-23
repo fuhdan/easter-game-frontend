@@ -14,7 +14,8 @@
  */
 
 import { useState } from 'react';
-import { getEvent, updateEvent, deleteEvent } from '../../../services';
+import { updateEvent, deleteEvent } from '../../../services';
+import { getEventByYear } from '../../../services/aiTraining';
 import { logger } from '../../../utils/logger';
 
 /**
@@ -69,9 +70,11 @@ export function useEventOperations(loadAllData) {
    */
   const handleViewEvent = async (event) => {
     try {
-      // Fetch full event details from the API (includes story_html and image_data)
-      const fullEventData = await getEvent(event.id);
-      logger.debug('event_full_data_loaded', { eventId: event.id, hasStoryHtml: !!fullEventData.story_html, module: 'useEventOperations' });
+      // MULTI-DATABASE FIX: Use year instead of ID to fetch event details
+      // Event IDs can be duplicated across databases (e.g., both 2024 and 2025 have ID=1)
+      // Year is unique and identifies which database to query
+      const fullEventData = await getEventByYear(event.year);
+      logger.debug('event_full_data_loaded', { eventYear: event.year, hasStoryHtml: !!fullEventData.story_html, module: 'useEventOperations' });
 
       setSelectedEvent(fullEventData);
       setViewMode('view');
@@ -152,8 +155,8 @@ export function useEventOperations(loadAllData) {
       alert('✅ Event updated successfully!');
       await loadAllData();
 
-      // Refresh the selected event data
-      const fullEventData = await getEvent(selectedEvent.id);
+      // Refresh the selected event data (use year for multi-database)
+      const fullEventData = await getEventByYear(selectedEvent.year);
       if (fullEventData) {
         setSelectedEvent(fullEventData);
         setPackageFormData({

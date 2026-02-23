@@ -31,8 +31,9 @@ import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import './GamePackageManagement.css';
 import {
-  getEvents, getCategories, getSystemPrompts, getAdminGuide
+  getCategories, getSystemPrompts, getAdminGuide
 } from '../../services';
+import { getEvents, getCategoriesByYear, getSystemPromptsByYear } from '../../services/aiTraining';
 import { useImageUpload } from './hooks/useImageUpload';
 import { useEventOperations } from './hooks/useEventOperations';
 import { usePackageForm } from './hooks/usePackageForm';
@@ -118,6 +119,55 @@ function GamePackageManagement({ user }) {
   useEffect(() => {
     loadAllData();
   }, []);
+
+  /**
+   * Load event-specific categories and system prompts when viewing an event.
+   * MULTI-DATABASE: Each event has its own categories and prompts in its database.
+   */
+  useEffect(() => {
+    const loadEventSpecificData = async () => {
+      if (selectedEvent && selectedEvent.year) {
+        try {
+          logger.debug('Loading event-specific categories and prompts', { year: selectedEvent.year });
+
+          // Load categories and prompts for this event year
+          const [categoriesResponse, promptsResponse] = await Promise.all([
+            getCategoriesByYear(selectedEvent.year),
+            getSystemPromptsByYear(selectedEvent.year)
+          ]);
+
+          setCategories(categoriesResponse.categories || []);
+          setSystemPrompts(promptsResponse || []);
+
+          logger.debug('Event-specific data loaded', {
+            year: selectedEvent.year,
+            categoriesCount: categoriesResponse.categories?.length || 0,
+            promptsCount: promptsResponse?.length || 0
+          });
+        } catch (error) {
+          logger.error('Failed to load event-specific data', {
+            year: selectedEvent.year,
+            error: error.message
+          });
+        }
+      } else {
+        // No event selected, reload global data (active database)
+        try {
+          const [categoriesResponse, promptsResponse] = await Promise.all([
+            getCategories(),
+            getSystemPrompts()
+          ]);
+
+          setCategories(categoriesResponse.categories || []);
+          setSystemPrompts(promptsResponse.prompts || []);
+        } catch (error) {
+          logger.error('Failed to reload global data', { error: error.message });
+        }
+      }
+    };
+
+    loadEventSpecificData();
+  }, [selectedEvent]);
 
   /**
    * Sync image data from hook to create form data

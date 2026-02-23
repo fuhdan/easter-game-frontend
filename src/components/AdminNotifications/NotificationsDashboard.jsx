@@ -42,9 +42,6 @@ const NotificationsDashboard = ({ user }) => {
     const [typeFilter, setTypeFilter] = useState(null);
     const [teamFilter, setTeamFilter] = useState(null);
 
-    // Reference to track if SSE is enabled
-    const sseEnabledRef = useRef(false);
-
     /**
      * Sort notifications by priority, repeat count, and timestamp
      *
@@ -116,6 +113,17 @@ const NotificationsDashboard = ({ user }) => {
             module: 'NotificationsDashboard'
         });
 
+        // Only update notifications if we're viewing the 'open' tab
+        // SSE only sends open notifications, so ignore updates for other tabs
+        if (activeTab !== 'open') {
+            logger.debug('notifications_dashboard_ignored_wrong_tab', {
+                notificationId: notificationData.id,
+                activeTab,
+                module: 'NotificationsDashboard'
+            });
+            return;
+        }
+
         // Apply filters
         if (!matchesFilters(notificationData)) {
             logger.debug('notifications_dashboard_filtered_out', {
@@ -140,7 +148,7 @@ const NotificationsDashboard = ({ user }) => {
                 return sortNotificationsByPriority(updated);
             }
         });
-    }, [matchesFilters, sortNotificationsByPriority]);
+    }, [activeTab, matchesFilters, sortNotificationsByPriority]);
 
     const handleSSEConnect = useCallback(() => {
         logger.info('notifications_dashboard_sse_connected', {
@@ -149,7 +157,6 @@ const NotificationsDashboard = ({ user }) => {
         setConnectionStatus('connected');
         setError(null);
         setLoading(false);
-        sseEnabledRef.current = true;
     }, []);
 
     const handleSSEDisconnect = useCallback(() => {
@@ -157,7 +164,6 @@ const NotificationsDashboard = ({ user }) => {
             module: 'NotificationsDashboard'
         });
         setConnectionStatus('disconnected');
-        sseEnabledRef.current = false;
     }, []);
 
     const handleSSEError = useCallback((errorData) => {
@@ -169,10 +175,10 @@ const NotificationsDashboard = ({ user }) => {
         setLoading(false);
     }, []);
 
-    // SSE: Set up real-time notifications using hook (only for 'open' tab)
-    const { isConnected: sseConnected, disconnect: sseDisconnect } = useNotifications({
-        // Only connect when activeTab is 'open'
-        onNotification: activeTab === 'open' ? handleNotification : undefined,
+    // SSE: Set up real-time notifications using hook (always connected)
+    // Keep SSE connected regardless of active tab for real-time badge updates
+    const { isConnected: sseConnected } = useNotifications({
+        onNotification: handleNotification,
         onConnect: handleSSEConnect,
         onDisconnect: handleSSEDisconnect,
         onError: handleSSEError
@@ -180,42 +186,26 @@ const NotificationsDashboard = ({ user }) => {
 
     // Update connection status based on SSE state
     useEffect(() => {
-        if (activeTab === 'open') {
-            setConnectionStatus(sseConnected ? 'connected' : 'connecting');
-        } else {
-            setConnectionStatus('disconnected');
-        }
-    }, [sseConnected, activeTab]);
+        setConnectionStatus(sseConnected ? 'connected' : 'connecting');
+    }, [sseConnected]);
 
-    // Handle tab changes and SSE connection
+    // Handle tab changes - load notifications for the selected tab
+    // SSE stays connected for real-time updates regardless of tab
     useEffect(() => {
-        if (activeTab === 'open') {
-            logger.debug('notifications_dashboard_sse_setup', {
+        logger.debug('notifications_dashboard_tab_changed', {
+            activeTab,
+            module: 'NotificationsDashboard'
+        });
+
+        // Load notifications for the selected tab via API
+        // For 'open' tab: SSE will also update in real-time
+        // For other tabs: API fetch only
+        loadNotifications().then(() => {
+            logger.debug('notifications_dashboard_loaded', {
                 activeTab,
                 module: 'NotificationsDashboard'
             });
-            setConnectionStatus('connecting');
-
-            // BUGFIX: Load initial data before SSE connects
-            // This ensures we start with a clean slate when switching tabs
-            loadNotifications().then(() => {
-                logger.debug('notifications_dashboard_initial_loaded', {
-                    module: 'NotificationsDashboard'
-                });
-            });
-        } else {
-            // Disconnect SSE for non-open tabs and use traditional API
-            if (sseEnabledRef.current) {
-                logger.debug('notifications_dashboard_sse_disconnect', {
-                    activeTab,
-                    module: 'NotificationsDashboard'
-                });
-                sseDisconnect();
-            }
-
-            // Load notifications via API for acknowledged/resolved tabs
-            loadNotifications();
-        }
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
 
@@ -419,17 +409,15 @@ const NotificationsDashboard = ({ user }) => {
                         </button>
                     </div>
                     <div className="header-stats">
-                        {/* SSE Connection Status (only for 'open' tab) */}
-                        {activeTab === 'open' && (
-                            <div className={`stat-badge connection-status ${connectionStatus}`}>
-                                <span className="status-indicator"></span>
-                                <span className="stat-label">
-                                    {connectionStatus === 'connected' && 'Live'}
-                                    {connectionStatus === 'connecting' && 'Connecting...'}
-                                    {connectionStatus === 'disconnected' && 'Disconnected'}
-                                </span>
-                            </div>
-                        )}
+                        {/* SSE Connection Status (always visible) */}
+                        <div className={`stat-badge connection-status ${connectionStatus}`}>
+                            <span className="status-indicator"></span>
+                            <span className="stat-label">
+                                {connectionStatus === 'connected' && 'Live'}
+                                {connectionStatus === 'connecting' && 'Connecting...'}
+                                {connectionStatus === 'disconnected' && 'Disconnected'}
+                            </span>
+                        </div>
 
                         <div className="stat-badge">
                             <span className="stat-value">{totalNotifications}</span>

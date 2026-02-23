@@ -1042,3 +1042,72 @@ textarea.form-control {
   color: #0277bd;
   border: 1px solid #90caf9;
 }
+
+/* ===================================================================
+   Event Management - Active Event Highlighting
+   =================================================================== */
+
+/* Active Event Item - Highlighted with border and background */
+.event-item.event-active {
+  border: 2px solid #28a745;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+}
+
+.event-item.event-active:hover {
+  border-color: #28a745;
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.25);
+  transform: translateY(-3px);
+}
+
+/* Event Title Section - Layout for title and badge */
+.event-title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Active Event Badge - "🎯 ACTIVE EVENT" indicator */
+.active-badge {
+  padding: 0.35rem 0.85rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(40, 167, 69, 0.5);
+  }
+}
+
+/* Database Badge - Display database filename */
+.database-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  margin-left: 0.5rem;
+}
+
+.event-item.event-active .database-badge {
+  background: #e7f5ec;
+  border-color: #28a745;
+  color: #1e7e34;
+  font-weight: 600;
+}

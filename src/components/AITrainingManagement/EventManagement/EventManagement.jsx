@@ -91,9 +91,17 @@ function EventManagement({ events, onEventsChanged }) {
             </div>
           ) : (
             events.map(event => (
-              <div key={event.id} className="event-item">
+              <div
+                key={`${event.year}-${event.id}`}
+                className={`event-item ${event.is_active ? 'event-active' : ''}`}
+              >
                 <div className="event-header">
-                  <h4>{event.year} - {event.title}</h4>
+                  <div className="event-title-section">
+                    <h4>{event.year} - {event.title}</h4>
+                    {event.is_active && (
+                      <span className="active-badge">🎯 ACTIVE EVENT</span>
+                    )}
+                  </div>
                   <button
                     className="btn btn-sm btn-primary"
                     onClick={() => _handleEditEvent(event)}
@@ -109,6 +117,11 @@ function EventManagement({ events, onEventsChanged }) {
                     <p><strong>Description:</strong> {event.description}</p>
                   )}
                   <p><strong>Games:</strong> {event.game_count || 0}</p>
+                  <p><strong>Database:</strong>
+                    <code className="database-badge">
+                      {event.database_file || 'easter_game_dev.db'}
+                    </code>
+                  </p>
                   <p><strong>Status:</strong>
                     <span className={`status-badge ${event.is_active ? 'active' : 'inactive'}`}>
                       {event.is_active ? '✅ Active' : '❌ Inactive'}

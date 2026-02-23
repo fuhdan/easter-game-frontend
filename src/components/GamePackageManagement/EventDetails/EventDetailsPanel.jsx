@@ -90,9 +90,9 @@ function EventDetailsPanel({
           />
         )}
 
-        {eventDetailTab === 'games' && <GamesTab />}
+        {eventDetailTab === 'games' && <GamesTab eventYear={selectedEvent.year} />}
 
-        {eventDetailTab === 'hints' && <HintsTab />}
+        {eventDetailTab === 'hints' && <HintsTab eventYear={selectedEvent.year} />}
 
         {eventDetailTab === 'categories' && (
           <CategoriesTab
