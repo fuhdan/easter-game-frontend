@@ -29,9 +29,9 @@ function PackagesList({ events, selectedEvent, viewMode, onCreatePackage, onView
       <div className="packages-grid">
         {events.map(event => (
           <PackageCard
-            key={event.id}
+            key={event.year}
             event={event}
-            isSelected={selectedEvent?.id === event.id && viewMode}
+            isSelected={selectedEvent?.year === event.year && viewMode}
             onView={onViewEvent}
           />
         ))}
