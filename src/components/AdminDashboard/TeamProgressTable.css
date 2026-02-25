@@ -121,19 +121,28 @@
   display: inline-block;
 }
 
+/* NOT_STARTED - Blue */
+.status-not-started {
+  background: #cce5ff;
+  color: #004085;
+}
+
+/* IN_PROGRESS / ACTIVE - Yellow */
+.status-in-progress,
 .status-active {
   background: #fff3cd;
   color: #856404;
 }
 
+/* COMPLETED - Green */
 .status-completed {
   background: #d4edda;
   color: #155724;
 }
 
 .status-help {
-  background: #cce5ff;
-  color: #004085;
+  background: #f8d7da;
+  color: #721c24;
 }
 
 /* Mobile responsive */

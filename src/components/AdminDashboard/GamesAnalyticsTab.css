@@ -444,15 +444,28 @@
 .team-status {
   text-align: right;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  display: inline-block;
 }
 
-.team-status.status-completed {
-  color: var(--success, #28a745);
-}
-
+/* NOT_STARTED - Blue */
 .team-status.status-not_started {
-  color: #6c757d;
+  background: #cce5ff;
+  color: #004085;
+}
+
+/* IN_PROGRESS - Yellow */
+.team-status.status-in_progress {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* COMPLETED - Green */
+.team-status.status-completed {
+  background: #d4edda;
+  color: #155724;
 }
 
 /* Rating Distribution Bars */

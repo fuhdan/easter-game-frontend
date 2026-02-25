@@ -388,7 +388,9 @@ const GamesAnalyticsTab = () => {
                           {team.team_name}
                         </span>
                         <span className={`team-status status-${team.status}`}>
-                          {team.status === 'completed' ? '✓ Complete' : '○ Not Started'}
+                          {team.status === 'completed' ? '✓ Completed' :
+                           team.status === 'in_progress' ? '◐ In Progress' :
+                           '○ Not Started'}
                         </span>
                       </div>
 

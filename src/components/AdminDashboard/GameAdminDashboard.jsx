@@ -154,7 +154,7 @@ const GameAdminDashboard = ({ user }) => {
                                 team_name: data.team_name,
                                 progress: data.progress_percentage,
                                 games_completed: data.completed_games,
-                                help_requests: data.help_requests,
+                                total_hints_used: data.total_hints_used,
                                 status: data.status
                             };
                         }

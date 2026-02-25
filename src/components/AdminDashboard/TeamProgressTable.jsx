@@ -30,7 +30,7 @@ const TeamProgressTable = ({ data }) => {
             progress: 95,
             games_completed: 9,
             total_games: 10,
-            help_requests: 3,
+            total_hints_used: 3,
             status: 'active'
         },
         {
@@ -39,7 +39,7 @@ const TeamProgressTable = ({ data }) => {
             progress: 100,
             games_completed: 10,
             total_games: 10,
-            help_requests: 1,
+            total_hints_used: 1,
             status: 'completed'
         },
         {
@@ -48,7 +48,7 @@ const TeamProgressTable = ({ data }) => {
             progress: 70,
             games_completed: 7,
             total_games: 10,
-            help_requests: 8,
+            total_hints_used: 8,
             status: 'needs_help'
         }
     ];
@@ -80,11 +80,13 @@ const TeamProgressTable = ({ data }) => {
      */
     const getStatusClass = (status) => {
         switch (status.toLowerCase()) {
-            case 'active': return 'status-active';
+            case 'not_started': return 'status-not-started';
+            case 'in_progress':
+            case 'active': return 'status-in-progress';
             case 'completed': return 'status-completed';
             case 'help':
             case 'needs_help': return 'status-help';
-            default: return 'status-active';
+            default: return 'status-not-started';
         }
     };
 
@@ -95,7 +97,9 @@ const TeamProgressTable = ({ data }) => {
      */
     const getStatusText = (status) => {
         switch (status.toLowerCase()) {
-            case 'active': return 'ACTIVE';
+            case 'not_started': return 'NOT STARTED';
+            case 'in_progress':
+            case 'active': return 'IN PROGRESS';
             case 'completed': return 'COMPLETED';
             case 'help':
             case 'needs_help': return 'NEEDS HELP';
@@ -115,7 +119,7 @@ const TeamProgressTable = ({ data }) => {
                     <div>TEAM</div>
                     <div>PROGRESS</div>
                     <div>GAMES COMPLETED</div>
-                    <div>HELP REQUESTS</div>
+                    <div>HINTS USED</div>
                     <div>STATUS</div>
                 </div>
                 
@@ -138,7 +142,7 @@ const TeamProgressTable = ({ data }) => {
                                 {team.games_completed || 0}/
                                 {team.total_games || 10}
                             </div>
-                            <div data-label="Help">{team.help_requests || 0}</div>
+                            <div data-label="Hints">{team.total_hints_used || 0}</div>
                             <div data-label="Status">
                                 <span className={`status-badge ${getStatusClass(team.status)}`}>
                                     {getStatusText(team.status)}

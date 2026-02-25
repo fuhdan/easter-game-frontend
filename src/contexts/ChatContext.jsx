@@ -602,6 +602,28 @@ export function ChatProvider({ children, user }) {
 
   useEffect(() => { if (chatMode === 'ai' && user) loadAIContext(); }, [chatMode, user, loadAIContext]);
 
+  // Listen for game progress updates and refresh AI context
+  useEffect(() => {
+    const handleGameProgressUpdate = (event) => {
+      logger.debug('chat_game_progress_update_received', {
+        gameId: event.detail?.gameId,
+        source: event.detail?.source,
+        module: 'ChatContext'
+      });
+
+      // Refresh AI context when game progress changes
+      if (chatMode === 'ai' && user) {
+        loadAIContext();
+      }
+    };
+
+    window.addEventListener('gameProgressUpdated', handleGameProgressUpdate);
+
+    return () => {
+      window.removeEventListener('gameProgressUpdated', handleGameProgressUpdate);
+    };
+  }, [chatMode, user, loadAIContext]);
+
   // AI-BASED PROGRESS TRACKING: Function to trigger game progress refresh in GamePanel
   const refreshGameProgress = useCallback((gameId) => {
     logger.info('chat_refreshing_game_progress', {

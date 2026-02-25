@@ -52,7 +52,7 @@ export const {
   bulkCreate: bulkCreateUsers,
   getCurrentUser,
   updateProfile,
-  changePassword,
+  // changePassword removed - use auth.activateAccount() instead
   promoteUser,
   demoteUser
 } = users;

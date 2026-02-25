@@ -242,7 +242,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
       setSubmitting(true);
       setMessage(null);
 
-      const result = await submitSolution(selectedGame.id, solution.trim());
+      const result = await submitSolution(selectedGame.game_id, solution.trim());
 
       if (result.correct) {
         setMessage({ type: 'success', text: result.message });
@@ -288,7 +288,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
     return (
       <div className="profile-card">
         <div className="card-header">
-          🎮 {selectedGame.title}
+          🎮 Game {selectedGame.order_index}
           <button
             onClick={() => setSelectedGame(null)}
             style={{
@@ -305,7 +305,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
         </div>
         <div className="card-body">
           <p><strong>Question:</strong></p>
-          <p>{selectedGame.challenge_text}</p>
+          <p>{selectedGame.game_challenge_text}</p>
 
           <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
             <div>

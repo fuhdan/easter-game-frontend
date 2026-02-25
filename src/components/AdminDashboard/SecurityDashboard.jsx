@@ -15,8 +15,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { buildApiUrl } from '../../config/apiConfig';
 import { logger } from '../../utils/logger';
+import { request } from '../../services/api';
 import './SecurityDashboard.css';
 
 /**
@@ -121,41 +121,14 @@ const SecurityDashboard = ({ securitySummary, latestSecurityEvent }) => {
         try {
             // Load detailed stats in parallel (summary comes from SSE in real-time)
             // Using 9999 days to get all event data
-            const [categoriesRes, languagesRes, eventsRes, trendRes, usersRes] = await Promise.all([
-                fetch(buildApiUrl('admin/security/stats/categories?days=9999'), {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                }),
-                fetch(buildApiUrl('admin/security/stats/languages?days=9999'), {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                }),
-                fetch(buildApiUrl('admin/security/events?limit=10&blocked_only=true'), {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                }),
-                fetch(buildApiUrl('admin/security/stats/trend?days=1'), {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                }),
-                fetch(buildApiUrl('admin/security/stats/users?days=9999&limit=5'), {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                })
+            // SECURITY: Use centralized API client for automatic token refresh on 401
+            const [categoriesData, languagesData, eventsData, trendData, usersData] = await Promise.all([
+                request('GET', '/admin/security/stats/categories?days=9999'),
+                request('GET', '/admin/security/stats/languages?days=9999'),
+                request('GET', '/admin/security/events?limit=10&blocked_only=true'),
+                request('GET', '/admin/security/stats/trend?days=1'),
+                request('GET', '/admin/security/stats/users?days=9999&limit=5')
             ]);
-
-            // Check all responses
-            if (!categoriesRes.ok || !languagesRes.ok || !eventsRes.ok ||
-                !trendRes.ok || !usersRes.ok) {
-                throw new Error('Failed to fetch security data');
-            }
-
-            // Parse all responses
-            const categoriesData = await categoriesRes.json();
-            const languagesData = await languagesRes.json();
-            const eventsData = await eventsRes.json();
-            const trendData = await trendRes.json();
-            const usersData = await usersRes.json();
 
             // Summary comes from SSE (real-time), not REST API
             setCategories(categoriesData.categories || []);

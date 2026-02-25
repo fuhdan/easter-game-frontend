@@ -8,7 +8,9 @@
  * - Create/update/delete users (admin)
  * - Bulk create users (admin)
  * - Update current user profile
- * - Change password
+ *
+ * NOTE: For authentication checks, use auth.js (GET /auth/me)
+ * NOTE: For password changes, use auth.js (POST /users/change-password)
  *
  * @since 2025-11-20
  */
@@ -97,10 +99,12 @@ export const bulkCreate = (users) => request('POST', '/users/bulk-create', { use
 /**
  * Get current user profile
  *
+ * Uses /auth/me endpoint (canonical authentication check)
+ *
  * @returns {Promise<Object>} Current user object
  * @throws {APIError} 401 if not authenticated
  */
-export const getCurrentUser = () => request('GET', '/users/me');
+export const getCurrentUser = () => request('GET', '/auth/me');
 
 /**
  * Update current user profile
@@ -114,13 +118,5 @@ export const getCurrentUser = () => request('GET', '/users/me');
  */
 export const updateProfile = (profileData) => request('PUT', '/users/me', profileData);
 
-/**
- * Change password for current user
- *
- * @param {Object} passwordData - Password change data
- * @param {string} passwordData.old_password - Current password
- * @param {string} passwordData.new_password - New password (min 8 chars)
- * @returns {Promise<Object>} Success confirmation
- * @throws {APIError} 400 if validation fails, 401 if old password incorrect
- */
-export const changePassword = (passwordData) => request('PUT', '/users/me/password', passwordData);
+// NOTE: changePassword removed - use auth.activateAccount() from auth.js instead
+// That function calls POST /users/change-password which supports all 3 password change scenarios
