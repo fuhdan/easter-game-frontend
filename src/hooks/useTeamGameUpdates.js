@@ -45,6 +45,7 @@ import { logger } from '../utils/logger';
  * - heartbeat: Keep-alive ping
  *
  * @param {Object} options - Configuration options
+ * @param {boolean} options.enabled - Enable/disable SSE connection (default: true). Set to false for admins.
  * @param {Function} options.onGameStarted - Callback when game is started (data)
  * @param {Function} options.onGameCompleted - Callback when game is completed (data)
  * @param {Function} options.onHintUsed - Callback when hint is used (data)
@@ -56,6 +57,7 @@ import { logger } from '../utils/logger';
  */
 export const useTeamGameUpdates = (options = {}) => {
   const {
+    enabled = true,
     onGameStarted,
     onGameCompleted,
     onHintUsed,
@@ -144,8 +146,9 @@ export const useTeamGameUpdates = (options = {}) => {
   }, [onError]);
 
   // Use generic SSE hook with team game updates configuration
+  // NOTE: Pass null endpoint when disabled (e.g., for admins without teams)
   const { data, isConnected, error, reconnect, disconnect } = useSSE({
-    endpoint: buildApiUrl('sse/team/game-updates/stream'),
+    endpoint: enabled ? buildApiUrl('sse/team/game-updates/stream') : null,
     eventTypes: ['game_started', 'game_completed', 'hint_used', 'heartbeat', 'error'],
     onMessage: handleMessage,
     onConnect: handleConnect,

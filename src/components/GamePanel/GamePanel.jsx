@@ -104,7 +104,10 @@ const GamePanel = ({ user }) => {
     }, []);
 
     // SSE: Set up real-time team game updates using hook
+    // NOTE: Only enable SSE for non-admin users (admins don't have teams)
+    const isAdmin = user?.role === 'admin';
     useTeamGameUpdates({
+        enabled: !isAdmin,
         onGameStarted: handleGameStarted,
         onGameCompleted: handleGameCompleted,
         onHintUsed: handleHintUsed,
