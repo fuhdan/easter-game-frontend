@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '../../utils/logger';
-import { submitSolution, startGame } from '../../services';
+import { submitSolution, startGame, getTeamRewards } from '../../services';
 import { getMyTeamProgress } from '../../services/teams';
 import { useChat } from '../../contexts/ChatContext';
 
@@ -57,14 +57,21 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
   // Use team progress data which includes both team status and user status
   const [teamProgressGames, setTeamProgressGames] = useState([]);
 
+  // Team rewards data
+  const [rewards, setRewards] = useState([]);
+  const [selectedReward, setSelectedReward] = useState(null);
+  const [showRewardModal, setShowRewardModal] = useState(false);
+
   useEffect(() => {
     loadGameProgress();
+    loadRewards();
   }, []);
 
   // Reload game progress when games prop changes (e.g., after teammate starts/completes game)
   useEffect(() => {
     if (games && games.length > 0) {
       loadGameProgress();
+      loadRewards();
       // BUGFIX: Also refresh AI context when games change (e.g., teammate completes game)
       if (loadAIContext) {
         loadAIContext();
@@ -107,6 +114,37 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
     } catch (err) {
       logger.error('Failed to load team progress:', err);
     }
+  }
+
+  /**
+   * Load team rewards
+   * @async
+   * @returns {Promise<void>}
+   */
+  async function loadRewards() {
+    // Skip for admin users (no team)
+    if (isAdmin) {
+      return;
+    }
+
+    try {
+      const rewardsData = await getTeamRewards();
+      setRewards(rewardsData);
+      logger.debug('[CurrentGame] Loaded team rewards', { count: rewardsData.length });
+    } catch (err) {
+      // Log but don't fail - rewards are optional
+      logger.debug('[CurrentGame] No rewards available or failed to load', err);
+      setRewards([]);
+    }
+  }
+
+  /**
+   * Get reward for a specific game
+   * @param {number} gameId - Game ID
+   * @returns {Object|null} Reward object or null
+   */
+  function getRewardForGame(gameId) {
+    return rewards.find(r => r.game_id === gameId) || null;
   }
 
   /**
@@ -472,10 +510,28 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
 
                   {/* Game Content */}
                   <div style={{ flex: 1 }}>
-                    {/* Game title */}
-                    <h4 style={{ margin: '0 0 8px 0', color: isCompleted ? '#28a745' : '#333' }}>
-                      {isCompleted && '✅ '}Game {game.order_index}
-                    </h4>
+                    {/* Game title with reward indicator */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <h4 style={{ margin: 0, color: isCompleted ? '#28a745' : '#333' }}>
+                        {isCompleted && '✅ '}Game {game.order_index}
+                      </h4>
+                      {game.has_reward && (
+                        <span
+                          style={{
+                            fontSize: '16px',
+                            padding: '2px 8px',
+                            background: isCompleted ? '#ffc107' : '#e0e0e0',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          title={isCompleted ? 'Reward unlocked!' : 'Reward available upon completion'}
+                        >
+                          {isCompleted ? '🎁' : '🔒🎁'}
+                        </span>
+                      )}
+                    </div>
 
                     {/* Admin view: show all questions with lock icon */}
                     {isAdmin ? (
@@ -522,6 +578,80 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
                         }}>
                           {game.game_challenge_text}
                         </p>
+
+                        {/* Reward Display - Show clickable icon if game has a reward */}
+                        {(() => {
+                          const reward = getRewardForGame(game.game_id);
+                          if (reward) {
+                            // Show unlocked reward - clickable to open modal
+                            if (isCompleted) {
+                              return (
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedReward(reward);
+                                    setShowRewardModal(true);
+                                  }}
+                                  style={{
+                                    margin: '12px 0',
+                                    padding: '12px',
+                                    background: 'linear-gradient(135deg, #fff3cd, #ffeeba)',
+                                    border: '2px solid #ffc107',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
+                                >
+                                  <div style={{
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    color: '#856404',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between'
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span style={{ fontSize: '18px' }}>🎁</span>
+                                      {reward.display_name}
+                                    </div>
+                                    <span style={{ fontSize: '12px', opacity: 0.7 }}>Click to view</span>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              // Show locked reward teaser
+                              return (
+                                <div style={{
+                                  margin: '12px 0',
+                                  padding: '10px',
+                                  background: '#f8f9fa',
+                                  border: '1px solid #dee2e6',
+                                  borderRadius: '6px'
+                                }}>
+                                  <div style={{
+                                    fontSize: '13px',
+                                    color: '#6c757d',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}>
+                                    <span style={{ fontSize: '14px' }}>🔒🎁</span>
+                                    <strong>{reward.display_name}</strong> - Complete to unlock!
+                                  </div>
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
 
                         {/* Start Challenge Button - Only show if not started */}
                         {!isStarted && (
@@ -605,6 +735,147 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
           })}
         </div>
       </div>
+
+      {/* Reward Modal */}
+      {showRewardModal && selectedReward && (
+        <div
+          onClick={() => setShowRewardModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="profile-card"
+            style={{
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              margin: '20px'
+            }}
+          >
+            <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '24px' }}>🎁</span>
+                <span>{selectedReward.display_name}</span>
+              </div>
+              <button
+                onClick={() => setShowRewardModal(false)}
+                style={{
+                  padding: '4px 12px',
+                  background: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  lineHeight: '1'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="card-body">
+              {/* Description */}
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ color: '#6c757d', fontSize: '14px', margin: 0 }}>
+                  {selectedReward.description}
+                </p>
+              </div>
+
+              {/* Reward Value */}
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  color: '#495057',
+                  marginBottom: '8px'
+                }}>
+                  Reward Value:
+                </label>
+                <div style={{
+                  padding: '12px',
+                  background: '#f8f9fa',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  fontFamily: 'monospace',
+                  fontSize: '13px',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                  maxHeight: '300px',
+                  overflow: 'auto'
+                }}>
+                  {selectedReward.decrypted_value || '(No value available)'}
+                </div>
+              </div>
+
+              {/* Copy Button */}
+              <button
+                onClick={() => {
+                  if (selectedReward.decrypted_value) {
+                    navigator.clipboard.writeText(selectedReward.decrypted_value);
+                    // Show brief success message
+                    const btn = document.activeElement;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✓ Copied!';
+                    btn.style.background = '#28a745';
+                    setTimeout(() => {
+                      btn.textContent = originalText;
+                      btn.style.background = '#005da0';
+                    }, 2000);
+                  }
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#005da0',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  width: '100%'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#004271';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#005da0';
+                }}
+              >
+                📋 Copy to Clipboard
+              </button>
+
+              {/* Unlocked Info */}
+              {selectedReward.unlocked_at && (
+                <div style={{
+                  marginTop: '15px',
+                  padding: '10px',
+                  background: '#e7f3ff',
+                  border: '1px solid #b3d9ff',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  color: '#004085'
+                }}>
+                  <strong>Unlocked:</strong> {new Date(selectedReward.unlocked_at).toLocaleString()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

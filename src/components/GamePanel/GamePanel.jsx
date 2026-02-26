@@ -76,15 +76,11 @@ const GamePanel = ({ user }) => {
 
     const handleGameCompleted = useCallback((data) => {
         logger.debug('[GamePanel] Team member completed game:', data);
-        // Only refresh if another team member completed (not current user)
-        // Current user's completion already refreshes via onSubmitSolution
-        if (data.completed_by_user_id !== user.id) {
-            logger.debug('[GamePanel] Refreshing for teammate completion');
-            loadEventAndGames();
-        } else {
-            logger.debug('[GamePanel] Skipping refresh - current user already refreshed');
-        }
-    }, [user.id, loadEventAndGames]);
+        // BUGFIX: Always refresh on game completion to ensure UI updates
+        // This handles both current user and teammate completions
+        logger.debug('[GamePanel] Refreshing games list after completion');
+        loadEventAndGames();
+    }, [loadEventAndGames]);
 
     const handleHintUsed = useCallback((data) => {
         logger.debug('[GamePanel] Team member used hint:', data);

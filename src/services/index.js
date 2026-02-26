@@ -27,12 +27,13 @@ import * as chat from './chat';
 import * as system from './system';
 import * as aiTraining from './aiTraining';
 import * as files from './files';
+import * as rewards from './rewards';
 
 // Core API utilities
 export { request, buildHeaders, onTokenRefresh, utils, CONFIG, APIError } from './api';
 
 // Export namespaced services (no conflicts)
-export { auth, users, teams, players, games, events, admin, chat, system, aiTraining, files };
+export { auth, users, teams, players, games, events, admin, chat, system, aiTraining, files, rewards };
 
 // Export specific commonly used functions with prefixes to avoid conflicts
 export const {
@@ -165,6 +166,15 @@ export const {
   uploadImage
 } = files;
 
+export const {
+  getTeamRewards,
+  getAllRewards,
+  createReward,
+  grantReward,
+  deleteReward,
+  exportPublicKeys
+} = rewards;
+
 // Default export - object with all services organized by domain
 const api = {
   auth,
@@ -178,6 +188,7 @@ const api = {
   system,
   aiTraining,
   files,
+  rewards,
 
   // Keep utils for backward compatibility
   utils: {

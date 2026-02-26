@@ -1,0 +1,257 @@
+/**
+ * Styles: RewardDisplay
+ * Purpose: Styling for team rewards display
+ * Part of: Easter Quest Frontend
+ *
+ * @since 2026-02-25
+ */
+
+.reward-display {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.reward-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--primary-blue, #005da0);
+}
+
+.reward-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-blue, #005da0);
+}
+
+.reward-stats {
+  display: flex;
+  gap: 10px;
+}
+
+.reward-count {
+  background: var(--primary-blue, #005da0);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Loading & Error States */
+.reward-loading,
+.reward-error,
+.reward-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.reward-error {
+  color: var(--danger, #dc3545);
+}
+
+.reward-empty p {
+  margin: 10px 0;
+}
+
+.reward-hint {
+  color: var(--primary-blue, #005da0);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Reward Sections */
+.reward-section {
+  margin-bottom: 25px;
+}
+
+.reward-section:last-child {
+  margin-bottom: 0;
+}
+
+.reward-section-title {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 15px;
+  padding-left: 5px;
+  border-left: 4px solid var(--primary-blue, #005da0);
+}
+
+/* Reward Cards */
+.reward-card {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.reward-card:last-child {
+  margin-bottom: 0;
+}
+
+.reward-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.reward-unlocked {
+  border-color: var(--success, #28a745);
+  background: #f0fff4;
+}
+
+.reward-locked {
+  border-color: #dee2e6;
+  background: #fafafa;
+  opacity: 0.8;
+}
+
+/* Reward Card Header */
+.reward-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.reward-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.reward-info {
+  flex: 1;
+}
+
+.reward-name {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.reward-game {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.reward-lock {
+  font-size: 1.5rem;
+  opacity: 0.5;
+}
+
+/* Reward Description */
+.reward-description {
+  color: #555;
+  font-size: 0.95rem;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+/* Reward Value (for unlocked rewards) */
+.reward-value-container {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.reward-value-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.reward-value-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.reward-copy-btn {
+  background: var(--primary-blue, #005da0);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reward-copy-btn:hover {
+  background: var(--dark-blue, #004271);
+  transform: scale(1.05);
+}
+
+.reward-copy-btn.copied {
+  background: var(--success, #28a745);
+}
+
+.reward-value {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Locked Message */
+.reward-locked-message {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
+  color: #856404;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Timestamp */
+.reward-timestamp {
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 10px;
+  text-align: right;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .reward-display {
+    padding: 15px;
+  }
+
+  .reward-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .reward-card-header {
+    flex-wrap: wrap;
+  }
+
+  .reward-value {
+    font-size: 0.75rem;
+  }
+}
