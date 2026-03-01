@@ -19,8 +19,10 @@ import { logger } from '../utils/logger';
 /**
  * Get all teams
  *
+ * ADMIN ONLY
+ *
  * @returns {Promise<Array>} Array of team objects
- * @throws {APIError} 401 if not authenticated
+ * @throws {APIError} 401 if not authenticated, 403 if not admin
  */
 export const getAllTeams = () => request('GET', '/teams');
 

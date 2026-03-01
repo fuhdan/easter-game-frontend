@@ -25,7 +25,7 @@ import { request } from './api';
  * @returns {Promise<Array>} Array of user objects
  * @throws {APIError} 403 if not admin
  */
-export const getAll = () => request('GET', '/users');
+export const getAll = () => request('GET', '/admin/users');
 
 /**
  * Get user by ID
