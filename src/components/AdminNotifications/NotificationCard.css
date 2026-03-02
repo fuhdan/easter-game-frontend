@@ -199,6 +199,74 @@
     border-left: 3px solid #28a745;
 }
 
+/* Provision Failure Details */
+.provision-failure-details {
+    margin: 0.75rem 0;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.details-toggle {
+    width: 100%;
+    padding: 0.75rem;
+    background: white;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 500;
+    color: #005da0;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.details-toggle:hover {
+    background: #f8f9fa;
+}
+
+.provision-details-content {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.8rem;
+}
+
+.detail-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    align-items: flex-start;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-row strong {
+    color: #333;
+    min-width: 120px;
+    flex-shrink: 0;
+}
+
+.detail-row code {
+    background: white;
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-family: 'Courier New', Consolas, Monaco, monospace;
+    font-size: 0.75rem;
+    border: 1px solid #e9ecef;
+    word-break: break-all;
+}
+
+.detail-row .error-text {
+    color: #c41e3a;
+    font-weight: 500;
+}
+
 /* Actions - Match btn style from SystemAdminDashboard */
 .notification-actions {
     display: flex;
@@ -245,6 +313,29 @@
 
 .btn-resolve:hover {
     background: #004271;
+}
+
+.btn-retry-provision {
+    background: #28a745;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-retry-provision:hover:not(:disabled) {
+    background: #218838;
+}
+
+.btn-retry-provision:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-retry-provision:disabled:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 /* Responsive Design */

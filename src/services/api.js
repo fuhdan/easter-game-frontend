@@ -496,7 +496,33 @@ export const utils = {
    * @param {string} modelName - Model to delete (e.g., 'mistral:7b')
    * @returns {Promise<{success: boolean, message: string}>}
    */
-  deleteOllamaModel: (modelName) => request('DELETE', `/admin/ollama/models/${encodeURIComponent(modelName)}`)
+  deleteOllamaModel: (modelName) => request('DELETE', `/admin/ollama/models/${encodeURIComponent(modelName)}`),
+
+  // ===================================================================
+  // Reward Provisioning API (admin only)
+  // ===================================================================
+
+  /**
+   * Retry a failed provision trigger
+   * @param {number} provisionId - Provision ID to retry
+   * @returns {Promise<{success: boolean, provision: object, message: string}>}
+   */
+  retryProvision: (provisionId) => request('POST', `/admin/rewards/provisions/${provisionId}/retry`),
+
+  /**
+   * Mark a provision as manually resolved
+   * @param {number} provisionId - Provision ID to mark as resolved
+   * @param {string} notes - Resolution notes
+   * @returns {Promise<{success: boolean, provision: object, message: string}>}
+   */
+  markProvisionResolved: (provisionId, notes) => request('POST', `/admin/rewards/provisions/${provisionId}/mark-resolved`, { notes }),
+
+  /**
+   * Get decrypted reward value for manual provisioning
+   * @param {number} teamRewardId - TeamReward ID
+   * @returns {Promise<{team_reward_id: number, reward_name: string, reward_type: string, decrypted_value: string}>}
+   */
+  getDecryptedReward: (teamRewardId) => request('GET', `/admin/rewards/team-rewards/${teamRewardId}`)
 };
 
 export default utils;

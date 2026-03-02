@@ -15,8 +15,9 @@
  * @since 2025-11-12
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { logger } from '../../utils/logger';
+import api from '../../services/api';
 import './NotificationCard.css';
 
 /**
@@ -77,7 +78,8 @@ function getEscalationTypeLabel(type) {
         'manual': 'Manual Escalation',
         'bug': 'Bug Report',
         'stuck': 'User Stuck',
-        'explicit_request': 'Support Request'
+        'explicit_request': 'Support Request',
+        'provision_failed': 'Provision Failed'
     };
     return labels[type] || type;
 }
@@ -95,6 +97,12 @@ function getEscalationTypeLabel(type) {
 const NotificationCard = ({ notification, onResolve, onAcknowledge, currentTab }) => {
     const priorityConfig = getPriorityConfig(notification.priority);
     const relativeTime = formatRelativeTime(notification.created_at);
+    const [isRetrying, setIsRetrying] = useState(false);
+    const [detailsExpanded, setDetailsExpanded] = useState(false);
+
+    // Check if this is a provision failure notification
+    const isProvisionFailure = notification.escalation_type === 'provision_failed';
+    const provisionId = notification.context_data?.team_reward_provision_id;
 
     /**
      * Handle resolve button click
@@ -132,6 +140,47 @@ const NotificationCard = ({ notification, onResolve, onAcknowledge, currentTab }
         onAcknowledge(notification.id);
     }
 
+    /**
+     * Handle retry provisioning click
+     */
+    async function handleRetryProvisioning() {
+        if (!provisionId) {
+            return;
+        }
+
+        setIsRetrying(true);
+        logger.info('provision_retry_started', {
+            notificationId: notification.id,
+            provisionId: provisionId,
+            teamName: notification.team_name,
+            module: 'NotificationCard'
+        });
+
+        try {
+            await api.retryProvision(provisionId);
+
+            logger.info('provision_retry_success', {
+                notificationId: notification.id,
+                provisionId: provisionId,
+                module: 'NotificationCard'
+            });
+
+            // Automatically resolve the notification after successful retry
+            onResolve(notification.id);
+        } catch (error) {
+            logger.error('provision_retry_failed', {
+                notificationId: notification.id,
+                provisionId: provisionId,
+                error: error.message,
+                module: 'NotificationCard'
+            });
+
+            // Just log the error, no popup - the notification will be updated by SSE
+        } finally {
+            setIsRetrying(false);
+        }
+    }
+
     return (
         <div className={`notification-card priority-${priorityConfig.color} ${currentTab === 'resolved' ? 'resolved' : ''}`}>
             {/* Priority Indicator */}
@@ -165,11 +214,60 @@ const NotificationCard = ({ notification, onResolve, onAcknowledge, currentTab }
 
             {/* Message */}
             <div className="notification-message">
-                {notification.message}
+                {notification.message.split('\n').map((line, idx) => (
+                    <React.Fragment key={idx}>
+                        {line}
+                        {idx < notification.message.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                ))}
             </div>
 
-            {/* Context Data (if available) */}
-            {notification.context_data && (
+            {/* Provision Failure Details */}
+            {isProvisionFailure && notification.context_data && (
+                <div className="provision-failure-details">
+                    <button
+                        className="details-toggle"
+                        onClick={() => setDetailsExpanded(!detailsExpanded)}
+                    >
+                        {detailsExpanded ? '▼' : '▶'} {detailsExpanded ? 'Hide' : 'Show'} Technical Details
+                    </button>
+                    {detailsExpanded && (
+                        <div className="provision-details-content">
+                            <div className="detail-row">
+                                <strong>Reward:</strong> {notification.context_data.reward_name}
+                            </div>
+                            <div className="detail-row">
+                                <strong>Type:</strong> {notification.context_data.reward_type}
+                            </div>
+                            <div className="detail-row">
+                                <strong>Game Trigger:</strong> {notification.context_data.triggered_by_game_name}
+                            </div>
+                            <div className="detail-row">
+                                <strong>API URL:</strong> <code>{notification.context_data.api_url}</code>
+                            </div>
+                            <div className="detail-row">
+                                <strong>Error:</strong> <span className="error-text">{notification.context_data.error_message}</span>
+                            </div>
+                            {notification.context_data.http_status_code && (
+                                <div className="detail-row">
+                                    <strong>HTTP Status:</strong> {notification.context_data.http_status_code}
+                                </div>
+                            )}
+                            {notification.context_data.retry_count > 0 && (
+                                <div className="detail-row">
+                                    <strong>Retry Attempts:</strong> {notification.context_data.retry_count}
+                                </div>
+                            )}
+                            <div className="detail-row">
+                                <strong>Failed At:</strong> {new Date(notification.context_data.failed_at).toLocaleString()}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Context Data (for non-provision failures) */}
+            {!isProvisionFailure && notification.context_data && (
                 <div className="notification-context">
                     <details>
                         <summary>View Team Context</summary>
@@ -201,6 +299,17 @@ const NotificationCard = ({ notification, onResolve, onAcknowledge, currentTab }
             {/* Actions */}
             {currentTab !== 'resolved' && (
                 <div className="notification-actions">
+                    {/* Show "Retry Provisioning" button for provision failures */}
+                    {isProvisionFailure && provisionId && (
+                        <button
+                            className="btn-retry-provision"
+                            onClick={handleRetryProvisioning}
+                            disabled={isRetrying}
+                            title="Retry the provision webhook call"
+                        >
+                            {isRetrying ? 'Retrying...' : '🔄 Retry Provisioning'}
+                        </button>
+                    )}
                     {/* Show "Acknowledge" button only for open notifications */}
                     {currentTab === 'open' && (
                         <button
