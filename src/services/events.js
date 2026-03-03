@@ -22,7 +22,7 @@ import { logger } from '../utils/logger';
  */
 export const getAll = () => {
   logger.info('Fetching all events');
-  return request('GET', '/events');
+  return request('GET', '/events/');
 };
 
 /**
@@ -64,6 +64,6 @@ export const getByYear = (year) => {
  * @throws {APIError} 404 if event not found
  */
 export const getGames = (eventId) => {
-  logger.info(`Fetching games for event ${eventId}`);
+  logger.info(`Fetching games for event ${eventId}/games`);
   return request('GET', `/events/${eventId}/games`);
 };

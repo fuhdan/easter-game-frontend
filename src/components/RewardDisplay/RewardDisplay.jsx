@@ -162,6 +162,7 @@ const RewardDisplay = ({ refreshKey = 0 }) => {
                   <div className="reward-value-header">
                     <span className="reward-value-label">Reward Value:</span>
                     <button
+                      type="button"
                       className={`reward-copy-btn ${copiedId === reward.reward_id ? 'copied' : ''}`}
                       onClick={() => handleCopy(reward.decrypted_value, reward.reward_id)}
                       title="Copy to clipboard"

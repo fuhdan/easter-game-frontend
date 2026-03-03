@@ -328,6 +328,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
         <div className="card-header">
           🎮 Game {selectedGame.order_index}
           <button
+            type="button"
             onClick={() => setSelectedGame(null)}
             style={{
               float: 'right',
@@ -656,6 +657,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
                         {/* Start Challenge Button - Only show if not started */}
                         {!isStarted && (
                           <button
+                            type="button"
                             onClick={(e) => handleStartGame(game.game_id, e)}
                             disabled={isStartingThisGame}
                             style={{
@@ -770,6 +772,7 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
                 <span>{selectedReward.display_name}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setShowRewardModal(false)}
                 style={{
                   padding: '4px 12px',
@@ -822,11 +825,14 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
 
               {/* Copy Button */}
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   if (selectedReward.decrypted_value) {
                     navigator.clipboard.writeText(selectedReward.decrypted_value);
                     // Show brief success message
-                    const btn = document.activeElement;
+                    const btn = e.currentTarget;
                     const originalText = btn.textContent;
                     btn.textContent = '✓ Copied!';
                     btn.style.background = '#28a745';

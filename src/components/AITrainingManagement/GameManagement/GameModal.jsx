@@ -42,9 +42,9 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
   const [expandedSections, setExpandedSections] = useState({
     basic: true,           // Always expanded
     config: true,          // Expanded by default
-    scoring: true,         // Expanded by default
+    scoring: false,         // Collapsed by default
     prerequisites: false,  // Collapsed by default
-    solution: true,        // Expanded by default
+    solution: false,        // Collapsed by default
     rewards: false         // Collapsed by default
   });
 
@@ -53,28 +53,8 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
     if (game && game.id) {
       loadDependencies();
       loadRewards();
-
-      // Smart defaults: expand sections with content
-      setExpandedSections(prev => ({
-        ...prev,
-        prerequisites: dependencies.length > 0,
-        rewards: rewards.length > 0
-      }));
     }
   }, [game]);
-
-  // Auto-expand sections when they have content
-  useEffect(() => {
-    if (dependencies.length > 0) {
-      setExpandedSections(prev => ({ ...prev, prerequisites: true }));
-    }
-  }, [dependencies]);
-
-  useEffect(() => {
-    if (rewards.length > 0) {
-      setExpandedSections(prev => ({ ...prev, rewards: true }));
-    }
-  }, [rewards]);
 
   /**
    * Toggle section expand/collapse
@@ -92,7 +72,7 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
   async function loadDependencies() {
     try {
       setLoading(true);
-      const response = await fetch(`/v1/admin/content/games/${game.id}/dependencies`, {
+      const response = await fetch(`/api/v1/admin/content/games/${game.id}/dependencies`, {
         credentials: 'include'
       });
 
@@ -118,7 +98,7 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
     if (!game || !game.id) return;
 
     try {
-      const response = await fetch(`/v1/admin/content/games/${game.id}/dependencies`, {
+      const response = await fetch(`/api/v1/admin/content/games/${game.id}/dependencies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -150,7 +130,7 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
     if (!window.confirm('Remove this prerequisite?')) return;
 
     try {
-      const response = await fetch(`/v1/admin/content/games/${game.id}/dependencies/${prereqId}`, {
+      const response = await fetch(`/api/v1/admin/content/games/${game.id}/dependencies/${prereqId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

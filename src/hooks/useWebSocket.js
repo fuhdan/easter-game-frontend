@@ -58,8 +58,9 @@ const useWebSocket = (url = null, options = {}) => {
   // Compute WebSocket URL
   const wsUrl = url || (() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    return `${protocol}//${host}/ws/chat`;
+    const hostname = window.location.hostname;
+    // Use hostname only (no port) to connect through nginx proxy on standard ports
+    return `${protocol}//${hostname}/ws/chat`;
   })();
 
   // State
