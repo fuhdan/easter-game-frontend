@@ -81,12 +81,12 @@ export const createReward = (rewardData) => request('POST', '/admin/rewards', re
  *
  * @param {number} rewardId - Reward ID
  * @param {number} teamId - Team ID
- * @param {string} [value] - Optional custom value (if not provided, auto-generated)
+ * @param {string} [customValue] - Optional custom value (if not provided, auto-generated)
  * @returns {Promise<Object>} Granted reward object
  * @throws {APIError} 400 if validation fails, 403 if not admin, 404 if not found
  */
-export const grantReward = (rewardId, teamId, value = null) =>
-  request('POST', '/admin/rewards/grant', { reward_id: rewardId, team_id: teamId, value });
+export const grantReward = (rewardId, teamId, customValue = null) =>
+  request('POST', '/admin/rewards/grant', { reward_id: rewardId, team_id: teamId, custom_value: customValue });
 
 /**
  * Delete a reward
