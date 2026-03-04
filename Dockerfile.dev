@@ -6,8 +6,8 @@
 # License: MIT
 #
 # Usage:
-#   docker build -f Dockerfile.dev -t easter-game-frontend:dev .
-#   docker run -p 3000:3000 -v $(pwd)/src:/app/src easter-game-frontend:dev
+#   docker build -f Dockerfile.dev -t eastergame-frontend:dev .
+#   docker run -p 3000:3000 -v $(pwd)/src:/app/src eastergame-frontend:dev
 #
 # Features:
 # - Code mounted from host for live development

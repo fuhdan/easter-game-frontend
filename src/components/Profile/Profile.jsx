@@ -130,7 +130,7 @@ const Profile = ({ user }) => {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'password':
-                return <PasswordChangeCard />;
+                return <PasswordChangeCard username={currentUser.username} />;
 
             case 'team-settings':
                 return <TeamNameCard user={currentUser} />;
@@ -139,7 +139,7 @@ const Profile = ({ user }) => {
                 return <GameRatingCard />;
 
             default:
-                return <PasswordChangeCard />;
+                return <PasswordChangeCard username={currentUser.username} />;
         }
     };
 

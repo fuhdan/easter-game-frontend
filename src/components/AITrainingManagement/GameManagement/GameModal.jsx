@@ -912,6 +912,7 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
                     onChange={(e) => setRewardForm({ ...rewardForm, api_bearer_token: e.target.value })}
                     className="form-control"
                     placeholder={editingReward ? "Leave empty to keep existing token" : "your-secret-bearer-token"}
+                    autoComplete="off"
                   />
                   <small style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
                     {editingReward

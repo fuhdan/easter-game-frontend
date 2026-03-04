@@ -678,6 +678,18 @@ export function ChatProvider({ children, user }) {
   const loadBroadcastHistory = useCallback(async () => {
     if (!user) return;
 
+    // Skip for admins - they don't have teams and access team chat differently
+    if (user.role === 'admin' || user.role === 'game_admin') {
+      logger.debug('chat_broadcast_history_skip', {
+        userRole: user.role,
+        reason: 'admin_no_team',
+        module: 'ChatContext'
+      });
+      setTeamBroadcastMessages([]);
+      setAdminNotifications([]);
+      return;
+    }
+
     try {
       logger.debug('chat_broadcast_history_loading', {
         userId: user.id,
@@ -743,6 +755,17 @@ export function ChatProvider({ children, user }) {
   // Load team members when switching to team chat mode
   const loadTeamMembers = useCallback(async () => {
     if (!user) return;
+
+    // Skip for admins - they don't have teams and send messages to any team
+    if (user.role === 'admin' || user.role === 'game_admin') {
+      logger.debug('chat_team_members_skip', {
+        userRole: user.role,
+        reason: 'admin_no_team',
+        module: 'ChatContext'
+      });
+      setTeamMembers([]);
+      return;
+    }
 
     try {
       logger.debug('chat_team_members_loading', {

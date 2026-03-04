@@ -28,30 +28,30 @@ describe('PasswordChangeCard Component', () => {
 
   describe('Rendering', () => {
     test('renders card header', () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       expect(screen.getByText(/🔐 Change Password/i)).toBeInTheDocument();
     });
 
     test('renders all three password input fields', () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       const fields = screen.getAllByPlaceholderText(/password/i);
       expect(fields).toHaveLength(3);
     });
 
     test('renders submit button', () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       expect(screen.getByRole('button', { name: /Change Password/i })).toBeInTheDocument();
     });
 
     test('renders reset button', () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       expect(screen.getByRole('button', { name: /Reset/i })).toBeInTheDocument();
     });
   });
 
   describe('Input Changes', () => {
     test('allows entering passwords', () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       const { current, new: newPwd, confirm } = getPasswordFields();
 
       fireEvent.change(current, { target: { value: 'oldpass' } });
@@ -66,7 +66,7 @@ describe('PasswordChangeCard Component', () => {
 
   describe('Form Validation', () => {
     test('shows error when fields are empty', async () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       
       fireEvent.click(screen.getByRole('button', { name: /Change Password/i }));
 
@@ -76,7 +76,7 @@ describe('PasswordChangeCard Component', () => {
     });
 
     test('shows error for short password', async () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       const { current, new: newPwd, confirm } = getPasswordFields();
 
       fireEvent.change(current, { target: { value: 'demo' } });
@@ -93,7 +93,7 @@ describe('PasswordChangeCard Component', () => {
 
   describe('Form Submission', () => {
     test('shows success on valid submission', async () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       const { current, new: newPwd, confirm } = getPasswordFields();
 
       fireEvent.change(current, { target: { value: 'demo' } });
@@ -112,7 +112,7 @@ describe('PasswordChangeCard Component', () => {
 
   describe('Reset Functionality', () => {
     test('reset button clears all fields', () => {
-      render(<PasswordChangeCard />);
+      render(<PasswordChangeCard username="testuser" />);
       const { current, new: newPwd, confirm } = getPasswordFields();
 
       fireEvent.change(current, { target: { value: 'test' } });

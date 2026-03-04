@@ -6,8 +6,8 @@
 # License: MIT
 #
 # Usage:
-#   docker build -f Dockerfile.prod -t easter-game-frontend:prod .
-#   docker run -p 80:80 easter-game-frontend:prod
+#   docker build -f Dockerfile.prod -t eastergame-frontend:prod .
+#   docker run -p 80:80 eastergame-frontend:prod
 #
 # Features:
 # - Multi-stage build for optimization

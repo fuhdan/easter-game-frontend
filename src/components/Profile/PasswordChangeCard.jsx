@@ -2,7 +2,7 @@
  * Component: PasswordChangeCard
  * Purpose: Password change form with validation
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
- * 
+ *
  * Features:
  * - Self-contained form state (no parent re-renders)
  * - Form validation and API calls
@@ -10,17 +10,20 @@
  */
 
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { logger } from '../../utils/logger';
 
 /**
  * PasswordChangeCard component - Password change form
  *
+ * @param {Object} props - Component props
+ * @param {string} props.username - Current username for password manager context
  * @returns {JSX.Element} Password change form card
  *
  * @example
- * <PasswordChangeCard />
+ * <PasswordChangeCard username="john_doe" />
  */
-const PasswordChangeCard = () => {
+const PasswordChangeCard = ({ username = '' }) => {
   // Move ALL password state back into this component
   const [passwordForm, setPasswordForm] = useState({
     current: '',
@@ -142,6 +145,17 @@ const PasswordChangeCard = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Hidden username field for password manager accessibility */}
+          <input
+            type="text"
+            name="username"
+            value={username}
+            autoComplete="username"
+            readOnly
+            style={{ display: 'none' }}
+            aria-hidden="true"
+          />
+
           <div className="form-group">
             <label className="form-label">Current Password</label>
             <input
@@ -151,6 +165,7 @@ const PasswordChangeCard = () => {
               onChange={(e) => handleInputChange('current', e.target.value)}
               placeholder="Enter your current password"
               disabled={passwordLoading}
+              autoComplete="current-password"
             />
             {passwordErrors.current && (
               <div className="form-error">{passwordErrors.current}</div>
@@ -166,6 +181,7 @@ const PasswordChangeCard = () => {
               onChange={(e) => handleInputChange('new', e.target.value)}
               placeholder="Enter new password (min 8 characters)"
               disabled={passwordLoading}
+              autoComplete="new-password"
             />
             {passwordErrors.new && (
               <div className="form-error">{passwordErrors.new}</div>
@@ -181,6 +197,7 @@ const PasswordChangeCard = () => {
               onChange={(e) => handleInputChange('confirm', e.target.value)}
               placeholder="Confirm your new password"
               disabled={passwordLoading}
+              autoComplete="new-password"
             />
             {passwordErrors.confirm && (
               <div className="form-error">{passwordErrors.confirm}</div>
@@ -209,6 +226,13 @@ const PasswordChangeCard = () => {
       </div>
     </div>
   );
+};
+
+/**
+ * PropTypes validation for PasswordChangeCard component
+ */
+PasswordChangeCard.propTypes = {
+  username: PropTypes.string
 };
 
 export default PasswordChangeCard;

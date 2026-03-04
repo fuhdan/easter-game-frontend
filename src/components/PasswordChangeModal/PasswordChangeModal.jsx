@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { logger } from '../../utils/logger';
 import './PasswordChangeModal.css';
 
@@ -175,6 +176,17 @@ const PasswordChangeModal = ({
           </div>
 
           <form onSubmit={handleSubmit} className="activation-form">
+            {/* Hidden username field for password manager accessibility */}
+            <input
+              type="text"
+              name="username"
+              value={username}
+              autoComplete="username"
+              readOnly
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
+
             {/* New Password Field */}
             <div className="form-group">
               <label className="form-label">New Password</label>
@@ -260,6 +272,19 @@ const PasswordChangeModal = ({
       </div>
     </div>
   );
+};
+
+/**
+ * PropTypes validation for PasswordChangeModal component
+ */
+PasswordChangeModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+  username: PropTypes.string.isRequired,
+  requiresOTP: PropTypes.bool,
+  currentPassword: PropTypes.string,
+  loading: PropTypes.bool
 };
 
 export default PasswordChangeModal;
