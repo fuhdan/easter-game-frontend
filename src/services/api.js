@@ -39,7 +39,17 @@ export class APIError extends Error {
   }
 
   getUserMessage() {
-    if (this.status === 401) return 'Please log in again';
+    if (this.status === 401) {
+      // Authentication error - check for specific error message (e.g., expired OTP)
+      if (this.data && this.data.detail) {
+        if (typeof this.data.detail === 'object' && this.data.detail.message) {
+          return this.data.detail.message;
+        } else if (typeof this.data.detail === 'string') {
+          return this.data.detail;
+        }
+      }
+      return 'Please log in again';
+    }
     if (this.status === 403) return 'Permission denied';
     if (this.status === 404) return 'Resource not found';
     if (this.status === 429) {

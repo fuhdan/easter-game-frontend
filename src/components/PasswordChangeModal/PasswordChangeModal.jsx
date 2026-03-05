@@ -68,8 +68,14 @@ const PasswordChangeModal = ({
 
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = 'New password is required';
-    } else if (formData.newPassword.length < 6) {
-      newErrors.newPassword = 'Password must be at least 6 characters';
+    } else if (formData.newPassword.length < 8) {
+      newErrors.newPassword = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(formData.newPassword)) {
+      newErrors.newPassword = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(formData.newPassword)) {
+      newErrors.newPassword = 'Password must contain at least one lowercase letter';
+    } else if (!/[0-9]/.test(formData.newPassword)) {
+      newErrors.newPassword = 'Password must contain at least one number';
     }
 
     if (!formData.confirmPassword.trim()) {
@@ -213,6 +219,9 @@ const PasswordChangeModal = ({
               {errors.newPassword && (
                 <div className="error-text">{errors.newPassword}</div>
               )}
+              <div className="password-requirements">
+                Requirements: 8+ characters, uppercase, lowercase, number
+              </div>
             </div>
 
             {/* Confirm Password Field */}

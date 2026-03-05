@@ -131,11 +131,10 @@ function ActivationCodesTab({ user }) {
     const diff = expiry - now;
 
     if (diff <= 0) {
-      setTeamMembers(prev => prev.map(member =>
-        member.id === memberId
-          ? { ...member, has_otp: false, otp_expires: null, activation_code: null }
-          : member
-      ));
+      // BUG FIX: Don't clear has_otp when expired - status detection needs it!
+      // The getMemberStatus() function checks has_otp && otp_expires to detect expired state.
+      // If we clear these fields, status becomes 'new' instead of 'expired'.
+      // Just update the timer display - the timestamp comparison handles expired state.
       setCodeTimers(prev => ({ ...prev, [memberId]: 'Expired' }));
     } else {
       const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -302,6 +301,7 @@ function ActivationCodesTab({ user }) {
                       <span className="code-check">✓</span>
                     </div>
                   ) : member.activation_code ? (
+                    /* Code was just generated - show it with timer */
                     <div className="code-display-section">
                       <div className="code-value">
                         <span className="code-text">{member.activation_code}</span>
@@ -312,6 +312,17 @@ function ActivationCodesTab({ user }) {
                         >
                           {copySuccess[member.id] ? '✓ Copied' : '📋 Copy'}
                         </button>
+                      </div>
+                      <div className="code-expiry">
+                        Expires in: <strong>{codeTimers[member.id] || 'Calculating...'}</strong>
+                      </div>
+                    </div>
+                  ) : member.has_otp && member.otp_expires && status === 'pending' ? (
+                    /* Code exists but wasn't just generated - show timer but not code */
+                    <div className="code-display-section">
+                      <div className="code-info">
+                        <span className="code-label">💡 Code Already Generated</span>
+                        <p className="code-hint">The activation code was previously generated and should have been shared with the user. Codes cannot be retrieved for security reasons.</p>
                       </div>
                       <div className="code-expiry">
                         Expires in: <strong>{codeTimers[member.id] || 'Calculating...'}</strong>
