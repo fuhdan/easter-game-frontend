@@ -32,6 +32,8 @@ const ATTACK_CATEGORIES = {
     'social_engineering': { icon: '🎭', label: 'Social Engineering', color: '#f39c12' },
     'obfuscation_attack': { icon: '🔣', label: 'Obfuscation Attack', color: '#9b59b6' },
     'roleplay_bypass': { icon: '🎬', label: 'Roleplay Bypass', color: '#3498db' },
+    'rate_limit': { icon: '⏱️', label: 'Rate Limit Exceeded', color: '#ff9800' },
+    'clean': { icon: '✅', label: 'Clean Message', color: '#28a745' },
     'none': { icon: '✅', label: 'Safe Message', color: '#28a745' }
 };
 
@@ -197,15 +199,43 @@ const SecurityDashboard = ({ securitySummary, latestSecurityEvent }) => {
                 </div>
 
                 <div className="security-stat-card">
-                    <div className="stat-icon">⚠️</div>
-                    <div className="stat-content">
-                        <div className="stat-label">Top Threat</div>
-                        <div className="stat-value-small">
-                            {ATTACK_CATEGORIES[summary.most_common_attack?.category]?.icon || '❓'}
-                            {ATTACK_CATEGORIES[summary.most_common_attack?.category]?.label || 'None'}
-                        </div>
-                        <div className="stat-detail">{summary.most_common_attack?.count || 0} attempts</div>
-                    </div>
+                    {(() => {
+                        // Filter out clean/safe messages to find actual threats
+                        const category = summary.most_common_attack?.category;
+                        const count = summary.most_common_attack?.count || 0;
+                        const hasNoThreats = !category || category === 'clean' || category === 'none';
+
+                        // If no threats found, show "None"
+                        if (hasNoThreats) {
+                            return (
+                                <>
+                                    <div className="stat-icon">⚠️</div>
+                                    <div className="stat-content">
+                                        <div className="stat-label">Top Threat</div>
+                                        <div className="stat-value-small">
+                                            ✅ None
+                                        </div>
+                                        <div className="stat-detail">0 attempts</div>
+                                    </div>
+                                </>
+                            );
+                        }
+
+                        // Show actual threat
+                        return (
+                            <>
+                                <div className="stat-icon">⚠️</div>
+                                <div className="stat-content">
+                                    <div className="stat-label">Top Threat</div>
+                                    <div className="stat-value-small">
+                                        {ATTACK_CATEGORIES[category]?.icon || '❓'}
+                                        {ATTACK_CATEGORIES[category]?.label || 'Unknown'}
+                                    </div>
+                                    <div className="stat-detail">{summary.most_common_attack?.count || 0} attempts</div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
         );

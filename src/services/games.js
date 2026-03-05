@@ -20,7 +20,7 @@ import { request } from './api';
  * @returns {Promise<Array>} Array of game objects
  * @throws {APIError} 401 if not authenticated
  */
-export const getAll = () => request('GET', '/games');
+export const getAll = () => request('GET', '/games/');
 
 /**
  * Get game by ID
@@ -144,7 +144,7 @@ export const useHint = (gameId) => request('POST', `/games/${gameId}/hint`);
  * @returns {Promise<Object>} Rating confirmation
  * @throws {APIError} 400 if invalid rating, 403 if not completed, 404 if not found
  */
-export const rate = (gameId, rating, comment) => request('POST', `/games/${gameId}/rate`, { rating, comment });
+export const rate = (gameId, rating, comment) => request('POST', '/games/rate', { game_id: gameId, rating, comment });
 
 /**
  * Get all ratings for a game
@@ -156,3 +156,20 @@ export const rate = (gameId, rating, comment) => request('POST', `/games/${gameI
  * @throws {APIError} 403 if not admin, 404 if game not found
  */
 export const getRatings = (gameId) => request('GET', `/games/${gameId}/ratings`);
+
+/**
+ * Get current user's rating history
+ *
+ * Returns all ratings submitted by the authenticated user
+ *
+ * @returns {Promise<Object>} Object with ratings array
+ * @returns {Array} result.ratings - Array of rating objects with game info
+ * @returns {number} result.ratings[].id - Rating ID
+ * @returns {number} result.ratings[].game_id - Game ID
+ * @returns {string} result.ratings[].game_title - Game title
+ * @returns {number} result.ratings[].rating - Rating value (1-5)
+ * @returns {string} result.ratings[].comment - Optional comment
+ * @returns {string} result.ratings[].created_at - ISO timestamp
+ * @throws {APIError} 401 if not authenticated
+ */
+export const getMyRatings = () => request('GET', '/games/my-ratings');
