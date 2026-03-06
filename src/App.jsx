@@ -16,6 +16,7 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from './utils/logger';
 import { API_CONFIG } from './config/apiConfig';
+import { request } from './services/api';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import Login from './components/Login/Login';
 import Header from './components/Header/Header';
@@ -71,27 +72,35 @@ const App = () => {
 
     /**
      * Validate current user session with backend.
+     *
+     * Uses the API service to get automatic token refresh if access token expired.
+     * If refresh token is still valid, user will be re-authenticated automatically.
+     *
      * @async
      * @returns {Promise<void>}
      */
     async function checkAuthStatus() {
         try {
             setLoading(true);
-            const response = await fetch(API_CONFIG.ENDPOINTS.AUTH.ME, {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' }
+            // Use API service for automatic token refresh on 401
+            const userData = await request('GET', '/auth/me');
+            setUser(userData);
+            logger.info('auth_check_successful', {
+                username: userData.username,
+                role: userData.role,
+                module: 'App'
             });
-
-            if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-            } else {
+        } catch (err) {
+            logger.warn('auth_check_failed', {
+                error: err.message,
+                status: err.status,
+                module: 'App'
+            });
+            // Only log out if auth genuinely failed (not just network error)
+            if (err.status === 401) {
                 setUser(null);
             }
-        } catch (err) {
-            logger.error('Auth check failed:', err);
-            setUser(null);
+            // For other errors (network, 500, etc.), keep trying on next request
         } finally {
             setLoading(false);
         }

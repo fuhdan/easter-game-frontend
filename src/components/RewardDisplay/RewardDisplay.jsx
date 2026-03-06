@@ -30,7 +30,8 @@ const getRewardIcon = (rewardType) => {
     password: '🔐',
     certificate: '📜',
     url: '🔗',
-    secret_text: '📝'
+    secret_text: '📝',
+    container_access: '🐳'
   };
   return icons[rewardType] || '🎁';
 };

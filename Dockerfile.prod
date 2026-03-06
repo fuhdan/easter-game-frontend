@@ -24,8 +24,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (generates package-lock.json if missing/outdated)
-RUN npm install
+# Install ALL dependencies (including dev dependencies needed for build)
+# Note: React apps need devDependencies (react-scripts, webpack, babel) to build
+# The final nginx stage only contains the built static files, no node_modules
+# SECURITY: npm ci uses exact versions from package-lock.json for reproducible builds
+RUN npm ci
 
 # Copy source code
 COPY src/ ./src/

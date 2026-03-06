@@ -18,7 +18,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '../../../utils/logger';
-import { getRewardsByGame, createReward, updateReward, deleteReward } from '../../../services/rewards';
+import { getRewardsByGame, createReward, updateReward, deleteReward, listProvisionTriggers } from '../../../services/rewards';
+import ProvisionTriggerModal from '../ProvisionTriggerModal/ProvisionTriggerModal';
 
 function GameModal({ game, gameForm, events, categories, games, onFormChange, onSave, onClose }) {
   const [dependencies, setDependencies] = useState([]);
@@ -35,8 +36,18 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
     description: '',
     is_active: true,
     api_url: '',
-    api_bearer_token: ''
+    api_bearer_token: '',
+    // Container-specific fields
+    container_game_type: '',
+    container_memory: '256m',
+    container_cpu: '0.5'
   });
+
+  // Provision trigger management state
+  const [provisionTriggers, setProvisionTriggers] = useState({});  // Map of reward_id to triggers array
+  const [showTriggerModal, setShowTriggerModal] = useState(false);
+  const [editingTrigger, setEditingTrigger] = useState(null);
+  const [selectedReward, setSelectedReward] = useState(null);  // Reward for which we're managing triggers
 
   // Collapsible sections state (with smart defaults)
   const [expandedSections, setExpandedSections] = useState({
@@ -170,7 +181,11 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
     try {
       setLoadingRewards(true);
       const data = await getRewardsByGame(game.id);
-      setRewards(data.rewards || []);
+      const rewardsData = data.rewards || [];
+      setRewards(rewardsData);
+
+      // Load provision triggers for all rewards
+      await loadAllProvisionTriggers(rewardsData);
     } catch (error) {
       logger.error('game_rewards_load_failed', {
         gameId: game.id,
@@ -180,6 +195,31 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
     } finally {
       setLoadingRewards(false);
     }
+  }
+
+  /**
+   * Load provision triggers for all rewards
+   */
+  async function loadAllProvisionTriggers(rewardsData) {
+    const triggersMap = {};
+
+    for (const reward of rewardsData) {
+      try {
+        const response = await listProvisionTriggers(reward.id);
+        triggersMap[reward.id] = response.provision_triggers || [];
+      } catch (error) {
+        logger.error('provision_triggers_load_failed', {
+          extra: {
+            reward_id: reward.id,
+            error: error.message,
+            module: 'GameModal'
+          }
+        });
+        triggersMap[reward.id] = [];
+      }
+    }
+
+    setProvisionTriggers(triggersMap);
   }
 
   /**
@@ -193,7 +233,11 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
       description: '',
       is_active: true,
       api_url: '',
-      api_bearer_token: ''
+      api_bearer_token: '',
+      // Container-specific fields
+      container_game_type: '',
+      container_memory: '256m',
+      container_cpu: '0.5'
     });
     setShowRewardModal(true);
   }
@@ -203,6 +247,7 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
    */
   function handleEditReward(reward) {
     setEditingReward(reward);
+
     setRewardForm({
       reward_type: reward.reward_type,
       display_name: reward.display_name,
@@ -223,13 +268,31 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
       return;
     }
 
+    // Validate required fields
+    if (!rewardForm.display_name || rewardForm.display_name.trim() === '') {
+      alert('Please enter a display name for the reward');
+      return;
+    }
+
+    if (!rewardForm.description || rewardForm.description.trim() === '') {
+      alert('Please enter a description for the reward');
+      return;
+    }
+
     try {
-      const rewardData = {
-        ...rewardForm,
-        game_id: game.id,
-        // Only include api_bearer_token if it's not empty
-        ...(rewardForm.api_bearer_token ? { api_bearer_token: rewardForm.api_bearer_token } : {})
+      let rewardData = {
+        reward_type: rewardForm.reward_type,
+        display_name: rewardForm.display_name,
+        description: rewardForm.description,
+        is_active: rewardForm.is_active,
+        game_id: game.id
       };
+
+      // Add webhook configuration if provided
+      rewardData.api_url = rewardForm.api_url;
+      if (rewardForm.api_bearer_token) {
+        rewardData.api_bearer_token = rewardForm.api_bearer_token;
+      }
 
       if (editingReward) {
         // Update existing reward
@@ -285,6 +348,44 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
       }, error);
       alert(`Failed to delete reward: ${error.response?.data?.detail || error.message}`);
     }
+  }
+
+  /**
+   * Delete provision trigger
+   */
+  async function handleDeleteTrigger(triggerId) {
+    if (!window.confirm('Delete this provision trigger?\n\nThis cannot be undone.')) return;
+
+    try {
+      const { deleteProvisionTrigger } = await import('../../../services/rewards');
+      await deleteProvisionTrigger(triggerId);
+      logger.info('provision_trigger_deleted', {
+        extra: {
+          trigger_id: triggerId,
+          module: 'GameModal'
+        }
+      });
+      await loadRewards(); // Reload to refresh triggers
+    } catch (error) {
+      logger.error('provision_trigger_delete_failed', {
+        extra: {
+          trigger_id: triggerId,
+          error: error.message,
+          module: 'GameModal'
+        }
+      });
+      alert(`Failed to delete provision trigger: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handle trigger modal save
+   */
+  async function handleTriggerSave() {
+    setShowTriggerModal(false);
+    setEditingTrigger(null);
+    setSelectedReward(null);
+    await loadRewards(); // Reload to refresh triggers
   }
 
   /**
@@ -795,6 +896,112 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
                               </button>
                             </div>
                           </div>
+
+                          {/* Provision Triggers for this reward */}
+                          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #dee2e6' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057' }}>
+                                ⚡ Provision Triggers ({provisionTriggers[reward.id]?.length || 0})
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedReward(reward);
+                                  setEditingTrigger(null);
+                                  setShowTriggerModal(true);
+                                }}
+                                style={{
+                                  background: '#28a745',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '3px',
+                                  padding: '3px 6px',
+                                  cursor: 'pointer',
+                                  fontSize: '10px',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                ➕ Add Trigger
+                              </button>
+                            </div>
+
+                            {provisionTriggers[reward.id] && provisionTriggers[reward.id].length > 0 ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {provisionTriggers[reward.id].map((trigger, idx) => (
+                                  <div
+                                    key={trigger.id}
+                                    style={{
+                                      padding: '8px',
+                                      background: '#f8f9fa',
+                                      borderRadius: '4px',
+                                      border: '1px solid #dee2e6',
+                                      fontSize: '11px'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#495057' }}>
+                                          🎯 {trigger.trigger_on_game_name} <span style={{ color: '#6c757d', fontWeight: 'normal' }}>(Order: {trigger.trigger_order})</span>
+                                        </div>
+                                        <div style={{ color: '#6c757d', fontSize: '10px', wordBreak: 'break-all' }}>
+                                          {trigger.api_url}
+                                        </div>
+                                        <div style={{ marginTop: '2px', fontSize: '10px' }}>
+                                          <span style={{ color: trigger.has_api_token ? '#28a745' : '#6c757d' }}>
+                                            {trigger.has_api_token ? '🔑 Token set' : '🔑 No token'}
+                                          </span>
+                                          {' • '}
+                                          <span style={{ color: trigger.is_active ? '#28a745' : '#dc3545' }}>
+                                            {trigger.is_active ? '✓ Active' : '✗ Inactive'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '3px', marginLeft: '6px' }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedReward(reward);
+                                            setEditingTrigger(trigger);
+                                            setShowTriggerModal(true);
+                                          }}
+                                          style={{
+                                            background: '#007bff',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '2px',
+                                            padding: '2px 5px',
+                                            cursor: 'pointer',
+                                            fontSize: '10px'
+                                          }}
+                                        >
+                                          ✏️
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteTrigger(trigger.id)}
+                                          style={{
+                                            background: '#dc3545',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '2px',
+                                            padding: '2px 5px',
+                                            cursor: 'pointer',
+                                            fontSize: '10px'
+                                          }}
+                                        >
+                                          🗑️
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: '11px', color: '#6c757d', fontStyle: 'italic' }}>
+                                No provision triggers configured. Click "Add Trigger" to create one.
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -806,7 +1013,7 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
 
                   <small style={{ display: 'block', marginTop: '10px', fontSize: '12px', color: '#6c757d' }}>
                     💡 Rewards are automatically granted to teams when they complete this game.
-                    Supports SSH keys, API tokens, passwords, certificates, URLs, and secret text.
+                    Supports SSH keys, API tokens, passwords, certificates, URLs, secret text, and Docker containers.
                   </small>
                 </div>
               )}
@@ -883,45 +1090,48 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
                 </label>
               </div>
 
-              <div style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
-                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
-                  📡 Webhook Configuration (Optional)
-                </label>
+              {/* Webhook Configuration (deprecated for rewards, use Provision Triggers instead) */}
+              {(
+                <div style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                  <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+                    📡 Webhook Configuration (Optional)
+                  </label>
 
-                <div className="form-group">
-                  <label htmlFor="reward-api-url">🌐 Webhook URL (HTTPS only)</label>
-                  <input
-                    type="text"
-                    id="reward-api-url"
-                    value={rewardForm.api_url}
-                    onChange={(e) => setRewardForm({ ...rewardForm, api_url: e.target.value })}
-                    className="form-control"
-                    placeholder="https://your-server.com/api/provision"
-                  />
-                  <small style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
-                    POST endpoint to call when reward is unlocked. Must use HTTPS.
-                  </small>
-                </div>
+                  <div className="form-group">
+                    <label htmlFor="reward-api-url">🌐 Webhook URL (HTTPS only)</label>
+                    <input
+                      type="text"
+                      id="reward-api-url"
+                      value={rewardForm.api_url}
+                      onChange={(e) => setRewardForm({ ...rewardForm, api_url: e.target.value })}
+                      className="form-control"
+                      placeholder="https://your-server.com/api/provision"
+                    />
+                    <small style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
+                      POST endpoint to call when trigger game activates. Must use HTTPS.
+                    </small>
+                  </div>
 
-                <div className="form-group">
-                  <label htmlFor="reward-api-token">🔑 Bearer Token</label>
-                  <input
-                    type="password"
-                    id="reward-api-token"
-                    value={rewardForm.api_bearer_token}
-                    onChange={(e) => setRewardForm({ ...rewardForm, api_bearer_token: e.target.value })}
-                    className="form-control"
-                    placeholder={editingReward ? "Leave empty to keep existing token" : "your-secret-bearer-token"}
-                    autoComplete="off"
-                  />
-                  <small style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
-                    {editingReward
-                      ? "Leave empty to keep existing token. Fill to update it."
-                      : "Authentication token for webhook endpoint. Will be encrypted in database."
-                    }
-                  </small>
+                  <div className="form-group">
+                    <label htmlFor="reward-api-token">🔑 Bearer Token</label>
+                    <input
+                      type="password"
+                      id="reward-api-token"
+                      value={rewardForm.api_bearer_token}
+                      onChange={(e) => setRewardForm({ ...rewardForm, api_bearer_token: e.target.value })}
+                      className="form-control"
+                      placeholder={editingReward ? "Leave empty to keep existing token" : "your-secret-bearer-token"}
+                      autoComplete="off"
+                    />
+                    <small style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginTop: '4px' }}>
+                      {editingReward
+                        ? "Leave empty to keep existing token. Fill to update it."
+                        : "Authentication token for webhook endpoint. Will be encrypted in database."
+                      }
+                    </small>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div className="modal-actions">
               <button className="btn btn-success" onClick={handleSaveReward}>
@@ -933,6 +1143,21 @@ function GameModal({ game, gameForm, events, categories, games, onFormChange, on
             </div>
           </div>
         </div>
+      )}
+
+      {/* Provision Trigger Modal */}
+      {showTriggerModal && selectedReward && (
+        <ProvisionTriggerModal
+          reward={selectedReward}
+          trigger={editingTrigger}
+          games={games}
+          onSave={handleTriggerSave}
+          onClose={() => {
+            setShowTriggerModal(false);
+            setEditingTrigger(null);
+            setSelectedReward(null);
+          }}
+        />
       )}
     </div>
   );

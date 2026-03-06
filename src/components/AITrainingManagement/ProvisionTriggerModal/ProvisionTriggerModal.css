@@ -1,0 +1,39 @@
+/**
+ * Styles for ProvisionTriggerModal component
+ */
+
+.provision-trigger-modal {
+  width: 600px;
+  max-width: 90vw;
+}
+
+.provision-trigger-modal .reward-context {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border: 1px solid #dee2e6;
+}
+
+.provision-trigger-modal .form-hint {
+  display: block;
+  font-size: 11px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.provision-trigger-modal .modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.provision-trigger-modal .modal-footer-left {
+  flex: 1;
+}
+
+.provision-trigger-modal .modal-footer-right {
+  display: flex;
+  gap: 10px;
+}
