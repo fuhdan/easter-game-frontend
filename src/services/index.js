@@ -41,7 +41,8 @@ export const {
   logout,
   refresh,
   verify,
-  activateAccount
+  activateAccount,
+  changePassword
 } = auth;
 
 export const {
@@ -53,7 +54,7 @@ export const {
   bulkCreate: bulkCreateUsers,
   getCurrentUser,
   updateProfile,
-  // changePassword removed - use auth.activateAccount() instead
+  // changePassword moved to auth service (use auth.changePassword() or auth.activateAccount())
   promoteUser,
   demoteUser
 } = users;

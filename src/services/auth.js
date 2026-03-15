@@ -101,3 +101,22 @@ export const me = () => request('GET', '/auth/me');
  * @throws {APIError} 401 if not authenticated
  */
 export const verify = () => request('GET', '/auth/me');
+
+/**
+ * Change password for already-authenticated users
+ *
+ * Uses the same endpoint as activateAccount but for regular password changes.
+ * For logged-in users changing their password in Profile settings.
+ *
+ * @param {Object} passwordData - Password change data
+ * @param {string} passwordData.username - Username (for session validation)
+ * @param {string} passwordData.current_password - Current password
+ * @param {string} passwordData.new_password - New password
+ * @param {string} passwordData.confirm_password - Password confirmation (must match new_password)
+ * @returns {Promise<Object>} Password change response
+ * @throws {APIError} 400 if current password wrong or validation fails, 401 if session expired
+ */
+export const changePassword = (passwordData) => {
+  logger.info('Changing password for:', passwordData.username);
+  return request('POST', '/users/change-password', passwordData);
+};

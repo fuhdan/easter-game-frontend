@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { logger } from '../../utils/logger';
+import { changePassword } from '../../services/auth';
 
 /**
  * PasswordChangeCard component - Password change form
@@ -69,12 +70,15 @@ const PasswordChangeCard = ({ username = '' }) => {
   /**
    * Handle password change form submission
    *
+   * Calls POST /users/change-password endpoint
+   * Uses session authentication (user is already logged in)
+   *
    * @param {Event} e - Form submit event
    * @returns {Promise<void>}
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     setPasswordErrors({});
     setPasswordSuccess(false);
 
@@ -87,26 +91,49 @@ const PasswordChangeCard = ({ username = '' }) => {
     try {
       setPasswordLoading(true);
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const MOCK_CURRENT_PASSWORD = "demo";
-      const isCurrentPasswordCorrect = passwordForm.current === MOCK_CURRENT_PASSWORD;
+      // SECURITY: Call password change API
+      // Backend uses session authentication for logged-in users
+      await changePassword({
+        username: username, // Provided by parent Profile component
+        current_password: passwordForm.current,
+        new_password: passwordForm.new,
+        confirm_password: passwordForm.confirm // Required by backend
+      });
 
-      if (isCurrentPasswordCorrect) {
-        setPasswordSuccess(true);
-        setPasswordForm({ current: '', new: '', confirm: '' });
-        setTimeout(() => setPasswordSuccess(false), 3000);
-      } else {
-        setPasswordErrors({ 
-          current: `Current password is incorrect. (Hint: try "${MOCK_CURRENT_PASSWORD}" for testing)` 
-        });
-      }
+      // Success: Clear form and show success message
+      setPasswordSuccess(true);
+      setPasswordForm({ current: '', new: '', confirm: '' });
+
+      // Hide success message after 3 seconds
+      setTimeout(() => setPasswordSuccess(false), 3000);
+
+      logger.info('Password changed successfully');
 
     } catch (error) {
       logger.error('Password change error:', error);
-      setPasswordErrors({ 
-        current: 'Network error. Please try again.' 
-      });
+
+      // Handle specific error cases
+      if (error.status === 400) {
+        // Current password is incorrect
+        setPasswordErrors({
+          current: 'Current password is incorrect'
+        });
+      } else if (error.status === 401) {
+        // Session expired or invalid credentials
+        setPasswordErrors({
+          current: 'Session expired. Please log in again.'
+        });
+      } else if (error.status === 429) {
+        // Rate limited
+        setPasswordErrors({
+          current: 'Too many attempts. Please try again later.'
+        });
+      } else {
+        // Network or server error
+        setPasswordErrors({
+          current: 'Network error. Please try again.'
+        });
+      }
     } finally {
       setPasswordLoading(false);
     }
