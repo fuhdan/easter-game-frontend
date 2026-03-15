@@ -87,7 +87,7 @@ const PasswordChangeModal = ({
     if (requiresOTP && !formData.otp.trim()) {
       newErrors.otp = 'OTP is required';
     } else if (requiresOTP && formData.otp.length !== 8) {
-      newErrors.otp = 'OTP must be 6 digits';
+      newErrors.otp = 'OTP must be 8 digits';
     }
 
     setErrors(newErrors);
