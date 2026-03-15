@@ -652,7 +652,7 @@ describe('PasswordChangeModal Component', () => {
         <PasswordChangeModal {...defaultProps} requiresOTP={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      expect(screen.getByText(/Check your email for the 6-digit one-time password/i)).toBeInTheDocument();
+      expect(screen.getByText(/Ask your Team Captain for the 8-digit one-time password/i)).toBeInTheDocument();
     });
 
     test('does not show OTP help text when requiresOTP is false', () => {
@@ -660,7 +660,7 @@ describe('PasswordChangeModal Component', () => {
         <PasswordChangeModal {...defaultProps} requiresOTP={false} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      expect(screen.queryByText(/Check your email for the 6-digit one-time password/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Ask your Team Captain for the 8-digit one-time password/i)).not.toBeInTheDocument();
     });
   });
 

@@ -261,7 +261,7 @@ const PasswordChangeModal = ({
                   <div className="error-text">{errors.otp}</div>
                 )}
                 <div className="otp-help">
-                  Check your email for the 6-digit one-time password
+                  Ask your Team Captain for the 8-digit one-time password
                 </div>
               </div>
             )}
