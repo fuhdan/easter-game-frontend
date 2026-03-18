@@ -35,6 +35,8 @@ import ConfigCategoryFilter from './ConfigCategoryFilter';
 import ConfigItem from './ConfigItem';
 import ConfirmModal from './ConfirmModal';
 import AISettings from '../AISettings/AISettings';
+import AdminUserManagement from '../AdminUserManagement/AdminUserManagement';
+import AuditLogs from '../AuditLogs/AuditLogs';
 
 function SystemAdminDashboard({ user }) {
   /**
@@ -67,7 +69,8 @@ function SystemAdminDashboard({ user }) {
    * Check if user can access a specific tab
    * - admin: All tabs
    * - content_admin: Events only
-   * - system_admin: System Config and AI Settings
+   * - system_admin: System Config, AI Settings, Admin Users, Audit Logs
+   * - game_admin: Audit Logs only
    *
    * @param {string} tabId - Tab identifier
    * @returns {boolean} Whether user can access the tab
@@ -82,7 +85,11 @@ function SystemAdminDashboard({ user }) {
       return tabId === 'events'; // Content admin only sees Events
     }
     if (role === 'system_admin') {
-      return tabId === 'system-config' || tabId === 'ai-settings'; // System admin sees System Config and AI Settings
+      // System admin sees System Config, AI Settings, Admin Users, Audit Logs
+      return ['system-config', 'ai-settings', 'admin-users', 'audit-logs'].includes(tabId);
+    }
+    if (role === 'game_admin') {
+      return tabId === 'audit-logs'; // Game admin can view audit logs
     }
     return false;
   };
@@ -256,7 +263,9 @@ function SystemAdminDashboard({ user }) {
     const allTabs = [
       { id: 'events', label: '🎮 Events' },
       { id: 'system-config', label: '⚙️ System Config' },
-      { id: 'ai-settings', label: '🤖 AI Settings' }
+      { id: 'ai-settings', label: '🤖 AI Settings' },
+      { id: 'admin-users', label: '👤 Admin Users' },
+      { id: 'audit-logs', label: '📋 Audit Logs' }
     ];
 
     // Filter tabs based on role permissions
@@ -348,6 +357,12 @@ function SystemAdminDashboard({ user }) {
       case 'ai-settings':
         return <AISettings />;
 
+      case 'admin-users':
+        return <AdminUserManagement user={user} />;
+
+      case 'audit-logs':
+        return <AuditLogs />;
+
       default:
         return null;
     }
@@ -383,11 +398,12 @@ function SystemAdminDashboard({ user }) {
 
 /**
  * PropTypes validation for SystemAdminDashboard
- * Only admin, content_admin, and system_admin roles can access this component
+ * Admin, content_admin, system_admin, and game_admin roles can access this component
+ * (game_admin for audit logs access)
  */
 SystemAdminDashboard.propTypes = {
   user: PropTypes.shape({
-    role: PropTypes.oneOf(['admin', 'content_admin', 'system_admin']).isRequired
+    role: PropTypes.oneOf(['admin', 'content_admin', 'system_admin', 'game_admin']).isRequired
   }).isRequired
 };
 

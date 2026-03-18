@@ -2,11 +2,15 @@
  * Component: Login (Updated for 3 Scenarios)
  * Purpose: User authentication interface with account activation support
  * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
- * 
+ *
  * Handles 3 login scenarios:
  * 1. Active user - normal login
  * 2. Inactive user - password change required
  * 3. Inactive user - password change + OTP required
+ *
+ * Demo Mode:
+ * - Production (REACT_APP_DEMO_MODE=false or unset): Empty login fields
+ * - Demo (REACT_APP_DEMO_MODE=true): Pre-filled with admin/demo for quick testing
  */
 
 import React, { useState } from 'react';
@@ -18,9 +22,11 @@ import Loader from '../Loader/Loader.jsx';
 import './Login.css';
 
 const Login = ({ onLogin, loading = false, error = null }) => {
+  // DEMO_MODE: Pre-fill credentials for demo mode, empty for production
+  const demoMode = process.env.REACT_APP_DEMO_MODE === 'true';
   const [credentials, setCredentials] = useState({
-    username: 'admin',
-    password: 'demo'
+    username: demoMode ? 'admin' : '',
+    password: demoMode ? 'demo' : ''
   });
   
   const [logoError, setLogoError] = useState(false);

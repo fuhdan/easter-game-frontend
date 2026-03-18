@@ -282,3 +282,252 @@ export const getGameAdminDetails = (gameId) => {
   logger.debug('admin_fetch_game_details', { gameId, module: 'admin' });
   return request('GET', `/admin/dashboard/games/${gameId}/details`);
 };
+
+// ============================================================================
+// ADMIN USER MANAGEMENT (admin.db)
+// ============================================================================
+
+/**
+ * List all admin users from admin.db
+ *
+ * SYSTEM_ADMIN ONLY
+ *
+ * Returns all admin users with their roles, status, and metadata.
+ * Passwords and password hashes are never exposed.
+ *
+ * @returns {Promise<Array>} Array of admin user objects
+ * @returns {number} users[].id - Admin user ID
+ * @returns {string} users[].username - Admin username
+ * @returns {string} users[].email - Admin email
+ * @returns {string} users[].display_name - Admin display name
+ * @returns {string} users[].role - Admin role (admin/game_admin/system_admin/content_admin)
+ * @returns {boolean} users[].is_active - Whether admin account is active
+ * @returns {boolean} users[].requires_password_change - Whether password change is required
+ * @returns {string} users[].created_at - Account creation timestamp
+ * @returns {string} users[].last_login - Last login timestamp
+ * @throws {APIError} 403 if not system_admin
+ *
+ * @example
+ * const admins = await listAdminUsers();
+ * console.log(`${admins.length} admin users found`);
+ *
+ * @since 2026-03-18
+ */
+export const listAdminUsers = () => {
+  logger.debug('admin_list_users', { module: 'admin' });
+  return request('GET', '/admin/admin-users');
+};
+
+/**
+ * Create a new admin user
+ *
+ * SYSTEM_ADMIN ONLY
+ *
+ * Creates a new admin user with initial password set to username.
+ * The new admin will be forced to change their password on first login.
+ *
+ * @param {Object} data - Admin user data
+ * @param {string} data.username - Username (3-50 chars, alphanumeric + underscore)
+ * @param {string} data.email - Email address
+ * @param {string} data.display_name - Display name (3-100 chars)
+ * @param {string} data.role - Role (admin/game_admin/system_admin/content_admin)
+ * @returns {Promise<Object>} Created admin user + initial password
+ * @returns {number} response.id - New admin user ID
+ * @returns {string} response.username - Username
+ * @returns {string} response.email - Email
+ * @returns {string} response.display_name - Display name
+ * @returns {string} response.role - Role
+ * @returns {boolean} response.requires_password_change - Always true
+ * @returns {string} response.initial_password - Initial password (same as username)
+ * @returns {string} response.message - Instructions message
+ * @throws {APIError} 400 if username already exists or validation fails
+ * @throws {APIError} 403 if not system_admin
+ *
+ * @example
+ * const newAdmin = await createAdminUser({
+ *   username: 'newadmin',
+ *   email: 'admin@ypsomed.com',
+ *   display_name: 'New Admin',
+ *   role: 'game_admin'
+ * });
+ * alert(`Initial password: ${newAdmin.initial_password}`);
+ *
+ * @since 2026-03-18
+ */
+export const createAdminUser = (data) => {
+  logger.info('admin_create_user', { username: data.username, role: data.role, module: 'admin' });
+  return request('POST', '/admin/admin-users', data);
+};
+
+/**
+ * Update admin user details
+ *
+ * SYSTEM_ADMIN ONLY
+ *
+ * Updates email, display_name, role, or is_active status.
+ * Does not update password (use resetAdminPassword instead).
+ *
+ * @param {number} adminId - Admin user ID to update
+ * @param {Object} data - Fields to update (all optional)
+ * @param {string} [data.email] - New email address
+ * @param {string} [data.display_name] - New display name
+ * @param {string} [data.role] - New role (admin/game_admin/system_admin/content_admin)
+ * @param {boolean} [data.is_active] - New active status
+ * @returns {Promise<Object>} Updated admin user object
+ * @throws {APIError} 404 if admin not found
+ * @throws {APIError} 403 if not system_admin
+ *
+ * @example
+ * await updateAdminUser(5, { role: 'system_admin', is_active: true });
+ *
+ * @since 2026-03-18
+ */
+export const updateAdminUser = (adminId, data) => {
+  logger.info('admin_update_user', { adminId, updateFields: Object.keys(data), module: 'admin' });
+  return request('PUT', `/admin/admin-users/${adminId}`, data);
+};
+
+/**
+ * Reset admin user password
+ *
+ * SYSTEM_ADMIN ONLY
+ *
+ * Resets the admin's password to their username.
+ * The admin will be forced to change their password on next login.
+ *
+ * @param {number} adminId - Admin user ID
+ * @returns {Promise<Object>} Reset confirmation + reset password
+ * @returns {boolean} response.success - Always true
+ * @returns {string} response.reset_password - Reset password (username)
+ * @returns {string} response.message - Instructions message
+ * @throws {APIError} 404 if admin not found
+ * @throws {APIError} 403 if not system_admin
+ *
+ * @example
+ * const result = await resetAdminPassword(5);
+ * console.log(`Password reset to: ${result.reset_password}`);
+ *
+ * @since 2026-03-18
+ */
+export const resetAdminPassword = (adminId) => {
+  logger.info('admin_reset_password', { adminId, module: 'admin' });
+  return request('POST', `/admin/admin-users/${adminId}/reset-password`);
+};
+
+/**
+ * Delete admin user
+ *
+ * SYSTEM_ADMIN ONLY
+ *
+ * Permanently deletes an admin user account.
+ * Safety checks:
+ * - Cannot delete yourself
+ * - Cannot delete the last admin
+ *
+ * @param {number} adminId - Admin user ID to delete
+ * @returns {Promise<Object>} Deletion confirmation
+ * @returns {boolean} response.success - Always true
+ * @returns {string} response.message - Confirmation message
+ * @throws {APIError} 400 if trying to delete yourself or last admin
+ * @throws {APIError} 404 if admin not found
+ * @throws {APIError} 403 if not system_admin
+ *
+ * @example
+ * await deleteAdminUser(5);
+ *
+ * @since 2026-03-18
+ */
+export const deleteAdminUser = (adminId) => {
+  logger.warn('admin_delete_user', { adminId, module: 'admin' });
+  return request('DELETE', `/admin/admin-users/${adminId}`);
+};
+
+// ============================================================================
+// ADMIN AUDIT LOGS
+// ============================================================================
+
+/**
+ * Get admin audit logs with optional filters
+ *
+ * ANY ADMIN
+ *
+ * Returns paginated audit logs from admin.db with optional filtering.
+ * All admin roles can view audit logs for transparency.
+ *
+ * @param {Object} [filters] - Optional filters
+ * @param {number} [filters.admin_id] - Filter by specific admin ID
+ * @param {number} [filters.event_year] - Filter by event year (e.g., 2025)
+ * @param {string} [filters.action] - Filter by action type
+ * @param {number} [filters.limit=100] - Max results (1-500, default 100)
+ * @param {number} [filters.offset=0] - Pagination offset (default 0)
+ * @returns {Promise<Object>} Audit logs with pagination info
+ * @returns {Array<Object>} response.logs - Array of audit log entries
+ * @returns {number} response.logs[].id - Log entry ID
+ * @returns {number} response.logs[].admin_id - Admin user ID
+ * @returns {string} response.logs[].admin_username - Admin username
+ * @returns {string} response.logs[].action - Action type (created_admin_user, etc.)
+ * @returns {number} response.logs[].event_year - Event year (nullable)
+ * @returns {Object} response.logs[].details - Action details (JSON)
+ * @returns {string} response.logs[].ip_address - IP address (nullable)
+ * @returns {string} response.logs[].user_agent - User agent (nullable)
+ * @returns {string} response.logs[].timestamp - Action timestamp
+ * @returns {Object} response.pagination - Pagination metadata
+ * @returns {number} response.pagination.limit - Requested limit
+ * @returns {number} response.pagination.offset - Current offset
+ * @returns {number} response.pagination.total_count - Total matching logs
+ * @returns {number} response.pagination.returned_count - Logs in this response
+ * @throws {APIError} 403 if not admin
+ *
+ * @example
+ * const logs = await getAuditLogs({ event_year: 2025, limit: 50 });
+ * console.log(`${logs.pagination.total_count} total logs`);
+ *
+ * @since 2026-03-18
+ */
+export const getAuditLogs = (filters = {}) => {
+  logger.debug('admin_fetch_audit_logs', { filters, module: 'admin' });
+  // Convert filters to query parameters
+  const params = new URLSearchParams();
+  if (filters.admin_id !== undefined) params.append('admin_id', filters.admin_id);
+  if (filters.event_year !== undefined) params.append('event_year', filters.event_year);
+  if (filters.action !== undefined) params.append('action', filters.action);
+  if (filters.limit !== undefined) params.append('limit', filters.limit);
+  if (filters.offset !== undefined) params.append('offset', filters.offset);
+
+  const queryString = params.toString();
+  const endpoint = `/admin/admin-audit-log${queryString ? `?${queryString}` : ''}`;
+  return request('GET', endpoint);
+};
+
+/**
+ * Get audit log statistics
+ *
+ * ANY ADMIN
+ *
+ * Returns aggregate statistics about audit logs including:
+ * - Total log count
+ * - Recent 24h activity count
+ * - Breakdown by action type
+ * - Breakdown by admin user
+ *
+ * @returns {Promise<Object>} Audit log statistics
+ * @returns {number} response.total_count - Total audit log entries
+ * @returns {number} response.recent_24h_count - Logs in last 24 hours
+ * @returns {Array<Object>} response.by_action - Counts by action type
+ * @returns {string} response.by_action[].action - Action type
+ * @returns {number} response.by_action[].count - Count for this action
+ * @returns {Array<Object>} response.by_admin - Counts by admin user
+ * @returns {string} response.by_admin[].admin_username - Admin username
+ * @returns {number} response.by_admin[].count - Count for this admin
+ * @throws {APIError} 403 if not admin
+ *
+ * @example
+ * const stats = await getAuditStats();
+ * console.log(`${stats.recent_24h_count} actions in last 24h`);
+ *
+ * @since 2026-03-18
+ */
+export const getAuditStats = () => {
+  logger.debug('admin_fetch_audit_stats', { module: 'admin' });
+  return request('GET', '/admin/admin-audit-log/stats');
+};
