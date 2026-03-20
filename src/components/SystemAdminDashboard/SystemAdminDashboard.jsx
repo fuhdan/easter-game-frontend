@@ -11,17 +11,23 @@
  * - Configuration change confirmation
  * - Role-based tab visibility
  *
+ * Tabs:
+ * - Events: Game content and event management
+ * - System Config: System settings and parameters
+ * - AI Settings: AI provider and prompt configuration
+ * - Admin Users: Admin account management
+ *
  * Security:
  * - Accessible to admin, content_admin, system_admin roles
  * - content_admin: Events tab only (game/puzzle management)
- * - system_admin: System Config tab only
+ * - system_admin: System Config, AI Settings, Admin Users tabs
  * - admin: All tabs
  * - All changes confirmed via modal
  * - Type validation on client and server
  *
  * @module components/SystemAdminDashboard
  * @since 2025-11-06
- * @updated 2025-12-07 - Added role-based tab visibility
+ * @updated 2026-03-18 - Removed audit logs (logging via backend only)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -36,7 +42,6 @@ import ConfigItem from './ConfigItem';
 import ConfirmModal from './ConfirmModal';
 import AISettings from '../AISettings/AISettings';
 import AdminUserManagement from '../AdminUserManagement/AdminUserManagement';
-import AuditLogs from '../AuditLogs/AuditLogs';
 
 function SystemAdminDashboard({ user }) {
   /**
@@ -69,8 +74,7 @@ function SystemAdminDashboard({ user }) {
    * Check if user can access a specific tab
    * - admin: All tabs
    * - content_admin: Events only
-   * - system_admin: System Config, AI Settings, Admin Users, Audit Logs
-   * - game_admin: Audit Logs only
+   * - system_admin: System Config, AI Settings, Admin Users
    *
    * @param {string} tabId - Tab identifier
    * @returns {boolean} Whether user can access the tab
@@ -85,11 +89,8 @@ function SystemAdminDashboard({ user }) {
       return tabId === 'events'; // Content admin only sees Events
     }
     if (role === 'system_admin') {
-      // System admin sees System Config, AI Settings, Admin Users, Audit Logs
-      return ['system-config', 'ai-settings', 'admin-users', 'audit-logs'].includes(tabId);
-    }
-    if (role === 'game_admin') {
-      return tabId === 'audit-logs'; // Game admin can view audit logs
+      // System admin sees System Config, AI Settings, Admin Users
+      return ['system-config', 'ai-settings', 'admin-users'].includes(tabId);
     }
     return false;
   };
@@ -264,8 +265,7 @@ function SystemAdminDashboard({ user }) {
       { id: 'events', label: '🎮 Events' },
       { id: 'system-config', label: '⚙️ System Config' },
       { id: 'ai-settings', label: '🤖 AI Settings' },
-      { id: 'admin-users', label: '👤 Admin Users' },
-      { id: 'audit-logs', label: '📋 Audit Logs' }
+      { id: 'admin-users', label: '👤 Admin Users' }
     ];
 
     // Filter tabs based on role permissions
@@ -314,10 +314,10 @@ function SystemAdminDashboard({ user }) {
         return (
           <div className="system-config-content">
             <div className="config-header-actions">
-              <button className="btn-action" onClick={_loadConfiguration}>
+              <button className="config-action-btn" onClick={_loadConfiguration} aria-label="Reload configuration">
                 🔄 Reload
               </button>
-              <button className="btn-action" onClick={_handleReloadCache}>
+              <button className="config-action-btn" onClick={_handleReloadCache} aria-label="Clear configuration cache">
                 💾 Clear Cache
               </button>
             </div>
@@ -360,9 +360,6 @@ function SystemAdminDashboard({ user }) {
       case 'admin-users':
         return <AdminUserManagement user={user} />;
 
-      case 'audit-logs':
-        return <AuditLogs />;
-
       default:
         return null;
     }
@@ -398,12 +395,11 @@ function SystemAdminDashboard({ user }) {
 
 /**
  * PropTypes validation for SystemAdminDashboard
- * Admin, content_admin, system_admin, and game_admin roles can access this component
- * (game_admin for audit logs access)
+ * Admin, content_admin, and system_admin roles can access this component
  */
 SystemAdminDashboard.propTypes = {
   user: PropTypes.shape({
-    role: PropTypes.oneOf(['admin', 'content_admin', 'system_admin', 'game_admin']).isRequired
+    role: PropTypes.oneOf(['admin', 'content_admin', 'system_admin']).isRequired
   }).isRequired
 };
 

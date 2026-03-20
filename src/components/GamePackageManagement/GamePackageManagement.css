@@ -142,6 +142,23 @@
   margin-bottom: 20px;
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+}
+
+.packages-header .btn-outline {
+  background: white;
+  color: var(--primary-blue, #005da0);
+  border: 2px solid var(--primary-blue, #005da0);
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+.packages-header .btn-outline:hover {
+  background: var(--primary-blue, #005da0);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 93, 160, 0.3);
 }
 
 /* Training Section */
@@ -805,6 +822,22 @@
   margin: 0;
   color: var(--primary-blue, #005da0);
   font-size: 1.4rem;
+}
+
+.event-details-header .btn-outline {
+  background: white;
+  color: var(--primary-blue, #005da0);
+  border: 2px solid var(--primary-blue, #005da0);
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+.event-details-header .btn-outline:hover {
+  background: var(--primary-blue, #005da0);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 93, 160, 0.3);
 }
 
 /* Event Detail Tabs */

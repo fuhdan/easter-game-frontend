@@ -85,14 +85,14 @@ const UserTable = ({ users, currentUserId, onEdit, onResetPassword, onDelete }) 
       <table className="user-table">
         <thead>
           <tr>
-            <th>Username</th>
-            <th>Display Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Last Login</th>
-            <th>Actions</th>
+            <th className="th-username">👤 Username</th>
+            <th className="th-display-name">💬 Display Name</th>
+            <th className="th-email">📧 Email</th>
+            <th className="th-role">🎭 Role</th>
+            <th className="th-status">⚡ Status</th>
+            <th className="th-created">📅 Created</th>
+            <th className="th-last-login">🕒 Last Login</th>
+            <th className="th-actions">⚙️ Actions</th>
           </tr>
         </thead>
         <tbody>

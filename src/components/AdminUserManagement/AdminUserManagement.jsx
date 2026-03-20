@@ -5,15 +5,16 @@
  *
  * Features:
  * - List all admin users from admin.db
- * - Create new admin users with random passwords
+ * - Create new admin users (initial password = username)
  * - Edit admin details (email, display_name, role, is_active)
- * - Reset admin passwords (generates new random password)
+ * - Reset admin passwords (password = username)
  * - Delete admin users (with safety checks)
- * - All actions logged to centralized audit log
+ * - All actions logged via backend application logging
  *
  * Access: system_admin role only
  *
  * @since 2026-03-18
+ * @updated 2026-03-18 - Removed audit log (backend logging only)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -254,8 +255,7 @@ const AdminUserManagement = ({ user }) => {
         <div className="header-info">
           <h2>👤 Admin User Management</h2>
           <p className="header-description">
-            Manage admin users in the global admin database (admin.db).
-            All actions are logged to the centralized audit log.
+            Create and manage administrator accounts with different permission levels.
           </p>
         </div>
         <button

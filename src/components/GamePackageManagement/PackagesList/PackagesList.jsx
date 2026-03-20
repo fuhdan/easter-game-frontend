@@ -21,7 +21,7 @@ function PackagesList({ events, selectedEvent, viewMode, onCreatePackage, onView
         <button className="btn btn-success" onClick={onCreatePackage}>
           ➕ Create New Game Event
         </button>
-        <button className="btn btn-outline" onClick={onReload}>
+        <button className="btn btn-outline" onClick={onReload} aria-label="Reload game events">
           🔄 Reload
         </button>
       </div>

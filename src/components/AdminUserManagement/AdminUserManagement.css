@@ -101,21 +101,47 @@
 }
 
 .user-table thead {
-  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  background: linear-gradient(to bottom, #005da0 0%, #004271 100%);
   color: white;
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 93, 160, 0.25);
 }
 
 .user-table thead th {
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   text-align: left;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: linear-gradient(135deg, #005da0 0%, #004271 100%);
+  letter-spacing: 0.08em;
+  background: transparent;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.user-table thead th:last-child {
+  border-right: none;
+}
+
+.user-table thead th:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Header column specific styles */
+.th-actions {
+  text-align: center;
+}
+
+.th-status {
+  min-width: 180px;
+}
+
+.th-created,
+.th-last-login {
+  min-width: 140px;
 }
 
 .user-table tbody tr {
@@ -240,6 +266,7 @@
 .actions-cell {
   display: flex;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .btn-action {

@@ -113,7 +113,7 @@
   margin-bottom: 1rem;
 }
 
-.btn-action {
+.config-action-btn {
   background: #005da0;
   color: white;
   border: none;
@@ -125,7 +125,7 @@
   transition: all 0.2s ease;
 }
 
-.btn-action:hover {
+.config-action-btn:hover {
   background: #004271;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
