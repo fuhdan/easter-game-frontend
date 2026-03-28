@@ -467,26 +467,26 @@ const CurrentGame = ({ games, activeEvent, showPoints = true, user, onSubmitSolu
             return (
               <div
                 key={game.game_id}
-                onClick={() => !isAdmin && !isLocked && isStarted && setSelectedGame(game)}
+                onClick={() => !isAdmin && !isLocked && isStarted && !isCompleted && setSelectedGame(game)}
                 style={{
                   padding: '15px',
                   marginBottom: '10px',
                   border: `2px solid ${category?.color || '#005da0'}`,
                   borderRadius: '8px',
-                  cursor: effectivelyLocked ? 'not-allowed' : (isStarted ? 'pointer' : 'default'),
+                  cursor: effectivelyLocked ? 'not-allowed' : (isCompleted ? 'default' : (isStarted ? 'pointer' : 'default')),
                   transition: 'all 0.2s',
                   background: effectivelyLocked ? '#f8f9fa' : (isCompleted ? '#f0f8f0' : '#fff'),
                   opacity: isAdminLocked ? 0.7 : (isLocked ? 0.5 : (isCompleted ? 0.8 : 1))
                 }}
                 onMouseEnter={(e) => {
-                  if (!effectivelyLocked && isStarted) {
-                    e.currentTarget.style.background = isCompleted ? '#e0f0e0' : '#e8f4f8';
+                  if (!effectivelyLocked && isStarted && !isCompleted) {
+                    e.currentTarget.style.background = '#e8f4f8';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!effectivelyLocked && isStarted) {
-                    e.currentTarget.style.background = isCompleted ? '#f0f8f0' : '#fff';
+                  if (!effectivelyLocked && isStarted && !isCompleted) {
+                    e.currentTarget.style.background = '#fff';
                     e.currentTarget.style.transform = 'translateY(0)';
                   }
                 }}
