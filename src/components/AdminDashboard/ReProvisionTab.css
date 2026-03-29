@@ -1,0 +1,254 @@
+/**
+ * ReProvisionTab Styles
+ * Part of: Easter Quest 2025 Frontend - Game Admin Dashboard
+ */
+
+.reprovision-tab {
+  padding: 20px;
+}
+
+.tab-header {
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--primary-blue, #005da0);
+  padding-bottom: 15px;
+}
+
+.tab-header h2 {
+  margin: 0 0 10px 0;
+  color: var(--primary-blue, #005da0);
+}
+
+.tab-description {
+  color: #666;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  background: var(--primary-blue, #005da0);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: var(--dark-blue, #004271);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.games-list {
+  display: grid;
+  gap: 20px;
+}
+
+.game-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.game-card.status-success {
+  background: #f0f9f0;
+  border: 2px solid #28a745;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.game-card.status-failed {
+  background: #fff5f5;
+  border: 2px solid #dc3545;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.game-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.game-id {
+  font-size: 12px;
+  color: #999;
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.game-info {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item .label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.info-item .value {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--primary-blue, #005da0);
+}
+
+.teams-list {
+  margin: 15px 0;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.teams-label {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.teams-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.teams-list li {
+  padding: 4px 0;
+  color: #666;
+}
+
+.reprovision-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary-blue, #005da0);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.reprovision-btn:hover:not(:disabled) {
+  background: var(--dark-blue, #004271);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 93, 160, 0.3);
+}
+
+.reprovision-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.provision-results {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.provision-results h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.results-summary {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.results-summary .success-count {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.results-summary .fail-count {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.results-table th {
+  background: #f5f5f5;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-weight: bold;
+  color: #333;
+}
+
+.results-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.results-table tr.success td {
+  background: #f0f9f0;
+}
+
+.results-table tr.failure td {
+  background: #fff5f5;
+}
+
+.loading,
+.error-container,
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.error-message {
+  color: var(--accent-red, #c41e3a);
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.retry-btn {
+  padding: 10px 20px;
+  background: var(--primary-blue, #005da0);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.retry-btn:hover {
+  background: var(--dark-blue, #004271);
+}
+
+.help-text {
+  font-size: 14px;
+  color: #999;
+  margin-top: 10px;
+}

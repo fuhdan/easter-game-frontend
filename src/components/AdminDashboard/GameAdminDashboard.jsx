@@ -30,6 +30,7 @@ import TeamProgressTable from './TeamProgressTable.jsx';
 import RateLimitCard from './RateLimitCard.jsx';
 import GamesAnalyticsTab from './GamesAnalyticsTab.jsx';
 import SecurityDashboard from './SecurityDashboard.jsx';
+import ReProvisionTab from './ReProvisionTab.jsx';
 import { useSSE } from '../../hooks/useSSE';
 import './GameAdminDashboard.css';
 
@@ -299,6 +300,7 @@ const GameAdminDashboard = ({ user }) => {
         const tabs = [
             { id: 'overview', label: '📊 Overview' },
             { id: 'games-analytics', label: '🎯 Games Analytics' },
+            { id: 'reprovision', label: '🔄 Re-provision' },
             { id: 'security', label: '🛡️ Security' },
             { id: 'rate-limits', label: '⚡ Rate Limits' }
         ];
@@ -337,6 +339,9 @@ const GameAdminDashboard = ({ user }) => {
 
             case 'games-analytics':
                 return <GamesAnalyticsTab />;
+
+            case 'reprovision':
+                return <ReProvisionTab user={user} />;
 
             case 'security':
                 return (
