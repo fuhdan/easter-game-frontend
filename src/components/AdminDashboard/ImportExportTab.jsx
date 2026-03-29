@@ -11,9 +11,10 @@
  *
  * @since 2026-03-29
  */
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { buildApiUrl } from '../../config/apiConfig';
 import { logger } from '../../utils/logger';
+import FileDropZone from '../common/FileDropZone';
 import './ImportExportTab.css';
 
 /**
@@ -27,7 +28,6 @@ const ImportExportTab = () => {
     const [importResults, setImportResults] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
-    const fileInputRef = useRef(null);
 
     /**
      * Handle file selection
@@ -165,9 +165,6 @@ const ImportExportTab = () => {
             // Clear file selection on success
             if (results.success) {
                 setSelectedFile(null);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                }
             }
 
         } catch (error) {
@@ -275,18 +272,13 @@ const ImportExportTab = () => {
                     <h3>📤 Import Event Configuration</h3>
                     <p>Upload a YAML file to import or update event configuration.</p>
 
-                    <div className="file-input-wrapper">
-                        <input
-                            type="file"
-                            accept=".yml,.yaml"
-                            onChange={handleFileSelect}
-                            ref={fileInputRef}
-                            id="yaml-file-input"
-                        />
-                        <label htmlFor="yaml-file-input" className="file-input-label">
-                            {selectedFile ? `📄 ${selectedFile.name}` : '📁 Choose YAML file'}
-                        </label>
-                    </div>
+                    <FileDropZone
+                        onFileSelect={handleFileSelect}
+                        accept=".yml,.yaml"
+                        selectedFileName={selectedFile?.name}
+                        disabled={isImporting}
+                        placeholder="Choose YAML file or drag and drop here"
+                    />
 
                     <div className="import-options">
                         <label className="checkbox-label">

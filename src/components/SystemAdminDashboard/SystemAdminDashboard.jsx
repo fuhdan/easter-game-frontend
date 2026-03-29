@@ -43,6 +43,7 @@ import ConfirmModal from './ConfirmModal';
 import AISettings from '../AISettings/AISettings';
 import AdminUserManagement from '../AdminUserManagement/AdminUserManagement';
 import ImportExportTab from '../AdminDashboard/ImportExportTab';
+import BackupRestoreTab from '../AdminDashboard/BackupRestoreTab';
 
 function SystemAdminDashboard({ user }) {
   /**
@@ -75,7 +76,7 @@ function SystemAdminDashboard({ user }) {
    * Check if user can access a specific tab
    * - admin: All tabs
    * - content_admin: Events, Import/Export only
-   * - system_admin: System Config, AI Settings, Admin Users only
+   * - system_admin: System Config, AI Settings, Admin Users, Backup/Restore
    *
    * @param {string} tabId - Tab identifier
    * @returns {boolean} Whether user can access the tab
@@ -91,8 +92,8 @@ function SystemAdminDashboard({ user }) {
       return ['events', 'import-export'].includes(tabId);
     }
     if (role === 'system_admin') {
-      // System admin sees System Config, AI Settings, Admin Users
-      return ['system-config', 'ai-settings', 'admin-users'].includes(tabId);
+      // System admin sees System Config, AI Settings, Admin Users, Backup/Restore
+      return ['system-config', 'ai-settings', 'admin-users', 'backup-restore'].includes(tabId);
     }
     return false;
   };
@@ -268,7 +269,8 @@ function SystemAdminDashboard({ user }) {
       { id: 'import-export', label: '💾 Import/Export' },
       { id: 'system-config', label: '⚙️ System Config' },
       { id: 'ai-settings', label: '🤖 AI Settings' },
-      { id: 'admin-users', label: '👤 Admin Users' }
+      { id: 'admin-users', label: '👤 Admin Users' },
+      { id: 'backup-restore', label: '🔄 Backup/Restore' }
     ];
 
     // Filter tabs based on role permissions
@@ -365,6 +367,9 @@ function SystemAdminDashboard({ user }) {
 
       case 'admin-users':
         return <AdminUserManagement user={user} />;
+
+      case 'backup-restore':
+        return <BackupRestoreTab />;
 
       default:
         return null;

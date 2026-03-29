@@ -1,0 +1,488 @@
+/**
+ * Styles for BackupRestoreTab component
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge
+ *
+ * @since 2026-03-29
+ */
+
+.backup-restore-tab {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.tab-header {
+    margin-bottom: 30px;
+}
+
+.tab-header h2 {
+    margin: 0 0 10px 0;
+    color: var(--primary-blue, #005da0);
+    font-size: 28px;
+}
+
+.security-notice {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #856404;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+/* Side-by-Side Container */
+.backup-restore-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* Helper Text */
+.helper-text {
+    margin: 12px 0 0 0;
+    color: #666;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Card Sections */
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+    margin: 0 0 12px 0;
+    color: var(--primary-blue, #005da0);
+    font-size: 22px;
+}
+
+.card > p {
+    margin: 0 0 20px 0;
+    color: #666;
+}
+
+/* Backup Section */
+.backup-section .backup-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-description {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+    font-style: italic;
+}
+
+.divider {
+    text-align: center;
+    color: #999;
+    font-weight: bold;
+    position: relative;
+    margin: 10px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background: #ddd;
+}
+
+.divider::before {
+    left: 0;
+}
+
+.divider::after {
+    right: 0;
+}
+
+/* Year Selector */
+.year-selector {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.year-selector strong {
+    display: block;
+    margin-bottom: 12px;
+    color: #495057;
+}
+
+.year-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.year-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.year-checkbox:hover {
+    border-color: var(--primary-blue, #005da0);
+    background: #f0f7ff;
+}
+
+.year-checkbox input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.year-checkbox input[type="checkbox"]:checked + span {
+    color: var(--primary-blue, #005da0);
+    font-weight: bold;
+}
+
+/* Buttons */
+.btn-large {
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 250px;
+}
+
+.btn-primary {
+    background: var(--primary-blue, #005da0);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--dark-blue, #004271);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 93, 160, 0.3);
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-secondary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-danger {
+    background: var(--danger, #dc3545);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Restore Section */
+.restore-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.file-upload-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.file-label {
+    font-weight: bold;
+    color: #495057;
+}
+
+.file-input {
+    padding: 10px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.file-input:hover:not(:disabled) {
+    border-color: var(--primary-blue, #005da0);
+}
+
+.file-input:disabled {
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* Backup Preview */
+.backup-preview {
+    background: #e7f3ff;
+    border: 2px solid var(--primary-blue, #005da0);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.backup-preview h4 {
+    margin: 0 0 12px 0;
+    color: var(--primary-blue, #005da0);
+    font-size: 18px;
+}
+
+.preview-info p {
+    margin: 6px 0;
+    color: #495057;
+}
+
+.preview-info .note {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #b3d9ff;
+    font-style: italic;
+    color: #666;
+}
+
+/* Restore Options */
+.restore-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-label:hover {
+    color: var(--primary-blue, #005da0);
+}
+
+/* Restore Actions */
+.restore-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Backup Results */
+.backup-results {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid;
+}
+
+.backup-results.success {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.backup-results.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+}
+
+.backup-results h4 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+}
+
+.backup-results.success h4 {
+    color: #155724;
+}
+
+.backup-results.error h4 {
+    color: #721c24;
+}
+
+/* Restore Results */
+.restore-results {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid;
+}
+
+.restore-results.success {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.restore-results.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+}
+
+.restore-results h4 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+}
+
+.restore-results.success h4 {
+    color: #155724;
+}
+
+.restore-results.error h4 {
+    color: #721c24;
+}
+
+.result-section {
+    margin-bottom: 16px;
+}
+
+.result-section strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.result-section ul {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.result-section li {
+    margin: 6px 0;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+}
+
+.result-section.errors li {
+    color: #721c24;
+}
+
+/* Documentation Section */
+.documentation-section {
+    background: #f8f9fa;
+}
+
+.doc-content h4 {
+    margin: 16px 0 8px 0;
+    color: var(--primary-blue, #005da0);
+    font-size: 18px;
+}
+
+.doc-content ul {
+    margin: 8px 0 16px 0;
+    padding-left: 24px;
+}
+
+.doc-content li {
+    margin: 6px 0;
+    color: #495057;
+}
+
+.doc-content p {
+    margin: 8px 0;
+    color: #495057;
+}
+
+.code-block {
+    background: #2d2d2d;
+    color: #f8f8f2;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    overflow-x: auto;
+    margin: 12px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .backup-restore-tab {
+        padding: 12px;
+    }
+
+    .backup-restore-container {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .btn-large {
+        min-width: 100%;
+    }
+
+    .year-checkboxes {
+        flex-direction: column;
+    }
+
+    .restore-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .restore-actions button {
+        width: 100%;
+    }
+}

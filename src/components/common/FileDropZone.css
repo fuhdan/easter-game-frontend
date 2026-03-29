@@ -1,0 +1,131 @@
+/**
+ * Styles for FileDropZone component
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge
+ *
+ * @since 2026-03-29
+ */
+
+.file-drop-zone {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-drop-zone:hover:not(.disabled) {
+    border-color: var(--primary-blue, #005da0);
+    background: #e7f3ff;
+    transform: translateY(-2px);
+}
+
+.file-drop-zone.dragging {
+    border-color: var(--primary-blue, #005da0);
+    background: #d4edff;
+    border-style: solid;
+    box-shadow: 0 4px 12px rgba(0, 93, 160, 0.2);
+}
+
+.file-drop-zone.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #e9ecef;
+}
+
+.file-drop-zone.has-file {
+    border-color: var(--primary-blue, #005da0);
+    background: #e7f3ff;
+}
+
+.file-drop-zone.has-file:hover:not(.disabled) {
+    background: #d4edff;
+}
+
+.drop-zone-content {
+    width: 100%;
+}
+
+.upload-icon,
+.file-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+.file-drop-zone.dragging .upload-icon {
+    animation: iconBounce 0.6s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes iconBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.upload-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.upload-hint {
+    font-size: 14px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.file-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #155724;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.file-hint {
+    font-size: 14px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .file-drop-zone {
+        padding: 24px 16px;
+        min-height: 120px;
+    }
+
+    .upload-icon,
+    .file-icon {
+        font-size: 36px;
+    }
+
+    .upload-text,
+    .file-name {
+        font-size: 14px;
+    }
+
+    .upload-hint,
+    .file-hint {
+        font-size: 12px;
+    }
+}
