@@ -42,6 +42,7 @@ import ConfigItem from './ConfigItem';
 import ConfirmModal from './ConfirmModal';
 import AISettings from '../AISettings/AISettings';
 import AdminUserManagement from '../AdminUserManagement/AdminUserManagement';
+import ImportExportTab from '../AdminDashboard/ImportExportTab';
 
 function SystemAdminDashboard({ user }) {
   /**
@@ -73,8 +74,8 @@ function SystemAdminDashboard({ user }) {
   /**
    * Check if user can access a specific tab
    * - admin: All tabs
-   * - content_admin: Events only
-   * - system_admin: System Config, AI Settings, Admin Users
+   * - content_admin: Events, Import/Export only
+   * - system_admin: System Config, AI Settings, Admin Users only
    *
    * @param {string} tabId - Tab identifier
    * @returns {boolean} Whether user can access the tab
@@ -86,7 +87,8 @@ function SystemAdminDashboard({ user }) {
       return true; // Admin can access all tabs
     }
     if (role === 'content_admin') {
-      return tabId === 'events'; // Content admin only sees Events
+      // Content admin sees Events and Import/Export (event managers only)
+      return ['events', 'import-export'].includes(tabId);
     }
     if (role === 'system_admin') {
       // System admin sees System Config, AI Settings, Admin Users
@@ -263,6 +265,7 @@ function SystemAdminDashboard({ user }) {
   const renderTabNavigation = () => {
     const allTabs = [
       { id: 'events', label: '🎮 Events' },
+      { id: 'import-export', label: '💾 Import/Export' },
       { id: 'system-config', label: '⚙️ System Config' },
       { id: 'ai-settings', label: '🤖 AI Settings' },
       { id: 'admin-users', label: '👤 Admin Users' }
@@ -309,6 +312,9 @@ function SystemAdminDashboard({ user }) {
     switch (activeTab) {
       case 'events':
         return <GamePackageManagement user={user} />;
+
+      case 'import-export':
+        return <ImportExportTab />;
 
       case 'system-config':
         return (

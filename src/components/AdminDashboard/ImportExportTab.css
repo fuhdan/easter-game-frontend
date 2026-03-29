@@ -1,0 +1,267 @@
+/**
+ * Stylesheet: ImportExportTab.css
+ * Purpose: Styling for import/export event configuration tab
+ * Part of: Easter Quest - Ypsomed AG Easter Challenge Frontend
+ *
+ * @since 2026-03-29
+ */
+
+.import-export-tab {
+    padding: 20px;
+}
+
+.import-export-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 1400px;
+}
+
+/* Export Section */
+.export-section,
+.import-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.export-section h3,
+.import-section h3 {
+    margin: 0 0 12px 0;
+    color: #005da0;
+    font-size: 1.3rem;
+}
+
+.export-section p,
+.import-section p {
+    margin: 0 0 20px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.export-info {
+    background: #f8f9fa;
+    border-left: 4px solid #005da0;
+    padding: 16px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.export-info strong {
+    display: block;
+    margin: 12px 0 8px 0;
+    color: #333;
+}
+
+.export-info strong:first-child {
+    margin-top: 0;
+}
+
+.export-info ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #666;
+}
+
+.export-info ul li {
+    margin: 4px 0;
+}
+
+/* Buttons */
+.export-button,
+.import-button {
+    background: #005da0;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.export-button:hover:not(:disabled),
+.import-button:hover:not(:disabled) {
+    background: #004271;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 93, 160, 0.2);
+}
+
+.export-button:disabled,
+.import-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* File Input */
+.file-input-wrapper {
+    margin-bottom: 20px;
+}
+
+.file-input-wrapper input[type="file"] {
+    display: none;
+}
+
+.file-input-label {
+    display: block;
+    background: #f8f9fa;
+    border: 2px dashed #ccc;
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+    font-weight: 600;
+}
+
+.file-input-label:hover {
+    border-color: #005da0;
+    background: #f0f7ff;
+    color: #005da0;
+}
+
+/* Import Options */
+.import-options {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: #333;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.option-help {
+    margin: 8px 0 0 30px;
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Import Results */
+.import-results {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.import-results.success {
+    background: #f0f9f0;
+    border: 2px solid #28a745;
+}
+
+.import-results.error {
+    background: #fff5f5;
+    border: 2px solid #dc3545;
+}
+
+.import-results h4 {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+}
+
+.import-results.success h4 {
+    color: #28a745;
+}
+
+.import-results.error h4 {
+    color: #dc3545;
+}
+
+.results-created,
+.results-updated,
+.results-errors {
+    margin: 16px 0;
+}
+
+.results-created strong,
+.results-updated strong,
+.results-errors strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.results-created ul,
+.results-updated ul,
+.results-errors ul {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.results-created ul li,
+.results-updated ul li {
+    padding: 4px 0;
+    color: #28a745;
+}
+
+.results-created ul li::before,
+.results-updated ul li::before {
+    content: '✓ ';
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.results-errors ul li {
+    padding: 4px 0;
+    color: #dc3545;
+}
+
+.results-errors ul li::before {
+    content: '✗ ';
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .import-export-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .import-export-tab {
+        padding: 12px;
+    }
+
+    .export-section,
+    .import-section {
+        padding: 16px;
+    }
+
+    .export-section h3,
+    .import-section h3 {
+        font-size: 1.1rem;
+    }
+}
