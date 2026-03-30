@@ -348,13 +348,23 @@ const BackupRestoreTab = () => {
             // Build query parameters
             const params = new URLSearchParams();
             if (selectedDbList.length > 0 && selectedDbList.length < backupDatabases.length) {
-                // Extract years from database names for selective restore
-                const years = backupDatabases
-                    .filter(db => selectedDatabases.has(db.name) && db.year)
-                    .map(db => db.year)
+                // BUG FIX: Build database identifiers for selective restore
+                // Admin DB uses "admin" identifier, year DBs use their year number
+                const databaseIdentifiers = backupDatabases
+                    .filter(db => selectedDatabases.has(db.name))
+                    .map(db => {
+                        // Admin database uses "admin" identifier
+                        if (db.type === 'admin' || db.name === 'admin_db') {
+                            return 'admin';
+                        }
+                        // Year databases use their year number
+                        return db.year;
+                    })
+                    .filter(id => id != null) // Remove any null values
                     .join(',');
-                if (years) {
-                    params.append('selected_databases', years);
+
+                if (databaseIdentifiers) {
+                    params.append('selected_databases', databaseIdentifiers);
                 }
             }
             params.append('overwrite', overwrite.toString());
