@@ -106,6 +106,21 @@ export const reset = () => {
 };
 
 /**
+ * Reset all teams AND delete all players
+ *
+ * ADMIN ONLY
+ *
+ * Deletes all teams and permanently removes all player/team_captain accounts.
+ *
+ * @returns {Promise<Object>} Reset confirmation
+ * @throws {APIError} 403 if not admin
+ */
+export const resetAll = () => {
+  logger.info('Resetting all teams and players');
+  return request('DELETE', '/teams/reset-all');
+};
+
+/**
  * Export teams as CSV
  *
  * ADMIN ONLY

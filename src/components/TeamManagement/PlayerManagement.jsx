@@ -16,7 +16,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { logger } from '../../utils/logger';
-import { getAllPlayers } from '../../services';
+import { getAllPlayers, createPlayer, deletePlayer } from '../../services';
 import './PlayerManagement.css';
 
 /**
@@ -128,16 +128,37 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
     setEditingId(Date.now());
   };
 
-  // Save new row
-  const saveNewRow = () => {
+  // Save new row - persists to backend
+  const saveNewRow = async () => {
     if(!newRow.name || !newRow.username) {
       showNotification('Name and Username are required', 'error');
       return;
     }
-    setPlayers(prev => [newRow, ...prev]);
-    setNewRow(null);
-    setEditingId(null);
-    showNotification('Player added successfully', 'success');
+    try {
+      setLoading(true);
+      const response = await createPlayer({
+        name: newRow.name,
+        username: newRow.username,
+        department: newRow.department || ''
+      });
+      if (response && response.success && response.user) {
+        const created = response.user;
+        setPlayers(prev => [{
+          id: created.id,
+          name: created.display_name || created.name || newRow.name,
+          username: created.username,
+          department: created.department || newRow.department || 'Unassigned'
+        }, ...prev]);
+        showNotification('Player added successfully', 'success');
+      }
+      setNewRow(null);
+      setEditingId(null);
+    } catch (error) {
+      const message = error?.response?.data?.detail || error?.message || 'Failed to add player';
+      showNotification(message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Inline editing existing row
@@ -152,6 +173,21 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
   };
 
   const cancelEdit = () => { setEditingId(null); if(newRow) setNewRow(null); };
+
+  // Delete player - persists to backend
+  const handleDeletePlayer = async (player) => {
+    try {
+      setLoading(true);
+      await deletePlayer(player.id);
+      setPlayers(prev => prev.filter(p => p.id !== player.id));
+      showNotification('Player deleted successfully', 'success');
+    } catch (error) {
+      const message = error?.response?.data?.detail || error?.message || 'Failed to delete player';
+      showNotification(message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPlayers = players.filter(player =>
     (player.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -233,7 +269,7 @@ const PlayerManagement = ({ players, setPlayers, showNotification, loading, setL
                       <td>{player.department}</td>
                       <td>
                         <button className="btn btn-secondary btn-sm" onClick={()=>startEdit(player)}>✏️</button>
-                        <button className="btn btn-danger btn-sm" onClick={()=>setPlayers(prev => prev.filter(p => p.id !== player.id))}>🗑️</button>
+                        <button className="btn btn-danger btn-sm" onClick={()=>handleDeletePlayer(player)}>🗑️</button>
                       </td>
                     </>
                   )}

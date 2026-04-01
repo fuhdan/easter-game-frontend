@@ -66,6 +66,7 @@ export const {
   update: updateTeam,
   deleteTeam,
   reset: resetTeams,
+  resetAll: resetAllTeamsAndPlayers,
   addMember,
   removeMember,
   setCaptain,

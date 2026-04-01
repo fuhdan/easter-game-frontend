@@ -35,6 +35,7 @@ function TeamCreationTab({ user }) {
   const [teams, setTeams] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
   const [config, setConfig] = useState({
     requiredDepartment: '',
     ensureDepartmentDistribution: false,
@@ -130,6 +131,24 @@ function TeamCreationTab({ user }) {
 
   return (
     <div className="team-creation-tab">
+
+      {/* Rotating logo overlay - shown only during team creation */}
+      {isCreating && (
+        <div className="creating-overlay" role="status" aria-live="polite" aria-label="Creating teams">
+          <div className="creating-content">
+            <div className="logo-spinner-wrap" aria-hidden="true">
+              <img
+                src="/assets/logo.png"
+                alt=""
+                className="logo-spinner-img"
+              />
+            </div>
+            <p className="creating-label">Creating Teams…</p>
+            <p className="creating-sublabel">Distributing players optimally</p>
+          </div>
+        </div>
+      )}
+
       {/* Team Statistics Summary */}
       <div className="team-stats-card">
         <h3>Team Statistics</h3>
@@ -168,6 +187,7 @@ function TeamCreationTab({ user }) {
           showNotification={showNotification}
           loading={loading}
           setLoading={setLoading}
+          setIsCreating={setIsCreating}
         />
       </div>
     </div>

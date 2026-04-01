@@ -23,7 +23,7 @@
 
 import React from 'react';
 import { logger } from '../../utils/logger';
-import { createTeams, resetTeams, utils } from '../../services';
+import { createTeams, resetTeams, resetAllTeamsAndPlayers, utils } from '../../services';
 import './TeamConfiguration.css';
 
 /**
@@ -68,7 +68,8 @@ const TeamConfiguration = ({
   departments,
   showNotification,
   loading,
-  setLoading
+  setLoading,
+  setIsCreating
 }) => {
 
   /**
@@ -110,28 +111,26 @@ const TeamConfiguration = ({
    */
   const handleCreateTeams = async () => {
     setLoading(true);
-    
+    setIsCreating(true);
+
     try {
-      // Frontend validation
       validateConfiguration();
 
-      // Call REAL API service
       const result = await createTeams(players, config);
-      
+
       if (result.success && result.teams) {
-        // Update frontend state with backend results
         setTeams(result.teams);
         showNotification(`Successfully created ${result.teams.length} teams with backend algorithm!`, 'success');
       } else {
         throw new Error('Backend did not return teams successfully');
       }
-      
+
     } catch (error) {
       logger.error('Team creation failed:', error);
-      // Use centralized error handling
       const errorMessage = utils.handleError(error, showNotification);
       showNotification(errorMessage || 'Failed to create teams', 'error');
     } finally {
+      setIsCreating(false);
       setLoading(false);
     }
   };
@@ -166,23 +165,19 @@ const TeamConfiguration = ({
 
   /**
    * Handle Reset All button click
-   * Clears both players and teams (teams via API, players locally)
+   * Deletes all teams AND all players from the database.
    */
   const handleResetAll = async () => {
-    if (!window.confirm('Reset everything? This will delete all players and teams.')) {
+    if (!window.confirm('Reset everything? This will permanently delete all teams AND all players from the database.')) {
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      // Reset teams on backend using REAL API
-      await resetTeams();
-      
-      // Clear frontend state
+      await resetAllTeamsAndPlayers();
       setTeams([]);
       setPlayers([]);
-      
     } catch (error) {
       utils.handleError(error, showNotification);
     } finally {
